@@ -70,7 +70,7 @@ onMounted(() => {
         <form v-else @submit.prevent="save" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
             <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 text-xs space-y-1">
                 <p class="font-bold text-gray-900">{{ reg?.customer?.name || reg?.lead?.name }}</p>
-                <p class="text-gray-500">{{ reg?.training_schedule?.product?.name || 'Program Pelatihan' }}</p>
+                <p class="text-gray-500">{{ reg?.product?.name || reg?.schedule?.product?.name || reg?.training_schedule?.product?.name || reg?.product_name || 'Program Pelatihan' }}</p>
             </div>
 
             <div>

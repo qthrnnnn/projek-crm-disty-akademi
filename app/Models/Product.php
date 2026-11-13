@@ -16,6 +16,8 @@ class Product extends Model
         'price', 'duration_hours', 'is_active',
     ];
 
+    protected $appends = ['product_type_label'];
+
     protected function casts(): array
     {
         return [
@@ -23,6 +25,11 @@ class Product extends Model
             'duration_hours' => 'integer',
             'is_active' => 'boolean',
         ];
+    }
+
+    public function trainingSchedules(): HasMany
+    {
+        return $this->hasMany(TrainingSchedule::class);
     }
 
     public function leads(): HasMany
@@ -42,5 +49,10 @@ class Product extends Model
             'bundle' => 'Pelatihan + Sertifikasi BNSP',
             default => 'Pelatihan / Kelas',
         };
+    }
+
+    public function getProductTypeLabelAttribute(): string
+    {
+        return $this->productTypeLabel();
     }
 }

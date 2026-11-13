@@ -21,6 +21,8 @@ class Registration extends Model
         'notes',
     ];
 
+    protected $appends = ['product_name', 'schedule_info'];
+
     protected function casts(): array
     {
         return [
@@ -42,6 +44,31 @@ class Registration extends Model
     public function schedule(): BelongsTo
     {
         return $this->belongsTo(TrainingSchedule::class, 'training_schedule_id');
+    }
+
+    public function trainingSchedule(): BelongsTo
+    {
+        return $this->belongsTo(TrainingSchedule::class, 'training_schedule_id');
+    }
+
+    public function training_schedule(): BelongsTo
+    {
+        return $this->belongsTo(TrainingSchedule::class, 'training_schedule_id');
+    }
+
+    public function getProductNameAttribute(): ?string
+    {
+        return $this->product?->name ?? $this->schedule?->product?->name ?? 'Program Pelatihan';
+    }
+
+    public function getScheduleInfoAttribute(): ?string
+    {
+        if (! $this->schedule) {
+            return null;
+        }
+        $date = $this->schedule->training_date?->format('d M Y');
+        $trainer = $this->schedule->trainer?->name;
+        return $date . ($trainer ? " (Trainer: {$trainer})" : '');
     }
 
     public static function generateNumber(): string

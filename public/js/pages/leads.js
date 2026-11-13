@@ -118,7 +118,7 @@
                         </td>
 
                         <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-gray-800">${item.product ? item.product.name : 'Program Pelatihan'}</p>
+                            <p class="font-semibold text-gray-800">${item.product?.name || item.product_name || 'Program Pelatihan'}</p>
                             <p class="text-[10.5px] text-emerald-600 font-bold mt-0.5">${App.formatRupiah(dealPrice)}</p>
                             <span class="text-[9.5px] text-gray-400">Est. Komisi 10%: ${App.formatRupiah(estCommission)}</span>
                         </td>

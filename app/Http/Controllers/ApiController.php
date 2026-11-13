@@ -83,21 +83,168 @@ class ApiController extends Controller
     public function index(Request $request, string $resource): JsonResponse
     {
         $model = $this->modelFor($resource);
-        $query = $model::query()->latest();
+        $query = $model::query();
 
-        if ($request->filled('search')) {
-            $search = $request->string('search')->toString();
-            $columns = $model::getConnectionResolver()
-                ->connection()->getSchemaBuilder()->getColumnListing((new $model)->getTable());
-            $searchable = array_values(array_intersect(['name', 'email', 'code', 'lead_code', 'customer_code'], $columns));
+        // Eager loading & specialized query per resource
+        switch ($resource) {
+            case 'training-schedules':
+                $query->with(['product', 'trainer'])->withCount('registrations')->latest('training_date');
+                if ($request->filled('status')) {
+                    $query->where('status', $request->status);
+                }
+                if ($request->filled('product_id')) {
+                    $query->where('product_id', $request->product_id);
+                }
+                if ($request->filled('trainer_id')) {
+                    $query->where('trainer_id', $request->trainer_id);
+                }
+                if ($request->filled('search')) {
+                    $q = $request->search;
+                    $query->where(function ($sub) use ($q) {
+                        $sub->where('location', 'like', "%{$q}%")
+                            ->orWhereHas('product', fn ($p) => $p->where('name', 'like', "%{$q}%")->orWhere('code', 'like', "%{$q}%"))
+                            ->orWhereHas('trainer', fn ($t) => $t->where('name', 'like', "%{$q}%"));
+                    });
+                }
+                break;
 
-            if ($searchable !== []) {
-                $query->where(function ($builder) use ($search, $searchable): void {
-                    foreach ($searchable as $column) {
-                        $builder->orWhere($column, 'like', "%{$search}%");
+            case 'registrations':
+                $query->with(['customer', 'product', 'schedule.product', 'schedule.trainer'])->latest();
+                if ($request->filled('status')) {
+                    $query->where('status', $request->status);
+                }
+                if ($request->filled('customer_id')) {
+                    $query->where('customer_id', $request->customer_id);
+                }
+                if ($request->filled('product_id')) {
+                    $query->where('product_id', $request->product_id);
+                }
+                if ($request->filled('search')) {
+                    $q = $request->search;
+                    $query->where(function ($sub) use ($q) {
+                        $sub->where('registration_number', 'like', "%{$q}%")
+                            ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$q}%"))
+                            ->orWhereHas('product', fn ($p) => $p->where('name', 'like', "%{$q}%"))
+                            ->orWhereHas('schedule.trainer', fn ($t) => $t->where('name', 'like', "%{$q}%"));
+                    });
+                }
+                break;
+
+            case 'products':
+                $query->withCount('leads')->latest();
+                if ($request->filled('category')) {
+                    $query->where('category', $request->category);
+                }
+                if ($request->filled('product_type')) {
+                    $query->where('product_type', $request->product_type);
+                }
+                if ($request->has('is_active') && $request->is_active !== '') {
+                    $query->where('is_active', $request->boolean('is_active'));
+                }
+                if ($request->filled('search')) {
+                    $q = $request->search;
+                    $query->where(function ($s) use ($q) {
+                        $s->where('name', 'like', "%{$q}%")
+                            ->orWhere('code', 'like', "%{$q}%")
+                            ->orWhere('description', 'like', "%{$q}%");
+                    });
+                }
+                break;
+
+            case 'leads':
+                $query->with(['product', 'source', 'assignedUser', 'rejectionReason'])->latest();
+                if ($request->user() && $request->user()->isSales()) {
+                    $query->where('assigned_to', $request->user()->id);
+                }
+                if ($request->filled('status')) {
+                    $query->where('status', $request->status);
+                }
+                if ($request->filled('product_id')) {
+                    $query->where('product_id', $request->product_id);
+                }
+                if ($request->filled('search')) {
+                    $q = $request->search;
+                    $query->where(function ($s) use ($q) {
+                        $s->where('name', 'like', "%{$q}%")
+                            ->orWhere('email', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%")
+                            ->orWhere('lead_code', 'like', "%{$q}%")
+                            ->orWhereHas('product', fn ($p) => $p->where('name', 'like', "%{$q}%"));
+                    });
+                }
+                break;
+
+            case 'payments':
+                $query->with(['product', 'lead.product', 'verifiedByUser'])->latest();
+                if ($request->user() && $request->user()->isSales()) {
+                    $userId = $request->user()->id;
+                    $query->whereHas('lead', fn ($lead) => $lead->where('assigned_to', $userId));
+                }
+                if ($request->filled('status')) {
+                    $query->where('status', $request->status);
+                }
+                break;
+
+            case 'commissions':
+                $query->with(['user', 'lead.product', 'payment'])->latest();
+                if ($request->user() && $request->user()->isSales()) {
+                    $query->where('user_id', $request->user()->id);
+                }
+                if ($request->filled('status')) {
+                    $query->where('status', $request->status);
+                }
+                break;
+
+            case 'follow-ups':
+                $query->with(['lead.product', 'assignedUser'])->latest('follow_up_at');
+                if ($request->user() && $request->user()->isSales()) {
+                    $query->where('assigned_to', $request->user()->id);
+                }
+                if ($request->filled('status')) {
+                    $query->where('status', $request->status);
+                }
+                break;
+
+            case 'customers':
+                $query->with(['institution'])->latest();
+                if ($request->filled('status')) {
+                    $query->where('status', $request->status);
+                }
+                if ($request->filled('search')) {
+                    $q = $request->search;
+                    $query->where(function ($s) use ($q) {
+                        $s->where('name', 'like', "%{$q}%")
+                            ->orWhere('email', 'like', "%{$q}%")
+                            ->orWhere('phone', 'like', "%{$q}%")
+                            ->orWhere('customer_code', 'like', "%{$q}%");
+                    });
+                }
+                break;
+
+            case 'trainers':
+                $query->withCount('schedules')->latest();
+                if ($request->has('is_active') && $request->is_active !== '') {
+                    $query->where('is_active', $request->boolean('is_active'));
+                }
+                break;
+
+            default:
+                $query->latest();
+                if ($request->filled('search')) {
+                    $search = $request->string('search')->toString();
+                    $columns = $model::getConnectionResolver()
+                        ->connection()->getSchemaBuilder()->getColumnListing((new $model)->getTable());
+                    $searchable = array_values(array_intersect(['name', 'email', 'code', 'lead_code', 'customer_code'], $columns));
+
+                    if ($searchable !== []) {
+                        $query->where(function ($builder) use ($search, $searchable): void {
+                            foreach ($searchable as $column) {
+                                $builder->orWhere($column, 'like', "%{$search}%");
+                            }
+                        });
                     }
-                });
-            }
+                }
+                break;
         }
 
         $perPage = min(max($request->integer('per_page', 20), 1), 100);
@@ -133,7 +280,36 @@ class ApiController extends Controller
     public function show(string $resource, int $id): JsonResponse
     {
         $model = $this->modelFor($resource);
-        $record = $model::query()->findOrFail($id);
+        $query = $model::query();
+
+        switch ($resource) {
+            case 'training-schedules':
+                $query->with(['product', 'trainer', 'registrations.customer']);
+                break;
+            case 'registrations':
+                $query->with(['customer', 'product', 'schedule.product', 'schedule.trainer']);
+                break;
+            case 'products':
+                $query->withCount('leads');
+                break;
+            case 'leads':
+                $query->with(['product', 'source', 'assignedUser', 'rejectionReason', 'activities', 'followUps']);
+                break;
+            case 'payments':
+                $query->with(['product', 'lead.product', 'verifiedByUser']);
+                break;
+            case 'commissions':
+                $query->with(['user', 'lead.product', 'payment']);
+                break;
+            case 'follow-ups':
+                $query->with(['lead.product', 'assignedUser']);
+                break;
+            case 'customers':
+                $query->with(['institution', 'leads.product', 'registrations.product']);
+                break;
+        }
+
+        $record = $query->findOrFail($id);
 
         return response()->json(['data' => $record]);
     }
@@ -151,6 +327,22 @@ class ApiController extends Controller
             $data['customer_code'] = Customer::generateCode();
         }
 
+        if ($resource === 'registrations') {
+            if (! isset($data['registration_number'])) {
+                $data['registration_number'] = Registration::generateNumber();
+            }
+            if (! empty($data['training_schedule_id'])) {
+                $sched = TrainingSchedule::find($data['training_schedule_id']);
+                if ($sched) {
+                    $data['product_id'] = $sched->product_id;
+                    $data['training_date'] = $sched->training_date;
+                    if (! isset($data['amount']) || $data['amount'] <= 0) {
+                        $data['amount'] = $sched->product?->price ?? 0;
+                    }
+                }
+            }
+        }
+
         $record = $model::create($data);
 
         return response()->json(['data' => $record], 201);
@@ -160,7 +352,17 @@ class ApiController extends Controller
     {
         $model = $this->modelFor($resource);
         $record = $model::query()->findOrFail($id);
-        $record->update($this->validatedAttributes($request, $model));
+        $data = $this->validatedAttributes($request, $model);
+
+        if ($resource === 'registrations' && ! empty($data['training_schedule_id'])) {
+            $sched = TrainingSchedule::find($data['training_schedule_id']);
+            if ($sched) {
+                $data['product_id'] = $sched->product_id;
+                $data['training_date'] = $sched->training_date;
+            }
+        }
+
+        $record->update($data);
 
         return response()->json(['data' => $record->refresh()]);
     }

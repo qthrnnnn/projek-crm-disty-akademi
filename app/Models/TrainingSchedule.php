@@ -23,6 +23,8 @@ class TrainingSchedule extends Model
         'notes',
     ];
 
+    protected $appends = ['product_name', 'trainer_name'];
+
     protected function casts(): array
     {
         return [
@@ -43,5 +45,15 @@ class TrainingSchedule extends Model
     public function registrations(): HasMany
     {
         return $this->hasMany(Registration::class);
+    }
+
+    public function getProductNameAttribute(): ?string
+    {
+        return $this->product?->name ?? 'Program Pelatihan';
+    }
+
+    public function getTrainerNameAttribute(): ?string
+    {
+        return $this->trainer?->name ?? 'Belum ditentukan';
     }
 }

@@ -4,7 +4,7 @@
  */
 (function() {
     App.pages['training-schedules'] = {
-        state: { page: 1, products: [], trainers: [] },
+        state: { page: 1, search: '', status: '' },
 
         async index(container) {
             this.container = container;
@@ -12,57 +12,75 @@
         },
 
         async loadList() {
-            const res = await api.list('training-schedules', { page: this.state.page, per_page: 20 });
+            const params = { page: this.state.page, per_page: 20 };
+            if (this.state.search) params.search = this.state.search;
+            if (this.state.status) params.status = this.state.status;
+
+            const res = await api.list('training-schedules', params);
             const items = res.data || [];
             this.renderList(items, res);
         },
 
         renderList(items, meta) {
+            const user = App.state.user || {};
+            const isAdmin = user.role === 'admin';
+
+            const scStyles = {
+                scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
+                ongoing: 'bg-amber-50 text-amber-700 border-amber-200',
+                completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
+            };
+
             const rows = items.map(s => {
-                const prodName = s.product?.name || 'Program #' + s.product_id;
-                const trainerName = s.trainer?.name || 'Trainer #' + s.trainer_id;
+                const prodName = s.product?.name || s.product_name || ('Program #' + s.product_id);
+                const trainerName = s.trainer?.name || s.trainer_name || '-';
                 const regCount = s.registrations_count ?? (s.registrations?.length || 0);
 
-                const statusBadges = {
-                    scheduled: 'bg-blue-50 text-blue-700 border-blue-200',
-                    ongoing: 'bg-cyan-50 text-cyan-700 border-cyan-200',
-                    completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                    cancelled: 'bg-gray-100 text-gray-500 border-gray-200',
-                };
-
                 return `
-                    <tr class="hover:bg-orange-50/20 transition-colors">
-                        <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
+                    <tr class="hover:bg-blue-50/20 transition-colors">
+                        <td class="py-3.5 px-4 font-semibold text-gray-900">
                             ${prodName}
-                            <p class="text-[10px] text-gray-400 font-normal mt-0.5">${s.location || 'Online'}</p>
+                            ${s.location ? `<div class="text-[11px] text-gray-400 font-normal">${s.location}</div>` : ''}
                         </td>
 
-                        <td class="py-3.5 px-4 text-xs font-semibold text-gray-700">
+                        <td class="py-3.5 px-4 text-gray-800 font-medium">
                             ${trainerName}
                         </td>
 
-                        <td class="py-3.5 px-4 text-xs text-gray-800">
-                            <span class="font-bold">${App.formatDate(s.training_date)}</span>
-                            ${s.start_time ? `<p class="text-[10px] text-gray-400 font-mono mt-0.5">${s.start_time.substring(0, 5)} - ${s.end_time ? s.end_time.substring(0, 5) : 'Selesai'}</p>` : ''}
+                        <td class="py-3.5 px-4 text-gray-900 font-medium whitespace-nowrap">
+                            ${App.formatDate(s.training_date)}
+                        </td>
+
+                        <td class="py-3.5 px-4 text-gray-600 whitespace-nowrap">
+                            ${s.start_time ? s.start_time.substring(0, 5) : '-'}
+                        </td>
+
+                        <td class="py-3.5 px-4 text-gray-600 whitespace-nowrap">
+                            ${s.end_time ? s.end_time.substring(0, 5) : '-'}
+                        </td>
+
+                        <td class="py-3.5 px-4">
+                            <span class="inline-block px-2 py-0.5 border text-[10px] font-semibold uppercase tracking-wider ${scStyles[s.status] || 'bg-gray-50 border-gray-200'}">
+                                ${App.statusLabel(s.status)}
+                            </span>
                         </td>
 
                         <td class="py-3.5 px-4 text-xs">
                             <span class="font-extrabold text-orange-600">${regCount}</span> / <span class="text-gray-400">${s.capacity || 0} Kursi</span>
                         </td>
 
-                        <td class="py-3.5 px-4">
-                            <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusBadges[s.status] || 'bg-gray-100 text-gray-600'}">
-                                ${App.statusLabel(s.status)}
-                            </span>
-                        </td>
-
                         <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
-                            <button onclick="App.navigate('/training-schedules/${s.id}/edit')" class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 inline-block" title="Edit">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            </button>
-                            <button onclick="App.pages['training-schedules'].deleteSchedule(${s.id})" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 inline-block" title="Hapus">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
+                            ${isAdmin ? `
+                                <div class="inline-flex items-center gap-1">
+                                    <a href="/training-schedules/${s.id}/edit" onclick="event.preventDefault(); App.navigate('/training-schedules/${s.id}/edit')" class="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50" title="Edit">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                    </a>
+                                    <button onclick="App.pages['training-schedules'].deleteSchedule(${s.id})" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50" title="Hapus">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                </div>
+                            ` : '<span class="text-xs text-gray-400 italic">Lihat Saja</span>'}
                         </td>
                     </tr>
                 `;
@@ -70,24 +88,103 @@
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Jadwal Pelatihan & Uji Sertifikasi',
-                        'Atur batch pelaksanaan kelas, instruktur pengajar, lokasi, dan batas kuota peserta',
-                        `<button onclick="App.navigate('/training-schedules/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Tambah Jadwal
-                        </button>`
-                    )}
+                    {{-- Header --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Jadwal yang Tersedia</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Setiap jadwal memiliki trainer, waktu, lokasi, dan kapasitas.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            ${isAdmin ? `
+                                <a href="/trainers" onclick="event.preventDefault(); App.navigate('/trainers')" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
+                                    Kelola Trainer
+                                </a>
+                                <a href="/training-schedules/create" onclick="event.preventDefault(); App.navigate('/training-schedules/create')" class="px-4 py-2 text-xs font-semibold text-white bg-gray-900 rounded-full hover:bg-black shadow-sm transition-colors">
+                                    + Buat Jadwal
+                                </a>
+                            ` : ''}
+                        </div>
+                    </div>
 
-                    ${App.tableShell(
-                        ['Program / Materi', 'Trainer / Instruktur', 'Tanggal & Waktu', 'Peserta Terisi', 'Status', 'Aksi'],
-                        rows,
-                        'Belum ada jadwal pelatihan.'
-                    )}
+                    {{-- Filter Card --}}
+                    <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
+                        <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                            <div class="relative flex-1 w-full">
+                                <input type="text" id="sched-search" value="${this.state.search}"
+                                       placeholder="Cari pelatihan, trainer, atau lokasi..."
+                                       class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 rounded"
+                                       onkeydown="if(event.key==='Enter') App.pages['training-schedules'].handleSearch()">
+                            </div>
+                            <div class="w-full sm:w-48">
+                                <select id="sched-status" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500 rounded"
+                                        onchange="App.pages['training-schedules'].handleStatusChange(this.value)">
+                                    <option value="">Semua status</option>
+                                    <option value="scheduled" ${this.state.status === 'scheduled' ? 'selected' : ''}>Scheduled</option>
+                                    <option value="ongoing" ${this.state.status === 'ongoing' ? 'selected' : ''}>Ongoing</option>
+                                    <option value="completed" ${this.state.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="cancelled" ${this.state.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="App.pages['training-schedules'].handleSearch()" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-sm transition-colors">
+                                Cari
+                            </button>
+                            ${(this.state.search || this.state.status) ? `
+                                <button type="button" onclick="App.pages['training-schedules'].resetFilter()" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">Reset</button>
+                            ` : ''}
+                        </div>
+                    </div>
 
-                    ${App.pagination(meta)}
+                    {{-- Table Card --}}
+                    <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[700px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3.5 px-4">PELATIHAN</th>
+                                        <th class="py-3.5 px-4">TRAINER</th>
+                                        <th class="py-3.5 px-4">TANGGAL</th>
+                                        <th class="py-3.5 px-4">JAM MULAI</th>
+                                        <th class="py-3.5 px-4">JAM SELESAI</th>
+                                        <th class="py-3.5 px-4">STATUS</th>
+                                        <th class="py-3.5 px-4">PESERTA</th>
+                                        <th class="py-3.5 px-4 text-right">AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${items.length === 0 ? `
+                                        <tr>
+                                            <td colspan="8" class="py-8 text-center text-gray-400 text-xs">
+                                                Belum ada jadwal pelatihan.
+                                            </td>
+                                        </tr>
+                                    ` : rows.join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ${App.pagination(meta)}
+                    </div>
                 </div>
             `;
+        },
+
+        handleSearch() {
+            const input = document.getElementById('sched-search');
+            this.state.search = input ? input.value : '';
+            this.state.page = 1;
+            this.loadList();
+        },
+
+        handleStatusChange(val) {
+            this.state.status = val;
+            this.state.page = 1;
+            this.loadList();
+        },
+
+        resetFilter() {
+            this.state.search = '';
+            this.state.status = '';
+            this.state.page = 1;
+            this.loadList();
         },
 
         goToPage(page) {
@@ -159,7 +256,7 @@
                         ${App.selectField('Pilih Trainer / Instruktur', 'trainer_id', trainerOptions, data.trainer_id || '', true)}
 
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                            ${App.inputField('Tanggal Pelaksanaan', 'training_date', data.training_date || '', 'date', true)}
+                            ${App.inputField('Tanggal Pelaksanaan', 'training_date', data.training_date ? data.training_date.substring(0, 10) : '', 'date', true)}
                             ${App.inputField('Jam Mulai', 'start_time', data.start_time ? data.start_time.substring(0, 5) : '09:00', 'time', true)}
                             ${App.inputField('Jam Selesai', 'end_time', data.end_time ? data.end_time.substring(0, 5) : '16:00', 'time', true)}
                         </div>

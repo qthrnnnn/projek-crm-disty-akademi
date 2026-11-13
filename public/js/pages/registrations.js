@@ -4,7 +4,7 @@
  */
 (function() {
     App.pages.registrations = {
-        state: { page: 1, customers: [], schedules: [] },
+        state: { page: 1, search: '', status: '' },
 
         async index(container) {
             this.container = container;
@@ -12,44 +12,59 @@
         },
 
         async loadList() {
-            const res = await api.list('registrations', { page: this.state.page, per_page: 20 });
+            const params = { page: this.state.page, per_page: 20 };
+            if (this.state.search) params.search = this.state.search;
+            if (this.state.status) params.status = this.state.status;
+
+            const res = await api.list('registrations', params);
             const items = res.data || [];
             this.renderList(items, res);
         },
 
         renderList(items, meta) {
-            const rows = items.map(reg => {
-                const custName = reg.customer?.name || 'Customer #' + reg.customer_id;
-                const scheduleInfo = reg.training_schedule ?
-                    `${reg.training_schedule.product?.name || 'Program'} (${App.formatDate(reg.training_schedule.training_date)})` :
-                    'Jadwal #' + reg.training_schedule_id;
+            const rStyles = {
+                registered: 'bg-blue-50 text-blue-700 border-blue-200',
+                confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                attended: 'bg-purple-50 text-purple-700 border-purple-200',
+                cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
+            };
 
-                const statusBadges = {
-                    registered: 'bg-blue-50 text-blue-700 border-blue-200',
-                    confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                    attended: 'bg-purple-50 text-purple-700 border-purple-200',
-                    cancelled: 'bg-gray-100 text-gray-500 border-gray-200',
-                };
+            const rows = items.map(reg => {
+                const sched = reg.schedule || reg.training_schedule;
+                const prodName = reg.product?.name || reg.product_name || sched?.product?.name || '-';
 
                 return `
-                    <tr class="hover:bg-orange-50/20 transition-colors">
-                        <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
-                            ${custName}
-                            <p class="text-[10px] text-gray-400 font-normal mt-0.5">${reg.customer?.email || reg.customer?.phone || '-'}</p>
-                        </td>
-
-                        <td class="py-3.5 px-4 text-xs font-semibold text-gray-800">
-                            ${scheduleInfo}
-                        </td>
-
-                        <td class="py-3.5 px-4 text-xs font-extrabold text-emerald-600">
-                            ${App.formatRupiah(reg.amount)}
+                    <tr class="hover:bg-blue-50/20 transition-colors">
+                        <td class="py-3.5 px-4 font-mono font-semibold text-gray-900">
+                            ${reg.registration_number || ('#REG-' + reg.id)}
                         </td>
 
                         <td class="py-3.5 px-4">
-                            <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusBadges[reg.status] || 'bg-gray-100 text-gray-600'}">
+                            <a href="/customers/${reg.customer_id}" onclick="event.preventDefault(); App.navigate('/customers/${reg.customer_id}')" class="font-medium text-blue-600 hover:underline">
+                                ${reg.customer?.name || ('Customer #' + reg.customer_id)}
+                            </a>
+                            <div class="text-[11px] text-gray-400">${reg.customer?.customer_code || '-'}</div>
+                        </td>
+
+                        <td class="py-3.5 px-4 font-medium text-gray-800">
+                            ${prodName}
+                        </td>
+
+                        <td class="py-3.5 px-4">
+                            ${sched ? `
+                                <div class="font-medium text-gray-800">${App.formatDate(sched.training_date)}</div>
+                                <div class="text-[11px] text-gray-400">Trainer: ${sched.trainer?.name || '-'}</div>
+                            ` : '<span class="text-gray-400">-</span>'}
+                        </td>
+
+                        <td class="py-3.5 px-4">
+                            <span class="inline-block px-2 py-0.5 border text-[10px] font-semibold uppercase tracking-wider ${rStyles[reg.status] || 'bg-gray-50 border-gray-200'}">
                                 ${App.statusLabel(reg.status)}
                             </span>
+                        </td>
+
+                        <td class="py-3.5 px-4 font-bold text-gray-900">
+                            ${App.formatRupiah(reg.amount)}
                         </td>
 
                         <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
@@ -66,24 +81,100 @@
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Pendaftaran Peserta Pelatihan',
-                        'Daftarkan customer tetap ke jadwal kelas pelatihan & uji sertifikasi yang aktif',
-                        `<button onclick="App.navigate('/registrations/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Daftarkan Peserta
-                        </button>`
-                    )}
+                    {{-- Header --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Pendaftaran Peserta</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Customer didaftarkan ke jadwal yang telah dibuat, bukan menentukan tanggal sendiri.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <a href="/training-schedules" onclick="event.preventDefault(); App.navigate('/training-schedules')" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
+                                Lihat Jadwal
+                            </a>
+                            <a href="/registrations/create" onclick="event.preventDefault(); App.navigate('/registrations/create')" class="px-4 py-2 text-xs font-semibold text-white bg-gray-900 rounded-full hover:bg-black shadow-sm transition-colors">
+                                + Daftarkan Customer
+                            </a>
+                        </div>
+                    </div>
 
-                    ${App.tableShell(
-                        ['Peserta (Customer)', 'Jadwal / Program Pelatihan', 'Biaya Pendaftaran', 'Status', 'Aksi'],
-                        rows,
-                        'Belum ada data pendaftaran peserta kelas.'
-                    )}
+                    {{-- Filter Card --}}
+                    <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
+                        <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                            <div class="relative flex-1 w-full">
+                                <input type="text" id="reg-search" value="${this.state.search}"
+                                       placeholder="Cari nomor, customer, training, trainer..."
+                                       class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 rounded"
+                                       onkeydown="if(event.key==='Enter') App.pages.registrations.handleSearch()">
+                            </div>
+                            <div class="w-full sm:w-48">
+                                <select id="reg-status" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500 rounded"
+                                        onchange="App.pages.registrations.handleStatusChange(this.value)">
+                                    <option value="">Semua status</option>
+                                    <option value="registered" ${this.state.status === 'registered' ? 'selected' : ''}>Registered</option>
+                                    <option value="confirmed" ${this.state.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                                    <option value="attended" ${this.state.status === 'attended' ? 'selected' : ''}>Attended</option>
+                                    <option value="cancelled" ${this.state.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="App.pages.registrations.handleSearch()" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-sm transition-colors">
+                                Filter
+                            </button>
+                            ${(this.state.search || this.state.status) ? `
+                                <button type="button" onclick="App.pages.registrations.resetFilter()" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">Reset</button>
+                            ` : ''}
+                        </div>
+                    </div>
 
-                    ${App.pagination(meta)}
+                    {{-- Table Card --}}
+                    <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[680px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3.5 px-4">NO. REGISTRASI</th>
+                                        <th class="py-3.5 px-4">CUSTOMER</th>
+                                        <th class="py-3.5 px-4">PELATIHAN</th>
+                                        <th class="py-3.5 px-4">JADWAL</th>
+                                        <th class="py-3.5 px-4">STATUS</th>
+                                        <th class="py-3.5 px-4">AMOUNT</th>
+                                        <th class="py-3.5 px-4 text-right">AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${items.length === 0 ? `
+                                        <tr>
+                                            <td colspan="7" class="py-8 text-center text-gray-400 text-xs">
+                                                Belum ada pendaftaran peserta.
+                                            </td>
+                                        </tr>
+                                    ` : rows.join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ${App.pagination(meta)}
+                    </div>
                 </div>
             `;
+        },
+
+        handleSearch() {
+            const input = document.getElementById('reg-search');
+            this.state.search = input ? input.value : '';
+            this.state.page = 1;
+            this.loadList();
+        },
+
+        handleStatusChange(val) {
+            this.state.status = val;
+            this.state.page = 1;
+            this.loadList();
+        },
+
+        resetFilter() {
+            this.state.search = '';
+            this.state.status = '';
+            this.state.page = 1;
+            this.loadList();
         },
 
         goToPage(page) {

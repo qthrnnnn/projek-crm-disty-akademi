@@ -35,6 +35,13 @@ class Lead extends Model
         ];
     }
 
+    protected $appends = ['product_name'];
+
+    public function getProductNameAttribute(): ?string
+    {
+        return $this->product?->name ?? 'Program Pelatihan';
+    }
+
     /* ---- Constants ---- */
     const STATUS_NEW = 'new';
 

@@ -4,7 +4,7 @@
  */
 (function() {
     App.pages.products = {
-        state: { page: 1, search: '' },
+        state: { page: 1, search: '', category: '', product_type: '' },
 
         async index(container) {
             this.container = container;
@@ -14,6 +14,8 @@
         async loadList() {
             const params = { page: this.state.page, per_page: 20 };
             if (this.state.search) params.search = this.state.search;
+            if (this.state.category) params.category = this.state.category;
+            if (this.state.product_type) params.product_type = this.state.product_type;
 
             const res = await api.list('products', params);
             const items = res.data || [];
@@ -24,95 +26,186 @@
             const user = App.state.user || {};
             const isAdmin = user.role === 'admin';
 
-            const typeBadges = {
-                training: 'bg-blue-50 text-blue-700 border-blue-200',
-                certification: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                bundle: 'bg-purple-50 text-purple-700 border-purple-200',
+            const typeLabel = (p) => {
+                if (p.product_type === 'certification') return 'Uji Sertifikasi BNSP';
+                if (p.product_type === 'bundle') return 'Paket Bundling';
+                return 'Pelatihan / Kelas';
             };
 
-            const typeLabels = {
-                training: 'Pelatihan',
-                certification: 'Sertifikasi BNSP',
-                bundle: 'Paket Pelatihan + Sertifikasi',
+            const typeBadgeClass = (p) => {
+                if (p.product_type === 'certification') return 'bg-red-50 text-red-700 border-red-200';
+                if (p.product_type === 'bundle') return 'bg-amber-50 text-amber-700 border-amber-200';
+                return 'bg-blue-50 text-blue-700 border-blue-200';
             };
 
             const rows = items.map(p => `
-                <tr class="hover:bg-orange-50/20 transition-colors">
-                    <td class="py-3.5 px-4 text-xs font-mono font-bold text-gray-900">
-                        ${p.code || '-'}
-                    </td>
-
-                    <td class="py-3.5 px-4 text-xs">
-                        <p class="font-bold text-gray-900">${p.name || '-'}</p>
-                        ${p.description ? `<p class="text-[11px] text-gray-400 line-clamp-1 mt-0.5">${p.description}</p>` : ''}
-                    </td>
-
+                <tr class="hover:bg-blue-50/20 transition-colors">
                     <td class="py-3.5 px-4">
-                        <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${typeBadges[p.product_type] || 'bg-gray-100 text-gray-600'}">
-                            ${typeLabels[p.product_type] || p.product_type || '-'}
+                        <div class="font-semibold text-gray-900 text-sm">${p.name || '-'}</div>
+                        <div class="text-[11px] text-gray-400 font-mono mt-0.5">${p.code || '-'}</div>
+                        ${p.description ? `<div class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">${p.description}</div>` : ''}
+                    </td>
+
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-semibold ${typeBadgeClass(p)} border">
+                            ${typeLabel(p)}
                         </span>
                     </td>
 
-                    <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
-                        ${p.price > 0 ? App.formatRupiah(p.price) : '<span class="text-emerald-600 font-bold">Gratis</span>'}
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-semibold border ${p.category === 'Sertifikasi BNSP' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'}">
+                            ${p.category || 'Pelatihan / Bootcamp'}
+                        </span>
                     </td>
 
-                    <td class="py-3.5 px-4 text-xs text-gray-600">
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        ${Number(p.price) === 0 ? `
+                            <span class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-bold bg-slate-900 text-white">Gratis</span>
+                        ` : `
+                            <span class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-bold bg-blue-900 text-white">Berbayar</span>
+                        `}
+                    </td>
+
+                    <td class="py-3.5 px-4 font-semibold text-gray-900 whitespace-nowrap">
+                        ${Number(p.price) === 0 ? '<span class="text-emerald-700 font-bold">Gratis (Rp 0)</span>' : `<span>${App.formatRupiah(p.price)}</span>`}
+                    </td>
+
+                    <td class="py-3.5 px-4 text-gray-700 whitespace-nowrap text-xs">
                         ${p.duration_hours ? p.duration_hours + ' Jam' : '-'}
                     </td>
 
-                    <td class="py-3.5 px-4">
-                        <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}">
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-medium border ${p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}">
                             ${p.is_active ? 'Aktif' : 'Non-aktif'}
                         </span>
                     </td>
 
-                    <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
-                        ${isAdmin ? `
-                            <button onclick="App.navigate('/products/${p.id}/edit')" class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 inline-block" title="Edit">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            </button>
-                            <button onclick="App.pages.products.deleteProduct(${p.id})" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 inline-block" title="Hapus">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
-                        ` : '<span class="text-xs text-gray-400 italic">Lihat Saja</span>'}
-                    </td>
+                    ${isAdmin ? `
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center gap-1">
+                                <a href="/products/${p.id}/edit" onclick="event.preventDefault(); App.navigate('/products/${p.id}/edit')" class="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50" title="Edit">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </a>
+                                <button onclick="App.pages.products.deleteProduct(${p.id})" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50" title="Hapus">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            </div>
+                        </td>
+                    ` : ''}
                 </tr>
             `);
 
+            const isCurrentFilter = (cat, type) => {
+                return (this.state.category === cat && this.state.product_type === type);
+            };
+
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Katalog Program Pelatihan & Sertifikasi',
-                        'Daftar resmi harga pokok program akademi sebagai acuan penawaran sales',
-                        isAdmin ? `<button onclick="App.navigate('/products/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Tambah Program
-                        </button>` : ''
-                    )}
-
-                    <!-- Search Bar -->
-                    <div class="flex items-center gap-2 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
-                        <div class="flex-1 relative">
-                            <input type="text" id="prod-search" value="${this.state.search}" placeholder="Cari kode program, nama, atau jenis..."
-                                   class="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-orange-500 outline-none"
-                                   onkeydown="if(event.key==='Enter') App.pages.products.handleSearch()">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    {{-- Header --}}
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Katalog Program Pelatihan & Sertifikasi</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Pelatihan, uji sertifikasi BNSP, dan paket bundling dipisahkan</p>
                         </div>
-                        <button onclick="App.pages.products.handleSearch()" class="px-4 py-1.5 rounded-xl bg-gray-900 text-white font-semibold text-xs hover:bg-black">
-                            Cari
-                        </button>
+                        ${isAdmin ? `
+                            <a href="/products/create" onclick="event.preventDefault(); App.navigate('/products/create')" class="px-4 py-2 text-xs font-semibold text-white bg-gray-900 rounded-full hover:bg-black shadow-sm transition-colors self-start sm:self-auto">
+                                + Tambah Program
+                            </a>
+                        ` : ''}
                     </div>
 
-                    ${App.tableShell(
-                        ['Kode', 'Nama Program', 'Tipe Program', 'Harga Pokok', 'Durasi', 'Status', 'Aksi'],
-                        rows,
-                        'Belum ada program pelatihan di katalog.'
-                    )}
+                    {{-- Filter Kategori & Pencarian --}}
+                    <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm space-y-3">
+                        <div class="flex flex-wrap items-center gap-1.5 border-b border-gray-100 pb-3 text-xs">
+                            <button type="button" onclick="App.pages.products.setFilter('', '')"
+                                    class="px-3 py-1.5 rounded-lg font-medium transition-colors ${isCurrentFilter('', '') ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                Semua Program
+                            </button>
+                            <button type="button" onclick="App.pages.products.setFilter('Pelatihan / Bootcamp', '')"
+                                    class="px-3 py-1.5 rounded-lg font-medium transition-colors ${isCurrentFilter('Pelatihan / Bootcamp', '') ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                Pelatihan / Bootcamp
+                            </button>
+                            <button type="button" onclick="App.pages.products.setFilter('Sertifikasi BNSP', '')"
+                                    class="px-3 py-1.5 rounded-lg font-medium transition-colors ${isCurrentFilter('Sertifikasi BNSP', '') ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                Sertifikasi BNSP
+                            </button>
+                            <button type="button" onclick="App.pages.products.setFilter('', 'training')"
+                                    class="px-3 py-1.5 rounded-lg font-medium transition-colors ${isCurrentFilter('', 'training') ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                Pelatihan
+                            </button>
+                            <button type="button" onclick="App.pages.products.setFilter('', 'certification')"
+                                    class="px-3 py-1.5 rounded-lg font-medium transition-colors ${isCurrentFilter('', 'certification') ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                Uji Sertifikasi
+                            </button>
+                            <button type="button" onclick="App.pages.products.setFilter('', 'bundle')"
+                                    class="px-3 py-1.5 rounded-lg font-medium transition-colors ${isCurrentFilter('', 'bundle') ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}">
+                                Paket Bundling
+                            </button>
+                        </div>
 
-                    ${App.pagination(meta)}
+                        {{-- Search Input --}}
+                        <div class="flex items-center gap-2">
+                            <div class="relative flex-1">
+                                <input type="text" id="prod-search" value="${this.state.search}"
+                                       placeholder="Cari nama program, kode, atau materi..."
+                                       class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 rounded"
+                                       onkeydown="if(event.key==='Enter') App.pages.products.handleSearch()">
+                            </div>
+                            <button type="button" onclick="App.pages.products.handleSearch()" class="px-5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-sm transition-colors">
+                                Cari
+                            </button>
+                            ${(this.state.search || this.state.category || this.state.product_type) ? `
+                                <button type="button" onclick="App.pages.products.resetFilter()" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">Reset</button>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    {{-- Table Card --}}
+                    <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[620px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3.5 px-4">KODE & NAMA PROGRAM</th>
+                                        <th class="py-3.5 px-4">TIPE LAYANAN</th>
+                                        <th class="py-3.5 px-4">KATEGORI</th>
+                                        <th class="py-3.5 px-4">TIPE BIAYA</th>
+                                        <th class="py-3.5 px-4">HARGA</th>
+                                        <th class="py-3.5 px-4">DURASI</th>
+                                        <th class="py-3.5 px-4">STATUS</th>
+                                        ${isAdmin ? '<th class="py-3.5 px-4 text-right">AKSI</th>' : ''}
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${items.length === 0 ? `
+                                        <tr>
+                                            <td colspan="${isAdmin ? 8 : 7}" class="py-8 text-center text-gray-400 text-xs">
+                                                Tidak ada program pelatihan atau sertifikasi ditemukan.
+                                            </td>
+                                        </tr>
+                                    ` : rows.join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ${App.pagination(meta)}
+                    </div>
                 </div>
             `;
+        },
+
+        setFilter(category, type) {
+            this.state.category = category;
+            this.state.product_type = type;
+            this.state.page = 1;
+            this.loadList();
+        },
+
+        resetFilter() {
+            this.state.category = '';
+            this.state.product_type = '';
+            this.state.search = '';
+            this.state.page = 1;
+            this.loadList();
         },
 
         handleSearch() {
