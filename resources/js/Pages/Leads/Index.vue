@@ -148,7 +148,7 @@ onMounted(() => {
 
                 <!-- Tombol Tambah Lead -->
                 <button type="button" @click="emit('navigate', '/leads/create')"
-                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-xl hover:bg-orange-700 shadow-sm transition-all">
+                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 shadow-sm transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                     </svg>
@@ -229,7 +229,7 @@ onMounted(() => {
                     <input type="text" readonly :value="`PIC: ${user?.name || ''} (Sales Aktif)`" class="w-full text-xs border border-gray-100 bg-gray-50 px-3 py-2 text-gray-500" />
                 </div>
                 <div class="flex items-center gap-1.5">
-                    <button type="submit" class="w-full text-xs bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-3 rounded-xl transition-colors">
+                    <button type="submit" class="w-full text-xs bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-3 rounded-xl transition-colors">
                         Filter
                     </button>
                     <button v-if="search || statusFilter || assignedFilter" @click="resetFilter" type="button" class="p-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50" title="Reset">

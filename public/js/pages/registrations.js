@@ -87,7 +87,7 @@
                             <a href="/training-schedules" onclick="event.preventDefault(); App.navigate('/training-schedules')" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-xs transition-colors">
                                 Lihat Jadwal
                             </a>
-                            <a href="/registrations/create" onclick="event.preventDefault(); App.navigate('/registrations/create')" class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors">
+                            <a href="/registrations/create" onclick="event.preventDefault(); App.navigate('/registrations/create')" class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-500 shadow-xs transition-colors">
                                 + Daftarkan Customer
                             </a>
                         </div>
@@ -112,7 +112,7 @@
                                     <option value="cancelled" ${this.state.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="App.pages.registrations.handleSearch()" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
+                            <button type="button" onclick="App.pages.registrations.handleSearch()" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
                                 Filter
                             </button>
                             ${(this.state.search || this.state.status) ? `

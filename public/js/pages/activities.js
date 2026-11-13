@@ -82,7 +82,7 @@
                                 <option value="email">Email</option>
                                 <option value="admin_reminder">Instruksi Admin</option>
                             </select>
-                            <button type="submit" class="text-xs bg-orange-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-700">
+                            <button type="submit" class="text-xs bg-orange-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-600">
                                 Filter
                             </button>
                         </form>

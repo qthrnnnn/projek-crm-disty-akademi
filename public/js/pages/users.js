@@ -68,7 +68,7 @@
                         </div>
                         <div>
                             <a href="/users/create" onclick="event.preventDefault(); App.navigate('/users/create')"
-                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors inline-block">
+                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-500 shadow-xs transition-colors inline-block">
                                 + Tambah Pengguna
                             </a>
                         </div>

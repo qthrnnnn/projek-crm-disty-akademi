@@ -122,7 +122,7 @@ onMounted(() => {
 
                 <!-- Tombol Tambah -->
                 <button type="button" @click="emit('navigate', '/customers/create')"
-                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-700 shadow-sm transition-colors">
+                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 shadow-sm transition-colors">
                     + Tambah Customer
                 </button>
             </div>
@@ -149,7 +149,7 @@ onMounted(() => {
                         <option v-for="inst in institutions" :key="inst.id" :value="inst.id">{{ inst.name }}</option>
                     </select>
                 </div>
-                <button type="submit" class="w-full sm:w-auto px-4 py-2 text-xs bg-orange-600 text-white font-medium rounded-lg hover:bg-orange-700 transition-colors whitespace-nowrap">
+                <button type="submit" class="w-full sm:w-auto px-4 py-2 text-xs bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap">
                     Terapkan Filter
                 </button>
                 <button v-if="search || statusFilter || institutionFilter" @click="resetFilter" type="button" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">

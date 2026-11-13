@@ -617,7 +617,7 @@
                 <!-- Footer Action Button -->
                 <div class="pt-3 border-t border-gray-100 mt-2">
                     <button type="button" onclick="App.navigate('/leads')"
-                       class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-orange-500 hover:bg-orange-600 text-white shadow-xs transition-colors">
+                       class="w-full inline-flex items-center justify-center gap-2 px-3 py-2 text-xs font-semibold rounded-xl bg-orange-500 hover:bg-orange-500 text-white shadow-xs transition-colors">
                         <span>${activeStage === 'all' ? 'Buka Daftar Lead di CRM' : 'Lihat Semua Prospek ' + activeStageLabel}</span>
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
                     </button>

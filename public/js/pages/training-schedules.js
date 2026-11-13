@@ -98,7 +98,7 @@
                                 <a href="/trainers" onclick="event.preventDefault(); App.navigate('/trainers')" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-xs transition-colors">
                                     Kelola Trainer
                                 </a>
-                                <a href="/training-schedules/create" onclick="event.preventDefault(); App.navigate('/training-schedules/create')" class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors">
+                                <a href="/training-schedules/create" onclick="event.preventDefault(); App.navigate('/training-schedules/create')" class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-500 shadow-xs transition-colors">
                                     + Buat Jadwal
                                 </a>
                             ` : ''}
@@ -125,7 +125,7 @@
                                 </select>
                             </div>
                             <button type="button" onclick="App.pages['training-schedules'].handleSearch()"
-                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
+                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
                                 Cari
                             </button>
                         </div>

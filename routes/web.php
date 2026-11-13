@@ -5,11 +5,11 @@ use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 Route::get('/', function () {
-    return response()->file(public_path('index.html'));
+    return view('app');
 })->name('home');
 
 Route::get('/login', function () {
-    return response()->file(public_path('index.html'));
+    return view('app');
 })->name('login');
 
 /* Alamat yang tidak dikenal (mis. /admin/dashboard diketik langsung oleh Klien) dialihkan ke halaman awal SPA.
@@ -19,7 +19,7 @@ Route::fallback(function (Request $request) {
         throw new NotFoundHttpException;
     }
 
-    return response()->file(public_path('index.html'));
+    return view('app');
 });
 
 require __DIR__.'/settings.php';

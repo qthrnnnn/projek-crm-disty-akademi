@@ -147,7 +147,7 @@ onMounted(() => {
                             <label class="block font-semibold text-gray-700 mb-1">Catatan Verifikasi</label>
                             <textarea v-model="statusForm.verification_notes" rows="2" class="w-full border border-gray-200 px-3 py-2 text-gray-800 rounded-lg" placeholder="Catatan audit..."></textarea>
                         </div>
-                        <button type="submit" :disabled="saving" class="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-xs transition-colors disabled:opacity-50">
+                        <button type="submit" :disabled="saving" class="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-xl shadow-xs transition-colors disabled:opacity-50">
                             {{ saving ? 'Menyimpan...' : 'Simpan Hasil Verifikasi' }}
                         </button>
                     </form>

@@ -73,7 +73,7 @@
                                    class="text-xs text-blue-600 hover:text-blue-800 font-medium p-1">Detail</a>
                                 ${(isAdmin && isPending) ? `
                                     <button onclick="App.pages.payments.verify(${p.id})"
-                                            class="px-2.5 py-1 rounded bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs shadow-xs">
+                                            class="px-2.5 py-1 rounded bg-orange-500 hover:bg-orange-500 text-white font-semibold text-xs shadow-xs">
                                         Verifikasi
                                     </button>
                                 ` : ''}
@@ -92,7 +92,7 @@
                         </div>
                         <div>
                             <a href="/payments/create" onclick="event.preventDefault(); App.navigate('/payments/create')"
-                               class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 transition-colors shadow-xs">
+                               class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-500 transition-colors shadow-xs">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Input Pembayaran
                             </a>
@@ -111,7 +111,7 @@
                                 <option value="recheck" ${this.state.statusFilter === 'recheck' ? 'selected' : ''}>Perlu Cek Ulang</option>
                             </select>
                             <button onclick="App.pages.payments.loadList()"
-                                    class="text-xs bg-orange-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-orange-500 shadow-xs transition-colors">
+                                    class="text-xs bg-orange-500 text-white font-semibold py-2 px-5 rounded-lg hover:bg-orange-500 shadow-xs transition-colors">
                                 Filter
                             </button>
                         </div>

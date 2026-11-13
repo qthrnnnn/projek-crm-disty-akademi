@@ -122,7 +122,7 @@
                                 Template CSV
                             </a>
                             <a href="/customers/create" onclick="event.preventDefault(); App.navigate('/customers/create')"
-                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors">
+                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-500 shadow-xs transition-colors">
                                 + Tambah Customer
                             </a>
                         </div>
@@ -152,7 +152,7 @@
                                 </select>
                             </div>
                             <button onclick="App.pages.customers.handleFilter()"
-                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
+                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
                                 Terapkan Filter
                             </button>
                         </div>
@@ -351,7 +351,7 @@
                             </button>
                             <div class="flex gap-2">
                                 <button type="button" onclick="App.closeModal()" class="px-3.5 py-2 rounded-xl border border-gray-200 font-semibold text-gray-600">Batal</button>
-                                <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600">Mulai Import</button>
+                                <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-500">Mulai Import</button>
                             </div>
                         </div>
                     </form>

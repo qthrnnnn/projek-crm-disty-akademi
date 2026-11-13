@@ -89,7 +89,7 @@ onMounted(() => {
                     <option value="">Semua Jenis Aktivitas</option>
                     <option v-for="(lbl, val) in typeLabels" :key="val" :value="val">{{ lbl }}</option>
                 </select>
-                <button type="submit" class="text-xs bg-orange-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-700 transition-colors">
+                <button type="submit" class="text-xs bg-orange-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors">
                     Filter
                 </button>
                 <button v-if="activityType" @click="handleReset" type="button" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">

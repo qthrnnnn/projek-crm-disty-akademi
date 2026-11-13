@@ -138,7 +138,7 @@ onMounted(() => {
                     <option value="">Semua Sales</option>
                     <option v-for="s in salesUsers" :key="s.id" :value="s.id">{{ s.name }}</option>
                 </select>
-                <button type="submit" class="text-xs bg-orange-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-700">
+                <button type="submit" class="text-xs bg-orange-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors">
                     Filter
                 </button>
                 <button v-if="statusFilter || userFilter" @click="resetFilter" type="button" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">

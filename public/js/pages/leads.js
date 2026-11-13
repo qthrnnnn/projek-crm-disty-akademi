@@ -196,7 +196,7 @@
                                 Template
                             </a>
                             <button type="button" onclick="App.navigate('/leads/create')"
-                                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-xl hover:bg-orange-700 shadow-sm transition-all">
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 shadow-sm transition-all">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Tambah Lead
                             </button>
@@ -232,7 +232,7 @@
                                 </select>
                             </div>
                             <div class="flex items-center gap-1.5">
-                                <button type="submit" class="w-full text-xs bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-3 rounded-xl transition-colors">
+                                <button type="submit" class="w-full text-xs bg-orange-500 hover:bg-orange-600 text-white font-medium py-2 px-3 rounded-xl transition-colors">
                                     Filter
                                 </button>
                                 ${this.state.search || this.state.statusFilter ? `
@@ -531,7 +531,7 @@
                                     Edit Data
                                 </button>
                             ` : ''}
-                            <button onclick="App.navigate('/payments/create?lead_id=${lead.id}')" class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm">
+                            <button onclick="App.navigate('/payments/create?lead_id=${lead.id}')" class="px-3.5 py-2 rounded-xl bg-orange-500 hover:bg-orange-500 text-white font-semibold text-xs shadow-sm">
                                 + Input Pembayaran
                             </button>
                         </div>
@@ -599,7 +599,7 @@
                                            class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs outline-none">
                                     <textarea name="description" rows="2" placeholder="Detail respon atau hasil diskusi..."
                                               class="w-full px-3 py-2 rounded-xl border border-gray-200 text-xs outline-none resize-none"></textarea>
-                                    <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-xs">
+                                    <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-500 text-white font-bold text-xs shadow-xs">
                                         Simpan Aktivitas
                                     </button>
                                 </form>
@@ -680,7 +680,7 @@
                             </button>
                             <div class="flex gap-2">
                                 <button type="button" onclick="App.closeModal()" class="px-3.5 py-2 rounded-xl border border-gray-200 font-semibold text-gray-600">Batal</button>
-                                <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-600">Mulai Import</button>
+                                <button type="submit" class="px-4 py-2 rounded-xl bg-orange-500 text-white font-bold hover:bg-orange-500">Mulai Import</button>
                             </div>
                         </div>
                     </form>

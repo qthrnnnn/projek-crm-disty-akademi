@@ -69,7 +69,7 @@ onMounted(() => {
             </div>
             <div class="flex items-center gap-2">
                 <button @click="emit('navigate', '/institutions/create')"
-                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-700 shadow-sm transition-colors">
+                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 shadow-sm transition-colors">
                     + Tambah Instansi
                 </button>
             </div>
@@ -83,7 +83,7 @@ onMounted(() => {
                         placeholder="Cari instansi, kota, atau jenis instansi..."
                         class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
                 </div>
-                <button type="submit" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-700 shadow-sm transition-colors">
+                <button type="submit" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow-sm transition-colors">
                     Cari
                 </button>
                 <button v-if="search" @click="resetFilter" type="button" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">

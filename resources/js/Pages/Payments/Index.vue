@@ -83,7 +83,7 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 mt-0.5">Kelola verifikasi transfer peserta dan pencatatan deal akademi</p>
             </div>
             <button @click="emit('navigate', '/payments/create')"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-600 rounded-full hover:bg-orange-700 transition-colors shadow-sm">
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-sm">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Input Pembayaran
             </button>
@@ -99,7 +99,7 @@ onMounted(() => {
                     <option value="invalid">Tidak Valid</option>
                     <option value="recheck">Perlu Cek Ulang</option>
                 </select>
-                <button type="submit" class="text-xs bg-orange-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-700">
+                <button type="submit" class="text-xs bg-orange-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors">
                     Filter
                 </button>
                 <button v-if="status" @click="resetFilter" type="button" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">

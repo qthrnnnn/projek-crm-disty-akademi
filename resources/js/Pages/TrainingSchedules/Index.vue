@@ -85,7 +85,7 @@ onMounted(() => {
                     Kelola Trainer
                 </button>
                 <button v-if="isAdmin" type="button" @click="emit('navigate', '/training-schedules/create')"
-                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-700 shadow-sm transition-colors">
+                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 shadow-sm transition-colors">
                     + Buat Jadwal
                 </button>
             </div>
@@ -110,7 +110,7 @@ onMounted(() => {
                     </select>
                 </div>
                 <button type="submit"
-                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-700 shadow-sm transition-colors">
+                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow-sm transition-colors">
                     Cari
                 </button>
                 <button v-if="search || status" type="button" @click="resetFilter"

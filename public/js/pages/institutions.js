@@ -78,7 +78,7 @@
                         </div>
                         <div>
                             <a href="/institutions/create" onclick="event.preventDefault(); App.navigate('/institutions/create')"
-                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors inline-block">
+                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-500 shadow-xs transition-colors inline-block">
                                 + Tambah Instansi
                             </a>
                         </div>
@@ -94,7 +94,7 @@
                                        onkeydown="if(event.key==='Enter') App.pages.institutions.handleSearch()">
                             </div>
                             <button onclick="App.pages.institutions.handleSearch()"
-                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
+                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
                                 Cari
                             </button>
                         </div>

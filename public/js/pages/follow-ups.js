@@ -73,7 +73,7 @@
                             <h1 class="text-xl font-semibold text-gray-900">Jadwal Follow-up Prospek</h1>
                             <p class="text-xs text-gray-500 mt-0.5">Kelola janji tindak lanjut dan respon calon peserta</p>
                         </div>
-                        <button onclick="App.navigate('/follow-ups/create')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-600 rounded-full hover:bg-orange-700 transition-colors shadow-sm">
+                        <button onclick="App.navigate('/follow-ups/create')" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-sm">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                             Tambah Jadwal
                         </button>
@@ -88,7 +88,7 @@
                                 <option value="completed" ${this.state.statusFilter === 'completed' ? 'selected' : ''}>Selesai</option>
                                 <option value="cancelled" ${this.state.statusFilter === 'cancelled' ? 'selected' : ''}>Dibatalkan</option>
                             </select>
-                            <button type="submit" class="text-xs bg-orange-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-700 transition-colors">
+                            <button type="submit" class="text-xs bg-orange-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors">
                                 Filter
                             </button>
                         </form>
