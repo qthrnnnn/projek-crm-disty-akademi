@@ -6,6 +6,7 @@ const emit = defineEmits(['authenticated']);
 
 const email = ref('admin@distyakademi.com');
 const password = ref('password');
+const remember = ref(false);
 const loading = ref(false);
 const error = ref('');
 
@@ -24,39 +25,58 @@ async function submit() {
 </script>
 
 <template>
-    <main class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <div class="w-full max-w-sm bg-white rounded-3xl p-8 shadow-xl shadow-gray-200/50 border border-gray-100">
-            <div class="text-center mb-8">
-                <div class="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center mx-auto mb-3 shadow-xs">
-                    <img src="/images/disty-icon.png" alt="Logo" class="w-9 h-9 rounded-xl object-contain" />
+    <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4 w-full">
+        <div class="w-full max-w-md">
+            <div class="bg-white border border-blue-100 p-8 shadow-sm">
+                <!-- Logo Disty Akademi -->
+                <div class="flex justify-center mb-6">
+                    <img src="/images/disty-logo.png" alt="Disty Akademi" class="h-12 w-auto object-contain" />
                 </div>
-                <h1 class="text-xl font-bold text-gray-900">Disty Akademi CRM</h1>
-                <p class="text-xs text-gray-400 mt-1">Masuk ke sistem manajemen & penjualan</p>
-            </div>
 
-            <div v-if="error" class="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs">
-                {{ error }}
-            </div>
+                <div class="text-center mb-6">
+                    <h1 class="text-xl font-bold text-gray-900">Selamat Datang</h1>
+                    <p class="text-xs text-gray-500 mt-1">Masuk ke akun Anda untuk melanjutkan</p>
+                </div>
 
-            <form @submit.prevent="submit" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Email</label>
-                    <input v-model="email" type="email" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition"
-                        placeholder="admin@distyakademi.com" />
+                <div v-if="error" class="mb-5 bg-red-50 border border-red-200 px-4 py-3 text-xs text-red-700">
+                    <p>{{ error }}</p>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold text-gray-700 mb-1">Password</label>
-                    <input v-model="password" type="password" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none transition"
-                        placeholder="••••••••" />
+
+                <form @submit.prevent="submit" class="space-y-4 text-xs">
+                    <div>
+                        <label for="email" class="block font-semibold text-gray-700 mb-1.5">Email</label>
+                        <input id="email" v-model="email" type="email" required autofocus
+                            class="w-full border border-gray-200 px-3.5 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="nama@distyakademi.com" />
+                    </div>
+
+                    <div>
+                        <label for="password" class="block font-semibold text-gray-700 mb-1.5">Password</label>
+                        <input id="password" v-model="password" type="password" required
+                            class="w-full border border-gray-200 px-3.5 py-2.5 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 transition-colors"
+                            placeholder="••••••••" />
+                    </div>
+
+                    <div class="flex items-center justify-between pt-1">
+                        <label class="flex items-center gap-2 cursor-pointer text-gray-600">
+                            <input v-model="remember" type="checkbox" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
+                            <span>Ingat saya</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" :disabled="loading"
+                        class="w-full rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 shadow-sm transition-colors text-xs mt-2 disabled:opacity-50">
+                        <span v-if="loading">Memverifikasi...</span>
+                        <span v-else>Masuk</span>
+                    </button>
+                </form>
+
+                <div class="mt-6 pt-6 border-t border-gray-100 text-center">
+                    <p class="text-[11px] text-gray-400">
+                        &copy; {{ new Date().getFullYear() }} Disty Akademi. All rights reserved.
+                    </p>
                 </div>
-                <button type="submit" :disabled="loading"
-                    class="w-full py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-md shadow-orange-500/20 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-                    <span v-if="loading">Memproses...</span>
-                    <span v-else>Masuk ke CRM</span>
-                </button>
-            </form>
+            </div>
         </div>
-    </main>
+    </div>
 </template>
