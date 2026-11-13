@@ -15,8 +15,11 @@ const error = ref('');
 
 const filterMode = ref('today'); // 'today' | 'month' | 'all'
 const selectedDate = ref(new Date().toISOString().split('T')[0]);
+const todayIso = new Date().toISOString().split('T')[0];
 const selectedFilterYear = ref(new Date().getFullYear());
 const selectedFilterMonth = ref(new Date().getMonth() + 1);
+const calendarMonth = ref(new Date().getMonth());
+const calendarYear = ref(new Date().getFullYear());
 const activeStage = ref('all');
 const hoverStage = ref(null);
 
@@ -39,6 +42,43 @@ const MONTH_NAMES = [
 const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
 
 const allLeads = computed(() => data.value?.pipelineLeadsData || data.value?.data?.pipelineLeadsData || []);
+const sixMonthLeads = computed(() => data.value?.sixMonthLeads || []);
+const maxSixMonthLeads = computed(() => Math.max(1, ...sixMonthLeads.value.map(month => Number(month.total) || 0)));
+
+const calendarDays = computed(() => {
+    const firstDay = new Date(calendarYear.value, calendarMonth.value, 1).getDay();
+    const daysInMonth = new Date(calendarYear.value, calendarMonth.value + 1, 0).getDate();
+    const days = Array.from({ length: firstDay }, () => null);
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const iso = `${calendarYear.value}-${String(calendarMonth.value + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        days.push({ number: day, iso });
+    }
+
+    return days;
+});
+
+const calendarTitle = computed(() => `${MONTH_NAMES[calendarMonth.value]} ${calendarYear.value}`);
+
+function isCalendarToday(iso) {
+    return iso === new Date().toISOString().split('T')[0];
+}
+
+function isSelectedDate(iso) {
+    return iso === selectedDate.value;
+}
+
+function changeCalendarMonth(offset) {
+    const next = new Date(calendarYear.value, calendarMonth.value + offset, 1);
+    calendarMonth.value = next.getMonth();
+    calendarYear.value = next.getFullYear();
+}
+
+async function selectCalendarDay(day) {
+    if (!day) return;
+    selectedDate.value = day.iso;
+    await loadDashboard();
+}
 
 // Leads filtered ONLY by period (for Donut slices, stageCounts, and period metrics)
 const periodLeads = computed(() => {
@@ -184,7 +224,7 @@ async function loadDashboard() {
     loading.value = true;
     error.value = '';
     try {
-        const res = await api.getDashboard();
+        const res = await api.request(`/dashboard?date=${selectedDate.value}`);
         data.value = res.data || res;
     } catch (err) {
         error.value = err.message || 'Gagal memuat dashboard.';
@@ -220,18 +260,47 @@ onMounted(() => {
         </div>
 
         <template v-else>
-            <!-- 4 KPI Cards -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard title="Lead Masuk" :value="data.todayLeadsIn ?? data.leads_today ?? 0" subtext="Total masuk tanggal ini" />
-                <StatCard title="Sudah Dijawab" :value="data.todayLeadsAnswered ?? data.answered_today ?? 0" subtext="Sudah dikontak sales" subtext-color="text-emerald-600" />
-                <StatCard title="Belum Dijawab" :value="data.todayLeadsUnanswered ?? data.unanswered_today ?? 0" subtext="Perlu segera dikontak" :subtext-color="(data.todayLeadsUnanswered ?? data.unanswered_today ?? 0) > 0 ? 'text-amber-600' : 'text-gray-400'" />
-                <StatCard title="Sudah Merespon" :value="data.todayLeadsResponded ?? data.responded_today ?? 0" subtext="Aktif / negosiasi" subtext-color="text-blue-600" />
+            <!-- KPI Cards & Calendar -->
+            <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-3 sm:gap-4 items-stretch">
+                <div class="grid grid-cols-2 gap-2.5 sm:gap-3 auto-rows-fr">
+                    <StatCard title="Lead Masuk" :value="data.todayLeadsIn ?? data.leads_today ?? 0" subtext="Total masuk tanggal ini" />
+                    <StatCard title="Sudah Dijawab" :value="data.todayLeadsAnswered ?? data.answered_today ?? 0" subtext="Sudah dikontak sales" subtext-color="text-emerald-600" />
+                    <StatCard title="Belum Dijawab" :value="data.todayLeadsUnanswered ?? data.unanswered_today ?? 0" subtext="Perlu segera dikontak" :subtext-color="(data.todayLeadsUnanswered ?? data.unanswered_today ?? 0) > 0 ? 'text-amber-600' : 'text-gray-400'" />
+                    <StatCard title="Sudah Merespon" :value="data.todayLeadsResponded ?? data.responded_today ?? 0" subtext="Aktif / negosiasi" subtext-color="text-blue-600" />
+                </div>
+
+                <div class="bg-white border border-gray-100 p-3 sm:p-4 shadow-2xs">
+                    <div class="flex items-center justify-between mb-2.5">
+                        <button type="button" @click="changeCalendarMonth(-1)" class="w-8 h-8 rounded-lg text-gray-400 hover:bg-orange-50 hover:text-orange-600 transition-colors flex items-center justify-center" aria-label="Bulan sebelumnya">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <div class="flex items-center gap-1.5">
+                            <p class="text-xs sm:text-sm font-semibold text-gray-900">{{ calendarTitle }}</p>
+                            <button v-if="selectedDate !== todayIso" @click="selectedDate = todayIso; loadDashboard()" type="button" class="text-[10px] text-orange-600 font-bold hover:underline bg-orange-50 px-1.5 py-0.5 rounded">
+                                Hari Ini
+                            </button>
+                        </div>
+                        <button type="button" @click="changeCalendarMonth(1)" class="w-8 h-8 rounded-lg text-gray-400 hover:bg-orange-50 hover:text-orange-600 transition-colors flex items-center justify-center" aria-label="Bulan berikutnya">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 text-center">
+                        <span v-for="weekday in ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']" :key="weekday" class="text-[10px] font-medium text-gray-400 py-1">{{ weekday }}</span>
+                        <span v-for="(day, index) in calendarDays" :key="index">
+                            <button v-if="day" type="button" @click="selectCalendarDay(day)"
+                                class="w-7 h-7 sm:w-8 sm:h-8 rounded-full text-[11px] sm:text-xs transition-all flex items-center justify-center mx-auto"
+                                :class="isSelectedDate(day.iso) ? 'bg-orange-500 text-white font-bold' : (isCalendarToday(day.iso) ? 'ring-1 ring-orange-400 text-orange-600 font-semibold' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600')">
+                                {{ day.number }}
+                            </button>
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <!-- Distribusi Status Lead & Filter Prospek Periode -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
                 <!-- Panel Kiri: Donut Chart & 7 Status Cards -->
-                <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex flex-col justify-between">
+                <div class="lg:col-span-2 bg-white p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
                     <div>
                         <!-- Header Panel -->
                         <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
@@ -302,7 +371,7 @@ onMounted(() => {
                 </div>
 
                 <!-- Panel Kanan: Pilihan Periode Prospek -->
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex flex-col justify-between">
+                <div class="bg-white p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
                     <div>
                         <!-- Header -->
                         <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
@@ -440,7 +509,7 @@ onMounted(() => {
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Modul Operasional & Pelatihan (Khusus Admin)</p>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-                    <button @click="emit('navigate', '/registrations')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/registrations')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Pendaftaran</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Peserta</span>
@@ -453,7 +522,7 @@ onMounted(() => {
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Daftarkan ke jadwal aktif</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/training-schedules')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/training-schedules')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Jadwal</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Pelatihan</span>
@@ -466,7 +535,7 @@ onMounted(() => {
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Cek kuota & instruktur</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/customers')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/customers')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Customer</span>
@@ -479,7 +548,7 @@ onMounted(() => {
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Export CSV & Data Peserta</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/institutions')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/institutions')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Instansi</span>
@@ -492,7 +561,7 @@ onMounted(() => {
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Mitra kampus & kantor</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/trainers')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/trainers')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Trainer</span>
@@ -513,7 +582,7 @@ onMounted(() => {
                     <span class="text-[11px] text-emerald-600 font-semibold">Komisi 10% dari setiap deal closing</span>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-                    <button @click="emit('navigate', '/leads/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/leads/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Input</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Prospek Baru</span>
@@ -526,7 +595,7 @@ onMounted(() => {
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Kenalan sales / calon deal</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/payments/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/payments/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Kirim</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Bukti Bayar</span>
@@ -539,7 +608,7 @@ onMounted(() => {
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Upload transfer DP / lunas</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/commissions')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/commissions')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Komisi 10%</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Saya</span>
@@ -552,7 +621,7 @@ onMounted(() => {
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Cek insentif & pencairan</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/products')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/products')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Katalog &</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Harga Patokan</span>
@@ -565,7 +634,7 @@ onMounted(() => {
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Harga resmi sertifikasi</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/follow-ups')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                    <button @click="emit('navigate', '/follow-ups')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                         <div class="flex items-start justify-between text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Follow-up</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Prospek</span>
@@ -581,9 +650,32 @@ onMounted(() => {
                 </div>
             </div>
 
+            <!-- Lead 6 Bulan -->
+            <div class="bg-white p-5 border border-gray-100 shadow-2xs">
+                <div class="flex items-center justify-between mb-3">
+                    <h2 class="text-xs font-bold text-gray-900">Lead 6 Bulan sampai {{ calendarTitle }}</h2>
+                    <span class="inline-flex items-center gap-1 text-[10px] text-gray-500">
+                        <span class="w-2 h-2 rounded-sm bg-emerald-400"></span>
+                        Won
+                    </span>
+                </div>
+                <div v-if="sixMonthLeads.length" class="grid grid-cols-6 gap-2 sm:gap-4 items-end h-28">
+                    <div v-for="month in sixMonthLeads" :key="month.label" class="h-full flex flex-col items-center justify-end gap-1">
+                        <span class="text-[9px] text-gray-400">{{ month.total }}</span>
+                        <div class="w-full max-w-10 h-20 flex items-end justify-center">
+                            <div class="w-full rounded-t-sm bg-emerald-400 transition-all" :style="{ height: `${Math.max(4, (Number(month.total) / maxSixMonthLeads) * 100)}%` }"></div>
+                        </div>
+                        <span class="text-[9px] text-gray-400 truncate max-w-full">{{ month.label }}</span>
+                    </div>
+                </div>
+                <div v-else class="h-28 flex items-center justify-center text-xs text-gray-400">
+                    Belum ada data lead.
+                </div>
+            </div>
+
             <!-- Aktivitas Terbaru & Follow-up Mendatang -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+                <div class="bg-white p-5 border border-gray-100 shadow-xs">
                     <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Aktivitas Terbaru</h2>
                     <div v-if="!data.recent_activities?.length" class="text-center py-8 text-xs text-gray-400">
                         Belum ada aktivitas tercatat hari ini.
@@ -599,7 +691,7 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs">
+                <div class="bg-white p-5 border border-gray-100 shadow-xs">
                     <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Follow-up Mendatang</h2>
                     <div v-if="!data.upcoming_followups?.length" class="text-center py-8 text-xs text-gray-400">
                         Tidak ada follow-up mendatang.

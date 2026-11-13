@@ -9,11 +9,11 @@ const props = defineProps({
 </script>
 
 <template>
-    <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex flex-col justify-between">
+    <div class="bg-white border border-gray-100 p-3 sm:p-4 h-full flex flex-col justify-between shadow-2xs">
         <div>
-            <p class="text-xs font-semibold text-gray-500">{{ title }}</p>
-            <p class="text-2xl font-black text-gray-900 mt-2">{{ value }}</p>
+            <p class="text-[11px] sm:text-xs text-gray-400 mb-1">{{ title }}</p>
+            <p class="text-2xl sm:text-3xl font-bold text-gray-900">{{ value }}</p>
         </div>
-        <p v-if="subtext" class="text-[11px] font-medium mt-3" :class="subtextColor">{{ subtext }}</p>
+        <p v-if="subtext" class="mt-2 text-[10.5px] sm:text-xs" :class="subtextColor">{{ subtext }}</p>
     </div>
 </template>

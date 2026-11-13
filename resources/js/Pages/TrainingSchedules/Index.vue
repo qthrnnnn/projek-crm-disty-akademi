@@ -133,7 +133,7 @@ onMounted(() => {
                             <th class="py-3.5 px-4">JAM SELESAI</th>
                             <th class="py-3.5 px-4">STATUS</th>
                             <th class="py-3.5 px-4">PESERTA</th>
-                            <th class="py-3.5 px-4 text-right">AKSI</th>
+                            <th class="py-3.5 px-4 text-center">AKSI</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
@@ -168,15 +168,21 @@ onMounted(() => {
                             <td class="py-3.5 px-4 font-medium">
                                 <span class="text-blue-600 font-bold">{{ s.registrations_count ?? 0 }}</span> / {{ s.capacity || 0 }}
                             </td>
-                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                                <div class="inline-flex items-center gap-1.5">
+                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                <div class="inline-flex items-center justify-center gap-1.5">
                                     <button @click="emit('navigate', `/registrations/create?schedule_id=${s.id}`)"
-                                        class="text-[11px] text-emerald-600 hover:text-emerald-800 font-medium bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
-                                        + Daftar
+                                        class="p-1.5 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
+                                        title="Daftarkan customer">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v14m-7-7h14"/>
+                                        </svg>
                                     </button>
                                     <button v-if="isAdmin" @click="emit('navigate', `/training-schedules/${s.id}/edit`)"
-                                        class="text-xs text-blue-600 hover:text-blue-800 font-medium p-1">
-                                        Edit
+                                        class="p-1.5 text-gray-400 hover:text-orange-600 rounded-lg hover:bg-orange-50 transition-colors"
+                                        title="Edit">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
                                     </button>
                                 </div>
                             </td>

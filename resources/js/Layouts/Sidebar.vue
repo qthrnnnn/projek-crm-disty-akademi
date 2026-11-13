@@ -69,14 +69,6 @@ watch(() => props.collapsed, () => {
                         <span class="block text-xs text-gray-500 font-normal">Akademi</span>
                     </span>
                 </a>
-                <button @click="emit('toggle-sidebar')"
-                        type="button"
-                        class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors"
-                        title="Perkecil menu">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-                    </svg>
-                </button>
             </div>
 
             <div v-else class="flex items-center justify-center w-full">
