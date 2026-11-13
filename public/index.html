@@ -79,6 +79,22 @@
         .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
         .scrollbar-thin::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 999px; }
         .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+
+        /* Judul modul operasional responsif: 2 baris default, 1 baris saat maximize (>= 1440px / 2xl) */
+        .card-title-br {
+            display: block;
+        }
+        .card-title-space {
+            display: none;
+        }
+        @media (min-width: 1440px) {
+            .card-title-br {
+                display: none !important;
+            }
+            .card-title-space {
+                display: inline !important;
+            }
+        }
     </style>
 </head>
 <body class="h-full h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50 text-gray-900 antialiased selection:bg-orange-500 selection:text-white">

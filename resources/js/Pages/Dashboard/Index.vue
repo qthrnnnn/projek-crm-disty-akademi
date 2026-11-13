@@ -435,28 +435,148 @@ onMounted(() => {
             </div>
 
             <!-- Modul Operasional & Pelatihan (Khusus Admin) -->
-            <div v-if="isAdmin" class="space-y-3">
-                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Modul Operasional & Pelatihan (Khusus Admin)</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
-                    <button @click="emit('navigate', '/registrations')" class="p-4 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 hover:shadow-sm text-left transition-all">
-                        <p class="text-xs font-bold text-gray-900">Pendaftaran Peserta</p>
-                        <p class="text-[11px] text-gray-400 mt-1">Daftarkan ke jadwal aktif</p>
+            <div v-if="isAdmin" class="mb-5">
+                <div class="mb-3">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Modul Operasional & Pelatihan (Khusus Admin)</p>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+                    <button @click="emit('navigate', '/registrations')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Pendaftaran</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Peserta</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Daftarkan ke jadwal aktif</p>
+                        </div>
                     </button>
-                    <button @click="emit('navigate', '/training-schedules')" class="p-4 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 hover:shadow-sm text-left transition-all">
-                        <p class="text-xs font-bold text-gray-900">Jadwal Pelatihan</p>
-                        <p class="text-[11px] text-gray-400 mt-1">Cek kuota & instruktur</p>
+                    <button @click="emit('navigate', '/training-schedules')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Jadwal</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Pelatihan</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Cek kuota & instruktur</p>
+                        </div>
                     </button>
-                    <button @click="emit('navigate', '/customers')" class="p-4 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 hover:shadow-sm text-left transition-all">
-                        <p class="text-xs font-bold text-gray-900">Daftar Customer</p>
-                        <p class="text-[11px] text-gray-400 mt-1">Export CSV & Data Peserta</p>
+                    <button @click="emit('navigate', '/customers')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Customer</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Export CSV & Data Peserta</p>
+                        </div>
                     </button>
-                    <button @click="emit('navigate', '/institutions')" class="p-4 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 hover:shadow-sm text-left transition-all">
-                        <p class="text-xs font-bold text-gray-900">Daftar Instansi</p>
-                        <p class="text-[11px] text-gray-400 mt-1">Mitra kampus & kantor</p>
+                    <button @click="emit('navigate', '/institutions')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Instansi</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Mitra kampus & kantor</p>
+                        </div>
                     </button>
-                    <button @click="emit('navigate', '/trainers')" class="p-4 rounded-2xl bg-white border border-gray-100 hover:border-orange-200 hover:shadow-sm text-left transition-all">
-                        <p class="text-xs font-bold text-gray-900">Daftar Trainer</p>
-                        <p class="text-[11px] text-gray-400 mt-1">Instruktur & expert</p>
+                    <button @click="emit('navigate', '/trainers')" class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Trainer</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Instruktur & expert</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+            <div v-else class="mb-5">
+                <div class="flex items-center justify-between mb-3">
+                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Aktivitas Affiliate & Penjualan</p>
+                    <span class="text-[11px] text-emerald-600 font-semibold">Komisi 10% dari setiap deal closing</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
+                    <button @click="emit('navigate', '/leads/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Input</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Prospek Baru</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Kenalan sales / calon deal</p>
+                        </div>
+                    </button>
+                    <button @click="emit('navigate', '/payments/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Kirim</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Bukti Bayar</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Upload transfer DP / lunas</p>
+                        </div>
+                    </button>
+                    <button @click="emit('navigate', '/commissions')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Komisi 10%</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Saya</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Cek insentif & pencairan</p>
+                        </div>
+                    </button>
+                    <button @click="emit('navigate', '/products')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Katalog &</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Harga Patokan</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Harga resmi sertifikasi</p>
+                        </div>
+                    </button>
+                    <button @click="emit('navigate', '/follow-ups')" class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between text-left">
+                            <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                <span>Follow-up</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Prospek</span>
+                            </p>
+                            <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
+                                <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
+                            </span>
+                        </div>
+                        <div class="mt-auto">
+                            <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Jadwal tindak lanjut</p>
+                        </div>
                     </button>
                 </div>
             </div>

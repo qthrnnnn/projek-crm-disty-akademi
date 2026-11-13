@@ -678,11 +678,11 @@
         renderOperationalModules(isAdmin) {
             if (isAdmin) {
                 const modules = [
-                    { title: 'Pendaftaran Peserta', sub: 'Daftarkan ke jadwal aktif', url: '/registrations' },
-                    { title: 'Jadwal Pelatihan', sub: 'Cek kuota & instruktur', url: '/training-schedules' },
-                    { title: 'Daftar Customer', sub: 'Export CSV & Data Peserta', url: '/customers' },
-                    { title: 'Daftar Instansi', sub: 'Mitra kampus & kantor', url: '/institutions' },
-                    { title: 'Daftar Trainer', sub: 'Instruktur & expert', url: '/trainers' },
+                    { line1: 'Pendaftaran', line2: 'Peserta', sub: 'Daftarkan ke jadwal aktif', url: '/registrations' },
+                    { line1: 'Jadwal', line2: 'Pelatihan', sub: 'Cek kuota & instruktur', url: '/training-schedules' },
+                    { line1: 'Daftar', line2: 'Customer', sub: 'Export CSV & Data Peserta', url: '/customers' },
+                    { line1: 'Daftar', line2: 'Instansi', sub: 'Mitra kampus & kantor', url: '/institutions' },
+                    { line1: 'Daftar', line2: 'Trainer', sub: 'Instruktur & expert', url: '/trainers' },
                 ];
                 return `
                     <div class="mb-5">
@@ -694,7 +694,9 @@
                                 <a href="${m.url}" onclick="event.preventDefault(); App.navigate('${m.url}')"
                                    class="group bg-white border border-blue-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                                     <div class="flex items-start justify-between text-left">
-                                        <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white">${m.title}</p>
+                                        <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                            <span>${m.line1}</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>${m.line2}</span>
+                                        </p>
                                         <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                                             <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                                         </span>
@@ -709,11 +711,11 @@
                 `;
             } else {
                 const modules = [
-                    { title: 'Input Prospek Baru', sub: 'Kenalan sales / calon deal', url: '/leads/create' },
-                    { title: 'Kirim Bukti Bayar', sub: 'Upload transfer DP / lunas', url: '/payments/create' },
-                    { title: 'Komisi 10% Saya', sub: 'Cek insentif & pencairan', url: '/commissions' },
-                    { title: 'Katalog & Harga Patokan', sub: 'Harga resmi sertifikasi', url: '/products' },
-                    { title: 'Follow-up Prospek', sub: 'Jadwal tindak lanjut', url: '/follow-ups' },
+                    { line1: 'Input', line2: 'Prospek Baru', sub: 'Kenalan sales / calon deal', url: '/leads/create' },
+                    { line1: 'Kirim', line2: 'Bukti Bayar', sub: 'Upload transfer DP / lunas', url: '/payments/create' },
+                    { line1: 'Komisi 10%', line2: 'Saya', sub: 'Cek insentif & pencairan', url: '/commissions' },
+                    { line1: 'Katalog &', line2: 'Harga Patokan', sub: 'Harga resmi sertifikasi', url: '/products' },
+                    { line1: 'Follow-up', line2: 'Prospek', sub: 'Jadwal tindak lanjut', url: '/follow-ups' },
                 ];
                 return `
                     <div class="mb-5">
@@ -726,7 +728,9 @@
                                 <a href="${m.url}" onclick="event.preventDefault(); App.navigate('${m.url}')"
                                    class="group bg-white border border-emerald-100 p-3 sm:p-4 rounded-xl text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
                                     <div class="flex items-start justify-between text-left">
-                                        <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white">${m.title}</p>
+                                        <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                                            <span>${m.line1}</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>${m.line2}</span>
+                                        </p>
                                         <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                                             <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                                         </span>

@@ -457,7 +457,9 @@
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
         <a href="{{ route('registrations.index') }}" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-card-rise flex flex-col min-h-[130px] sm:min-h-[150px]" style="animation-delay: 50ms">
             <div class="flex items-start justify-between text-left">
-                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white">Pendaftaran Peserta</p>
+                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                    <span>Pendaftaran</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Peserta</span>
+                </p>
                 <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/>
@@ -471,7 +473,9 @@
 
         <a href="{{ route('training-schedules.index') }}" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-card-rise flex flex-col min-h-[130px] sm:min-h-[150px]" style="animation-delay: 100ms">
             <div class="flex items-start justify-between text-left">
-                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white">Jadwal Pelatihan</p>
+                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                    <span>Jadwal</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Pelatihan</span>
+                </p>
                 <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/>
@@ -485,7 +489,9 @@
 
         <a href="{{ route('customers.index') }}" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-card-rise flex flex-col min-h-[130px] sm:min-h-[150px]" style="animation-delay: 150ms">
             <div class="flex items-start justify-between text-left">
-                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white">Daftar Customer</p>
+                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                    <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Customer</span>
+                </p>
                 <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/>
@@ -499,7 +505,9 @@
 
         <a href="{{ route('institutions.index') }}" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-card-rise flex flex-col min-h-[130px] sm:min-h-[150px]" style="animation-delay: 200ms">
             <div class="flex items-start justify-between text-left">
-                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white">Daftar<br>Instansi</p>
+                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                    <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Instansi</span>
+                </p>
                 <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/>
@@ -513,7 +521,9 @@
 
         <a href="{{ route('trainers.index') }}" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 animate-card-rise flex flex-col min-h-[130px] sm:min-h-[150px]" style="animation-delay: 250ms">
             <div class="flex items-start justify-between text-left">
-                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white">Daftar<br>Trainer</p>
+                <p class="min-h-10 sm:min-h-12 max-w-[calc(100%-2rem)] text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
+                    <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Trainer</span>
+                </p>
                 <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                     <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/>
