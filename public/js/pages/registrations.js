@@ -81,7 +81,7 @@
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    {{-- Header --}}
+                    <!-- Header -->
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
                             <h1 class="text-xl font-bold text-gray-900">Pendaftaran Peserta</h1>
@@ -97,7 +97,7 @@
                         </div>
                     </div>
 
-                    {{-- Filter Card --}}
+                    <!-- Filter Card -->
                     <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
                         <div class="flex flex-col sm:flex-row items-center gap-2.5">
                             <div class="relative flex-1 w-full">
@@ -125,7 +125,7 @@
                         </div>
                     </div>
 
-                    {{-- Table Card --}}
+                    <!-- Table Card -->
                     <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
                         <div class="overflow-x-auto">
                             <table class="w-full min-w-[680px] text-left text-xs text-gray-600">

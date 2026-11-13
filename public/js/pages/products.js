@@ -101,7 +101,7 @@
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    {{-- Header --}}
+                    <!-- Header -->
                     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                         <div>
                             <h1 class="text-xl font-bold text-gray-900">Katalog Program Pelatihan & Sertifikasi</h1>
@@ -114,7 +114,7 @@
                         ` : ''}
                     </div>
 
-                    {{-- Filter Kategori & Pencarian --}}
+                    <!-- Filter Kategori & Pencarian -->
                     <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm space-y-3">
                         <div class="flex flex-wrap items-center gap-1.5 border-b border-gray-100 pb-3 text-xs">
                             <button type="button" onclick="App.pages.products.setFilter('', '')"
@@ -143,7 +143,7 @@
                             </button>
                         </div>
 
-                        {{-- Search Input --}}
+                        <!-- Search Input -->
                         <div class="flex items-center gap-2">
                             <div class="relative flex-1">
                                 <input type="text" id="prod-search" value="${this.state.search}"
@@ -160,7 +160,7 @@
                         </div>
                     </div>
 
-                    {{-- Table Card --}}
+                    <!-- Table Card -->
                     <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
                         <div class="overflow-x-auto">
                             <table class="w-full min-w-[620px] text-left text-xs text-gray-600">

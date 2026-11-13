@@ -73,6 +73,11 @@ class Lead extends Model
         return $this->belongsTo(LeadSource::class);
     }
 
+    public function source(): BelongsTo
+    {
+        return $this->belongsTo(LeadSource::class, 'lead_source_id');
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
