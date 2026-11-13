@@ -1,5 +1,5 @@
 /**
- * Login Page Module — 1:1 Exact Replica of Blade Login View
+ * Login Page Module — 1:1 Exact Replica of Blade Login View (resources/views/auth/login.blade.php)
  */
 (function() {
     App.pages.login = {

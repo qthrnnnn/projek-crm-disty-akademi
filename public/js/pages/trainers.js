@@ -21,72 +21,86 @@
         },
 
         renderList(items, meta) {
-            const user = App.state.user || {};
-            const isAdmin = user.role === 'admin';
+            const rowsHtml = items.length === 0
+                ? `<tr><td colspan="5" class="py-12 text-center text-gray-400 text-sm">Belum ada trainer.</td></tr>`
+                : items.map(t => `
+                    <tr class="hover:bg-blue-50/20 transition-colors">
+                        <td class="py-3.5 px-4 font-semibold text-gray-900 text-xs">
+                            ${t.name}
+                        </td>
 
-            const rows = items.map(t => `
-                <tr class="hover:bg-orange-50/20 transition-colors">
-                    <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
-                        ${t.name}
-                        ${t.notes ? `<p class="text-[10px] text-gray-400 font-normal line-clamp-1 mt-0.5">${t.notes}</p>` : ''}
-                    </td>
+                        <td class="py-3.5 px-4 text-xs text-gray-600">
+                            ${t.email || '-'}
+                        </td>
 
-                    <td class="py-3.5 px-4 text-xs text-gray-700">
-                        ${t.email || '-'}
-                    </td>
+                        <td class="py-3.5 px-4 text-xs text-gray-600">
+                            ${t.phone || '-'}
+                        </td>
 
-                    <td class="py-3.5 px-4 text-xs text-gray-700">
-                        ${t.phone || '-'}
-                    </td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-block px-2 py-0.5 border text-[10px] font-semibold uppercase tracking-wider rounded ${t.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-600 border-gray-200'}">
+                                ${t.is_active ? 'Aktif' : 'Non-aktif'}
+                            </span>
+                        </td>
 
-                    <td class="py-3.5 px-4">
-                        <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${t.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}">
-                            ${t.is_active ? 'Aktif' : 'Non-aktif'}
-                        </span>
-                    </td>
-
-                    <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
-                        ${isAdmin ? `
-                            <button onclick="App.navigate('/trainers/${t.id}/edit')" class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 inline-block" title="Edit">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            </button>
-                            <button onclick="App.pages.trainers.deleteTrainer(${t.id})" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 inline-block" title="Hapus">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
-                        ` : ''}
-                    </td>
-                </tr>
-            `);
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                            <a href="/trainers/${t.id}/edit" onclick="event.preventDefault(); App.navigate('/trainers/${t.id}/edit')"
+                               class="text-xs text-blue-600 hover:text-blue-800 font-medium p-1">Edit</a>
+                        </td>
+                    </tr>
+                `).join('');
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Daftar Trainer & Instruktur Ahli',
-                        'Instruktur pengajar pelatihan dan asesor sertifikasi BNSP',
-                        isAdmin ? `<button onclick="App.navigate('/trainers/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Tambah Trainer
-                        </button>` : ''
-                    )}
-
-                    <!-- Search Bar -->
-                    <div class="flex items-center gap-2 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
-                        <div class="flex-1 relative">
-                            <input type="text" id="trn-search" value="${this.state.search}" placeholder="Cari nama trainer, email, atau keahlian..."
-                                   class="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-orange-500 outline-none"
-                                   onkeydown="if(event.key==='Enter') App.pages.trainers.handleSearch()">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Daftar Trainer</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Trainer digunakan saat membuat jadwal pelatihan.</p>
                         </div>
-                        <button onclick="App.pages.trainers.handleSearch()" class="px-4 py-1.5 rounded-xl bg-gray-900 text-white font-semibold text-xs hover:bg-black">
-                            Cari
-                        </button>
+                        <div>
+                            <a href="/trainers/create" onclick="event.preventDefault(); App.navigate('/trainers/create')"
+                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors inline-block">
+                                + Tambah Trainer
+                            </a>
+                        </div>
                     </div>
 
-                    ${App.tableShell(
-                        ['Nama Trainer & Keahlian', 'Email', 'No. WhatsApp / HP', 'Status', 'Aksi'],
-                        rows,
-                        'Belum ada data trainer.'
-                    )}
+                    <!-- Filter Card -->
+                    <div class="bg-white border border-gray-100 p-3.5 rounded-xl shadow-xs">
+                        <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                            <div class="relative flex-1 w-full">
+                                <input type="text" id="trn-search" value="${this.state.search}"
+                                       placeholder="Cari trainer, email, atau telepon..."
+                                       class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500"
+                                       onkeydown="if(event.key==='Enter') App.pages.trainers.handleSearch()">
+                            </div>
+                            <button onclick="App.pages.trainers.handleSearch()"
+                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
+                                Cari
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table Card -->
+                    <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[550px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3.5 px-4">NAMA ▲</th>
+                                        <th class="py-3.5 px-4">EMAIL</th>
+                                        <th class="py-3.5 px-4">TELEPON</th>
+                                        <th class="py-3.5 px-4">STATUS</th>
+                                        <th class="py-3.5 px-4 text-right">AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     ${App.pagination(meta)}
                 </div>

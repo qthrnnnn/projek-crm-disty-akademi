@@ -2,13 +2,29 @@
 import { onMounted, ref } from 'vue';
 import { api } from '../../services/api';
 import Pagination from '../../Components/Pagination.vue';
-import Badge from '../../Components/Badge.vue';
+
+const props = defineProps({
+    user: { type: Object, default: () => ({}) },
+});
 
 const emit = defineEmits(['navigate']);
 
 const batches = ref([]);
 const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
 const loading = ref(true);
+
+function formatDateTime(dtStr) {
+    if (!dtStr) return '-';
+    const d = new Date(dtStr);
+    if (isNaN(d.getTime())) return dtStr;
+    return d.toLocaleDateString('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+    });
+}
 
 async function loadBatches(page = 1) {
     loading.value = true;
@@ -35,58 +51,67 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="space-y-5">
+    <div class="space-y-4">
+        <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-                <h1 class="text-xl font-bold text-gray-900">Riwayat Import Batch CRM</h1>
-                <p class="text-xs text-gray-500 mt-0.5">Daftar unggahan data lead massal melalui file CSV / Excel</p>
+                <h1 class="text-xl font-semibold text-gray-900">Riwayat Import Lead (CSV / Excel)</h1>
+                <p class="text-xs text-gray-500 mt-0.5">Daftar batch upload prospek masal dari CSV atau Excel</p>
             </div>
             <button @click="emit('navigate', '/lead-imports/create')"
-                class="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5">
-                <span>+</span> Import Data Lead
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+                Upload File Baru
             </button>
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+        <!-- Table Card -->
+        <div class="bg-white border border-blue-100 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-gray-50/80 text-gray-400 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
+                <table class="w-full text-left text-xs text-gray-600">
+                    <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-medium uppercase tracking-wider text-[11px]">
                         <tr>
-                            <th class="p-4">Nama File / Batch</th>
-                            <th class="p-4">Tanggal Unggah</th>
-                            <th class="p-4">Total Baris</th>
-                            <th class="p-4">Berhasil Masuk</th>
-                            <th class="p-4">Gagal / Duplikat</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4 text-right">Aksi</th>
+                            <th class="py-3 px-4">Waktu & File</th>
+                            <th class="py-3 px-4">Pengunggah</th>
+                            <th class="py-3 px-4">Total Baris</th>
+                            <th class="py-3 px-4">Berhasil</th>
+                            <th class="py-3 px-4">Gagal</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4 text-right">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50 text-gray-700">
+                    <tbody class="divide-y divide-gray-100">
                         <tr v-if="loading">
-                            <td colspan="7" class="p-8 text-center text-gray-400 text-xs">Memuat batch import...</td>
+                            <td colspan="7" class="py-8 text-center text-gray-400">Memuat riwayat import...</td>
                         </tr>
                         <tr v-else-if="batches.length === 0">
-                            <td colspan="7" class="p-8 text-center text-gray-400 text-xs">Belum ada riwayat batch import.</td>
+                            <td colspan="7" class="py-8 text-center text-gray-400">Belum ada riwayat import data</td>
                         </tr>
-                        <tr v-for="b in batches" :key="b.id" class="hover:bg-gray-50/50 transition-colors">
-                            <td class="p-4 font-bold text-gray-900">
-                                <div>{{ b.original_filename || b.filename || 'batch_import.xlsx' }}</div>
-                                <span class="text-[10px] text-gray-400">ID: #{{ b.id }}</span>
+                        <tr v-for="b in batches" :key="b.id" class="hover:bg-blue-50/30 transition-colors">
+                            <td class="py-3 px-4">
+                                <div class="font-semibold text-gray-900">{{ b.file_name || b.original_filename || 'batch_import.xlsx' }}</div>
+                                <div class="text-[11px] text-gray-400">{{ formatDateTime(b.created_at) }}</div>
                             </td>
-                            <td class="p-4 text-gray-500">{{ b.created_at ? new Date(b.created_at).toLocaleString('id-ID') : '-' }}</td>
-                            <td class="p-4 font-black text-gray-900">{{ b.total_rows || 0 }}</td>
-                            <td class="p-4 font-bold text-emerald-600">{{ b.successful_rows || 0 }}</td>
-                            <td class="p-4 font-bold text-red-600">{{ b.failed_rows || 0 }}</td>
-                            <td class="p-4"><Badge :status="b.status || 'completed'" /></td>
-                            <td class="p-4 text-right">
-                                <button @click="emit('navigate', `/lead-imports/${b.id}`)" class="font-bold text-orange-600 hover:text-orange-700">Detail</button>
+                            <td class="py-3 px-4">{{ b.user?.name || '-' }}</td>
+                            <td class="py-3 px-4 font-medium">{{ b.total_rows || 0 }}</td>
+                            <td class="py-3 px-4 text-emerald-600 font-bold">{{ b.success_rows ?? b.successful_rows ?? 0 }}</td>
+                            <td class="py-3 px-4 text-red-600 font-medium">{{ b.failed_rows || 0 }}</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-0.5 text-[10px] font-medium border bg-blue-50 text-blue-700 border-blue-200">
+                                    {{ b.status ? (b.status.charAt(0).toUpperCase() + b.status.slice(1)) : 'Completed' }}
+                                </span>
+                            </td>
+                            <td class="py-3 px-4 text-right">
+                                <button @click="emit('navigate', `/lead-imports/${b.id}`)" class="text-xs text-blue-600 hover:underline font-medium">
+                                    Detail Baris
+                                </button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="p-4">
-                <Pagination :meta="pagination" :loading="loading" @change-page="loadBatches" />
+            <div v-if="pagination.total > 0" class="p-3 border-t border-gray-100 flex items-center justify-between">
+                <Pagination :pagination="pagination" @page="loadBatches" />
             </div>
         </div>
     </div>

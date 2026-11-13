@@ -2,7 +2,10 @@
 import { onMounted, ref } from 'vue';
 import { api } from '../../services/api';
 import Pagination from '../../Components/Pagination.vue';
-import Badge from '../../Components/Badge.vue';
+
+const props = defineProps({
+    user: { type: Object, default: () => ({}) },
+});
 
 const emit = defineEmits(['navigate']);
 
@@ -32,64 +35,106 @@ async function loadTrainers(page = 1) {
     }
 }
 
+function handleFilter() {
+    loadTrainers(1);
+}
+
+function resetFilter() {
+    search.value = '';
+    loadTrainers(1);
+}
+
 onMounted(() => {
     loadTrainers();
 });
 </script>
 
 <template>
-    <div class="space-y-5">
+    <div class="space-y-4">
+        <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-                <h1 class="text-xl font-bold text-gray-900">Daftar Trainer & Instruktur</h1>
-                <p class="text-xs text-gray-500 mt-0.5">Pengajar bersertifikasi dan praktisi industri</p>
+                <h1 class="text-xl font-bold text-gray-900">Daftar Trainer</h1>
+                <p class="text-xs text-gray-500 mt-0.5">Trainer digunakan saat membuat jadwal pelatihan.</p>
             </div>
-            <div class="flex items-center gap-2">
-                <input v-model="search" @input="loadTrainers(1)" type="text" placeholder="Cari trainer..."
-                    class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs bg-white focus:outline-none" />
-                <button @click="emit('navigate', '/trainers/create')"
-                    class="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm">
+            <div>
+                <button type="button" @click="emit('navigate', '/trainers/create')"
+                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-700 shadow-sm transition-colors">
                     + Tambah Trainer
                 </button>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+        <!-- Filter Card -->
+        <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
+            <form @submit.prevent="handleFilter" class="flex flex-col sm:flex-row items-center gap-2.5">
+                <div class="relative flex-1 w-full">
+                    <input v-model="search" type="text"
+                        placeholder="Cari trainer, email, atau telepon..."
+                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
+                </div>
+                <button type="submit" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-700 shadow-sm transition-colors">
+                    Cari
+                </button>
+                <button v-if="search" @click="resetFilter" type="button" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
+                    Reset
+                </button>
+            </form>
+        </div>
+
+        <!-- Table Card -->
+        <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-gray-50/80 text-gray-400 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
+                <table class="w-full min-w-[550px] text-left text-xs text-gray-600">
+                    <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
                         <tr>
-                            <th class="p-4">Nama Trainer</th>
-                            <th class="p-4">Bidang Keahlian</th>
-                            <th class="p-4">Kontak / WA</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4 text-right">Aksi</th>
+                            <th class="py-3.5 px-4">NAMA ▲</th>
+                            <th class="py-3.5 px-4">EMAIL</th>
+                            <th class="py-3.5 px-4">TELEPON</th>
+                            <th class="py-3.5 px-4">STATUS</th>
+                            <th class="py-3.5 px-4 text-right">AKSI</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50 text-gray-700">
+                    <tbody class="divide-y divide-gray-100">
                         <tr v-if="loading">
-                            <td colspan="5" class="p-8 text-center text-gray-400 text-xs">Memuat data trainer...</td>
+                            <td colspan="5" class="p-8 text-center text-gray-400">Memuat data trainer...</td>
                         </tr>
                         <tr v-else-if="trainers.length === 0">
-                            <td colspan="5" class="p-8 text-center text-gray-400 text-xs">Belum ada trainer terdaftar.</td>
+                            <td colspan="5" class="p-8 text-center text-gray-400">Belum ada trainer.</td>
                         </tr>
-                        <tr v-for="t in trainers" :key="t.id" class="hover:bg-gray-50/50 transition-colors">
-                            <td class="p-4 font-bold text-gray-900">{{ t.name }}</td>
-                            <td class="p-4 font-semibold text-gray-700">{{ t.expertise || 'Software Engineering' }}</td>
-                            <td class="p-4 text-gray-600">
-                                <div>{{ t.phone || '-' }}</div>
-                                <div class="text-[10px] text-gray-400">{{ t.email || '' }}</div>
+                        <tr v-for="t in trainers" :key="t.id" class="hover:bg-blue-50/20 transition-colors">
+                            <td class="py-3.5 px-4 font-semibold text-gray-900">
+                                {{ t.name }}
                             </td>
-                            <td class="p-4"><Badge :status="t.is_active ? 'aktif' : 'inactive'" /></td>
-                            <td class="p-4 text-right">
-                                <button @click="emit('navigate', `/trainers/${t.id}/edit`)" class="font-bold text-orange-600 hover:text-orange-700">Edit</button>
+                            <td class="py-3.5 px-4 text-gray-600">
+                                {{ t.email || '-' }}
+                            </td>
+                            <td class="py-3.5 px-4 text-gray-600">
+                                {{ t.phone || '-' }}
+                            </td>
+                            <td class="py-3.5 px-4">
+                                <span class="inline-block px-2 py-0.5 border text-[10px] font-semibold uppercase tracking-wider"
+                                    :class="t.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-600 border-gray-200'">
+                                    {{ t.is_active ? 'Aktif' : 'Non-aktif' }}
+                                </span>
+                            </td>
+                            <td class="py-3.5 px-4 text-right">
+                                <button @click="emit('navigate', `/trainers/${t.id}/edit`)" class="text-xs text-blue-600 hover:text-blue-800 font-medium p-1">
+                                    Edit
+                                </button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="p-4">
-                <Pagination :meta="pagination" :loading="loading" @change-page="loadTrainers" />
+            <div class="p-4 border-t border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <span>Tampilkan</span>
+                    <span class="border border-gray-200 px-2.5 py-1 text-xs text-gray-700 bg-white">50</span>
+                </div>
+                <div v-if="pagination.total > 0">
+                    <Pagination :pagination="pagination" @page="loadTrainers" />
+                </div>
             </div>
         </div>
     </div>

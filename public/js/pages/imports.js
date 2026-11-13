@@ -18,17 +18,19 @@
         },
 
         renderList(items, meta) {
-            const rows = items.map(imp => {
-                const statusBadges = {
-                    completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                    processing: 'bg-amber-50 text-amber-700 border-amber-200',
-                    failed: 'bg-red-50 text-red-700 border-red-200',
-                };
+            const statusBadges = {
+                completed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                processing: 'bg-amber-50 text-amber-700 border-amber-200',
+                failed: 'bg-red-50 text-red-700 border-red-200',
+            };
 
-                return `
+            const rowsHtml = items.length === 0
+                ? `<tr><td colspan="7" class="py-12 text-center text-gray-400 text-xs">Belum ada riwayat import data</td></tr>`
+                : items.map(imp => `
                     <tr class="hover:bg-orange-50/20 transition-colors">
                         <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
                             ${imp.original_filename || 'Batch #' + imp.id}
+                            <div class="text-[10px] text-gray-400 font-normal">${App.formatDateTime(imp.created_at)}</div>
                         </td>
 
                         <td class="py-3.5 px-4 text-xs text-gray-700">
@@ -48,40 +50,56 @@
                         </td>
 
                         <td class="py-3.5 px-4">
-                            <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusBadges[imp.status] || 'bg-gray-100 text-gray-600'}">
+                            <span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${statusBadges[imp.status] || 'bg-gray-100 text-gray-600'}">
                                 ${App.statusLabel(imp.status)}
                             </span>
                         </td>
 
-                        <td class="py-3.5 px-4 text-xs text-gray-400">
-                            ${App.formatDateTime(imp.created_at)}
-                        </td>
-
                         <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                            <button onclick="App.navigate('/lead-imports/${imp.id}')" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 inline-block" title="Detail">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            </button>
+                            <a href="/lead-imports/${imp.id}" onclick="event.preventDefault(); App.navigate('/lead-imports/${imp.id}')"
+                               class="text-blue-600 hover:underline text-xs font-semibold">Detail</a>
                         </td>
                     </tr>
-                `;
-            });
+                `).join('');
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Riwayat Batch Import Data CRM',
-                        'Daftar file CSV yang telah diproses masuk ke database leads',
-                        `<button onclick="App.navigate('/lead-imports/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                            Upload File Baru
-                        </button>`
-                    )}
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Riwayat Import Lead (CSV / Excel)</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Daftar batch upload prospek masal dari CSV atau Excel</p>
+                        </div>
+                        <div>
+                            <a href="/lead-imports/create" onclick="event.preventDefault(); App.navigate('/lead-imports/create')"
+                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors inline-flex items-center gap-1.5">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                Upload File Baru
+                            </a>
+                        </div>
+                    </div>
 
-                    ${App.tableShell(
-                        ['Nama File CSV', 'Pengunggah', 'Total', 'Berhasil', 'Gagal', 'Status', 'Waktu Upload', 'Aksi'],
-                        rows,
-                        'Belum ada riwayat batch import.'
-                    )}
+                    <!-- Table Card (Sesuai Screenshot 13) -->
+                    <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[700px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3.5 px-4">WAKTU & FILE</th>
+                                        <th class="py-3.5 px-4">PENGUNGGAH</th>
+                                        <th class="py-3.5 px-4 text-center">TOTAL BARIS</th>
+                                        <th class="py-3.5 px-4 text-center">BERHASIL</th>
+                                        <th class="py-3.5 px-4 text-center">GAGAL</th>
+                                        <th class="py-3.5 px-4">STATUS</th>
+                                        <th class="py-3.5 px-4 text-right">AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     ${App.pagination(meta)}
                 </div>

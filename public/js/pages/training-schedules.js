@@ -70,17 +70,16 @@
                             <span class="font-extrabold text-orange-600">${regCount}</span> / <span class="text-gray-400">${s.capacity || 0} Kursi</span>
                         </td>
 
-                        <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
+                        <td class="py-3.5 px-4 text-right space-x-2 whitespace-nowrap">
+                            <a href="/registrations/create?schedule_id=${s.id}" onclick="event.preventDefault(); App.navigate('/registrations/create?schedule_id=${s.id}')"
+                               class="text-xs text-orange-600 hover:text-orange-800 font-semibold p-1">+ Daftar</a>
                             ${isAdmin ? `
-                                <div class="inline-flex items-center gap-1">
-                                    <a href="/training-schedules/${s.id}/edit" onclick="event.preventDefault(); App.navigate('/training-schedules/${s.id}/edit')" class="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50" title="Edit">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                                    </a>
-                                    <button onclick="App.pages['training-schedules'].deleteSchedule(${s.id})" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50" title="Hapus">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
-                                </div>
-                            ` : '<span class="text-xs text-gray-400 italic">Lihat Saja</span>'}
+                                <a href="/training-schedules/${s.id}/edit" onclick="event.preventDefault(); App.navigate('/training-schedules/${s.id}/edit')"
+                                   class="text-xs text-blue-600 hover:text-blue-800 font-medium p-1">Edit</a>
+                                <button onclick="App.pages['training-schedules'].deleteSchedule(${s.id})" class="text-xs text-red-500 hover:text-red-700 p-1" title="Hapus">
+                                    Hapus
+                                </button>
+                            ` : ''}
                         </td>
                     </tr>
                 `;
@@ -96,10 +95,10 @@
                         </div>
                         <div class="flex items-center gap-2">
                             ${isAdmin ? `
-                                <a href="/trainers" onclick="event.preventDefault(); App.navigate('/trainers')" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
+                                <a href="/trainers" onclick="event.preventDefault(); App.navigate('/trainers')" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-xs transition-colors">
                                     Kelola Trainer
                                 </a>
-                                <a href="/training-schedules/create" onclick="event.preventDefault(); App.navigate('/training-schedules/create')" class="px-4 py-2 text-xs font-semibold text-white bg-gray-900 rounded-full hover:bg-black shadow-sm transition-colors">
+                                <a href="/training-schedules/create" onclick="event.preventDefault(); App.navigate('/training-schedules/create')" class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors">
                                     + Buat Jadwal
                                 </a>
                             ` : ''}
@@ -107,7 +106,33 @@
                     </div>
 
                     <!-- Filter Card -->
-                    <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
+                    <div class="bg-white border border-gray-100 p-3.5 rounded-xl shadow-xs">
+                        <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                            <div class="relative flex-1 w-full">
+                                <input type="text" id="sched-search" value="${this.state.search}"
+                                       placeholder="Cari pelatihan, trainer, atau lokasi..."
+                                       class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500"
+                                       onkeydown="if(event.key==='Enter') App.pages['training-schedules'].handleSearch()">
+                            </div>
+                            <div class="w-full sm:w-48">
+                                <select id="sched-status" class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500"
+                                        onchange="App.pages['training-schedules'].handleStatusChange(this.value)">
+                                    <option value="">Semua status</option>
+                                    <option value="scheduled" ${this.state.status === 'scheduled' ? 'selected' : ''}>Scheduled</option>
+                                    <option value="ongoing" ${this.state.status === 'ongoing' ? 'selected' : ''}>Ongoing</option>
+                                    <option value="completed" ${this.state.status === 'completed' ? 'selected' : ''}>Completed</option>
+                                    <option value="cancelled" ${this.state.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                                </select>
+                            </div>
+                            <button type="button" onclick="App.pages['training-schedules'].handleSearch()"
+                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
+                                Cari
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table Card -->
+                    <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs">
                         <div class="flex flex-col sm:flex-row items-center gap-2.5">
                             <div class="relative flex-1 w-full">
                                 <input type="text" id="sched-search" value="${this.state.search}"

@@ -21,72 +21,78 @@
         },
 
         renderList(items, meta) {
-            const rows = items.map(u => `
-                <tr class="hover:bg-orange-50/20 transition-colors">
-                    <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
-                        ${u.name}
-                    </td>
+            const rowsHtml = items.length === 0
+                ? `<tr><td colspan="5" class="py-8 text-center text-gray-400">Belum ada data pengguna</td></tr>`
+                : items.map(u => {
+                    const isAdm = u.role === 'admin';
+                    const roleBadge = isAdm
+                        ? `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 border border-purple-200">ADMIN</span>`
+                        : `<span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">SALES</span>`;
 
-                    <td class="py-3.5 px-4 text-xs text-gray-700">
-                        ${u.email}
-                    </td>
+                    return `
+                        <tr class="hover:bg-orange-50/20 transition-colors">
+                            <td class="py-3.5 px-4 text-xs">
+                                <span class="font-bold text-gray-900 block">${u.name}</span>
+                                <span class="text-[11px] text-gray-400 font-normal">${u.email}</span>
+                            </td>
 
-                    <td class="py-3.5 px-4 text-xs text-gray-700">
-                        ${u.phone || '-'}
-                    </td>
+                            <td class="py-3.5 px-4">
+                                ${roleBadge}
+                            </td>
 
-                    <td class="py-3.5 px-4">
-                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider ${u.role === 'admin' ? 'bg-orange-50 text-orange-700 border border-orange-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}">
-                            ${u.role}
-                        </span>
-                    </td>
+                            <td class="py-3.5 px-4 text-xs text-gray-700 font-mono">
+                                ${u.phone || '-'}
+                            </td>
 
-                    <td class="py-3.5 px-4">
-                        <span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold border ${u.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}">
-                            ${u.is_active ? 'Aktif' : 'Non-aktif'}
-                        </span>
-                    </td>
+                            <td class="py-3.5 px-4">
+                                <span class="inline-block px-2 py-0.5 rounded text-[10px] font-semibold border ${u.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}">
+                                    ${u.is_active ? 'Aktif' : 'Non-aktif'}
+                                </span>
+                            </td>
 
-                    <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
-                        <button onclick="App.navigate('/users/${u.id}/edit')" class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 inline-block" title="Edit">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                        </button>
-                        <button onclick="App.pages.users.deleteUser(${u.id})" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 inline-block" title="Hapus">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                        </button>
-                    </td>
-                </tr>
-            `);
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                                <a href="/users/${u.id}/edit" onclick="event.preventDefault(); App.navigate('/users/${u.id}/edit')"
+                                   class="text-gray-400 hover:text-gray-700 text-xs font-medium">Edit</a>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Manajemen Pengguna CRM',
-                        'Kelola akun login untuk tim Admin dan Sales Affiliate',
-                        `<button onclick="App.navigate('/users/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Tambah Pengguna
-                        </button>`
-                    )}
-
-                    <!-- Search Bar -->
-                    <div class="flex items-center gap-2 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
-                        <div class="flex-1 relative">
-                            <input type="text" id="usr-search" value="${this.state.search}" placeholder="Cari nama atau email pengguna..."
-                                   class="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-orange-500 outline-none"
-                                   onkeydown="if(event.key==='Enter') App.pages.users.handleSearch()">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Pengguna & Akun Tim</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Kelola akun Admin dan Sales tim Disty Akademi</p>
                         </div>
-                        <button onclick="App.pages.users.handleSearch()" class="px-4 py-1.5 rounded-xl bg-gray-900 text-white font-semibold text-xs hover:bg-black">
-                            Cari
-                        </button>
+                        <div>
+                            <a href="/users/create" onclick="event.preventDefault(); App.navigate('/users/create')"
+                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors inline-block">
+                                + Tambah Pengguna
+                            </a>
+                        </div>
                     </div>
 
-                    ${App.tableShell(
-                        ['Nama Pengguna', 'Email', 'No. WhatsApp / HP', 'Role Akses', 'Status', 'Aksi'],
-                        rows,
-                        'Belum ada data pengguna.'
-                    )}
+                    <!-- Table Card (Sesuai Screenshot 12) -->
+                    <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[700px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3.5 px-4">NAMA & EMAIL</th>
+                                        <th class="py-3.5 px-4">ROLE</th>
+                                        <th class="py-3.5 px-4">NO. HP / WA</th>
+                                        <th class="py-3.5 px-4">STATUS</th>
+                                        <th class="py-3.5 px-4 text-right">AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     ${App.pagination(meta)}
                 </div>

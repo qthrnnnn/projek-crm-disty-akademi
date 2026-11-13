@@ -24,73 +24,99 @@
         },
 
         renderList(items, meta) {
-            const typeBadges = {
-                call: 'bg-blue-50 text-blue-700 border-blue-200',
-                email: 'bg-purple-50 text-purple-700 border-purple-200',
-                whatsapp: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                meeting: 'bg-amber-50 text-amber-700 border-amber-200',
-                note: 'bg-gray-100 text-gray-700 border-gray-200',
-                status_change: 'bg-indigo-50 text-indigo-700 border-indigo-200',
+            const typeLabels = {
+                call: 'Telepon',
+                email: 'Email',
+                whatsapp: 'WhatsApp',
+                meeting: 'Meeting',
+                note: 'Catatan',
+                status_change: 'Ubah Status',
+                admin_reminder: 'Instruksi Admin',
             };
 
             const rows = items.map(act => `
-                <tr class="hover:bg-orange-50/20 transition-colors">
-                    <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
-                        ${act.lead ? `
-                            <a href="/leads/${act.lead.id}" onclick="event.preventDefault(); App.navigate('/leads/${act.lead.id}')" class="hover:text-orange-600">
-                                ${act.lead.name}
-                            </a>
-                            <p class="text-[10px] text-gray-400 font-mono mt-0.5">${act.lead.lead_code || '-'}</p>
-                        ` : '-'}
+                <tr class="hover:bg-blue-50/30 transition-colors">
+                    <td class="py-3 px-4 whitespace-nowrap text-gray-500">
+                        ${App.formatDateTime(act.activity_at || act.created_at)}
                     </td>
-
-                    <td class="py-3.5 px-4">
-                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider border ${typeBadges[act.type] || 'bg-gray-100 text-gray-600'}">
-                            ${act.type || 'note'}
+                    <td class="py-3 px-4">
+                        <span class="px-2 py-0.5 text-[10px] font-medium border bg-gray-50 border-gray-200">
+                            ${typeLabels[act.type] || act.type}
                         </span>
                     </td>
-
-                    <td class="py-3.5 px-4 text-xs">
-                        <p class="font-bold text-gray-900">${act.subject || '-'}</p>
-                        ${act.description ? `<p class="text-gray-500 text-[11px] mt-0.5 max-w-md">${act.description}</p>` : ''}
+                    <td class="py-3 px-4">
+                        ${act.lead ? `
+                            <a href="/leads/${act.lead.id}" onclick="event.preventDefault(); App.navigate('/leads/${act.lead.id}')" class="font-semibold text-blue-600 hover:underline">
+                                ${act.lead.name}
+                            </a>
+                        ` : '<span class="text-gray-400">-</span>'}
                     </td>
-
-                    <td class="py-3.5 px-4 text-xs text-gray-700 font-medium">
-                        ${act.user?.name || 'Sistem CRM'}
+                    <td class="py-3 px-4">
+                        <div class="font-medium text-gray-900">${act.subject || act.notes || act.description || '-'}</div>
                     </td>
-
-                    <td class="py-3.5 px-4 text-xs text-gray-400 whitespace-nowrap">
-                        ${App.formatDateTime(act.activity_at || act.created_at)}
+                    <td class="py-3 px-4">
+                        ${act.user?.name || '-'}
                     </td>
                 </tr>
             `);
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader('Riwayat Aktivitas CRM', 'Catatan lengkap komunikasi, panggilan, chat WhatsApp, & perubahan status')}
-
-                    <!-- Search Bar -->
-                    <div class="flex items-center gap-2 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
-                        <div class="flex-1 relative">
-                            <input type="text" id="act-search" value="${this.state.search}" placeholder="Cari subjek atau catatan aktivitas..."
-                                   class="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-orange-500 outline-none"
-                                   onkeydown="if(event.key==='Enter') App.pages.activities.handleSearch()">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-semibold text-gray-900">Log Aktivitas & Riwayat Interaksi</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Semua jejak kontak prospek, telepon, whatsapp, & status change</p>
                         </div>
-                        <button onclick="App.pages.activities.handleSearch()" class="px-4 py-1.5 rounded-xl bg-gray-900 text-white font-semibold text-xs hover:bg-black">
-                            Cari
-                        </button>
                     </div>
 
-                    ${App.tableShell(
-                        ['Prospek / Lead', 'Tipe', 'Subjek & Catatan', 'Sales / Petugas', 'Waktu'],
-                        rows,
-                        'Belum ada riwayat aktivitas yang tercatat.'
-                    )}
+                    <!-- Filter Card -->
+                    <div class="bg-white border border-blue-100 p-3.5 shadow-sm">
+                        <form onsubmit="event.preventDefault(); App.pages.activities.handleTypeFilter(document.getElementById('act-type-select').value);" class="flex flex-wrap items-center gap-2.5">
+                            <select id="act-type-select" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                                <option value="">Semua Jenis Aktivitas</option>
+                                <option value="status_change">Ubah Status</option>
+                                <option value="call">Telepon</option>
+                                <option value="whatsapp">WhatsApp</option>
+                                <option value="meeting">Meeting</option>
+                                <option value="note">Catatan</option>
+                                <option value="email">Email</option>
+                                <option value="admin_reminder">Instruksi Admin</option>
+                            </select>
+                            <button type="submit" class="text-xs bg-orange-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-700">
+                                Filter
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Activities Table Card -->
+                    <div class="bg-white border border-blue-100 overflow-hidden shadow-sm">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[620px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-medium uppercase tracking-wider text-[11px]">
+                                    <tr>
+                                        <th class="py-3 px-4">WAKTU</th>
+                                        <th class="py-3 px-4">TIPE</th>
+                                        <th class="py-3 px-4">PROSPEK</th>
+                                        <th class="py-3 px-4">SUBJEK / DETAIL</th>
+                                        <th class="py-3 px-4">SALES USER</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${rows.length ? rows.join('') : '<tr><td colspan="5" class="p-8 text-center text-gray-400">Belum ada riwayat aktivitas yang tercatat.</td></tr>'}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     ${App.pagination(meta)}
                 </div>
             `;
+        },
+
+        handleTypeFilter(type) {
+            this.state.type = type;
+            this.state.page = 1;
+            this.loadList();
         },
 
         handleSearch() {

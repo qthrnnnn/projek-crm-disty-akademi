@@ -66,16 +66,6 @@ function resetFilter() {
     loadSchedules(1);
 }
 
-async function deleteSchedule(id) {
-    if (!confirm('Hapus jadwal pelatihan ini?')) return;
-    try {
-        await api.remove('training-schedules', id);
-        loadSchedules(pagination.value.current_page);
-    } catch (err) {
-        alert(err.message || 'Gagal menghapus jadwal.');
-    }
-}
-
 onMounted(() => {
     loadSchedules();
 });
@@ -90,12 +80,12 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 mt-0.5">Setiap jadwal memiliki trainer, waktu, lokasi, dan kapasitas.</p>
             </div>
             <div class="flex items-center gap-2">
-                <button v-if="isAdmin" @click="emit('navigate', '/trainers')"
+                <button v-if="isAdmin" type="button" @click="emit('navigate', '/trainers')"
                     class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
                     Kelola Trainer
                 </button>
-                <button v-if="isAdmin" @click="emit('navigate', '/training-schedules/create')"
-                    class="px-4 py-2 text-xs font-semibold text-white bg-gray-900 rounded-full hover:bg-black shadow-sm transition-colors">
+                <button v-if="isAdmin" type="button" @click="emit('navigate', '/training-schedules/create')"
+                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-700 shadow-sm transition-colors">
                     + Buat Jadwal
                 </button>
             </div>
@@ -107,11 +97,11 @@ onMounted(() => {
                 <div class="relative flex-1 w-full">
                     <input v-model="search" type="text"
                         placeholder="Cari pelatihan, trainer, atau lokasi..."
-                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 rounded" />
+                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
                 </div>
                 <div class="w-full sm:w-48">
                     <select v-model="status" @change="loadSchedules(1)"
-                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500 rounded">
+                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
                         <option value="">Semua status</option>
                         <option value="scheduled">Scheduled</option>
                         <option value="ongoing">Ongoing</option>
@@ -120,7 +110,7 @@ onMounted(() => {
                     </select>
                 </div>
                 <button type="submit"
-                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-sm transition-colors">
+                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-700 shadow-sm transition-colors">
                     Cari
                 </button>
                 <button v-if="search || status" type="button" @click="resetFilter"
@@ -175,20 +165,18 @@ onMounted(() => {
                                     {{ s.status }}
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4 font-extrabold text-orange-600">
-                                <span>{{ s.registrations_count ?? 0 }}</span> / <span class="text-gray-400 font-normal">{{ s.capacity || 0 }} Kursi</span>
+                            <td class="py-3.5 px-4 font-medium">
+                                <span class="text-blue-600 font-bold">{{ s.registrations_count ?? 0 }}</span> / {{ s.capacity || 0 }}
                             </td>
                             <td class="py-3.5 px-4 text-right whitespace-nowrap">
-                                <div class="inline-flex items-center gap-1">
-                                    <button @click="emit('navigate', `/training-schedules/${s.id}/edit`)" class="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50" title="Edit">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                                        </svg>
+                                <div class="inline-flex items-center gap-1.5">
+                                    <button @click="emit('navigate', `/registrations/create?schedule_id=${s.id}`)"
+                                        class="text-[11px] text-emerald-600 hover:text-emerald-800 font-medium bg-emerald-50 px-2 py-1 rounded border border-emerald-200">
+                                        + Daftar
                                     </button>
-                                    <button @click="deleteSchedule(s.id)" class="p-1.5 text-gray-400 hover:text-red-600 rounded hover:bg-red-50" title="Hapus">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
+                                    <button v-if="isAdmin" @click="emit('navigate', `/training-schedules/${s.id}/edit`)"
+                                        class="text-xs text-blue-600 hover:text-blue-800 font-medium p-1">
+                                        Edit
                                     </button>
                                 </div>
                             </td>
@@ -196,8 +184,14 @@ onMounted(() => {
                     </tbody>
                 </table>
             </div>
-            <div class="p-4 border-t border-gray-100 bg-gray-50/50">
-                <Pagination :meta="pagination" :loading="loading" @change-page="loadSchedules" />
+            <div class="p-4 border-t border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <span>Tampilkan</span>
+                    <span class="border border-gray-200 px-2.5 py-1 text-xs text-gray-700 bg-white">50</span>
+                </div>
+                <div v-if="pagination.total > 0">
+                    <Pagination :pagination="pagination" @page="loadSchedules" />
+                </div>
             </div>
         </div>
     </div>

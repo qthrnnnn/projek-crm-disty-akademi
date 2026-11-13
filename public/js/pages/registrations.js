@@ -23,9 +23,9 @@
 
         renderList(items, meta) {
             const rStyles = {
-                registered: 'bg-blue-50 text-blue-700 border-blue-200',
-                confirmed: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-                attended: 'bg-purple-50 text-purple-700 border-purple-200',
+                registered: 'bg-blue-50/70 text-blue-700 border-blue-200',
+                confirmed: 'bg-emerald-50/70 text-emerald-700 border-emerald-200',
+                attended: 'bg-purple-50/70 text-purple-700 border-purple-200',
                 cancelled: 'bg-gray-100 text-gray-600 border-gray-200',
             };
 
@@ -35,45 +35,41 @@
 
                 return `
                     <tr class="hover:bg-blue-50/20 transition-colors">
-                        <td class="py-3.5 px-4 font-mono font-semibold text-gray-900">
+                        <td class="py-3.5 px-4 font-mono font-bold text-gray-900 text-xs">
                             ${reg.registration_number || ('#REG-' + reg.id)}
                         </td>
 
-                        <td class="py-3.5 px-4">
-                            <a href="/customers/${reg.customer_id}" onclick="event.preventDefault(); App.navigate('/customers/${reg.customer_id}')" class="font-medium text-blue-600 hover:underline">
+                        <td class="py-3.5 px-4 text-xs">
+                            <a href="/customers/${reg.customer_id}" onclick="event.preventDefault(); App.navigate('/customers/${reg.customer_id}')" class="font-semibold text-blue-600 hover:underline">
                                 ${reg.customer?.name || ('Customer #' + reg.customer_id)}
                             </a>
-                            <div class="text-[11px] text-gray-400">${reg.customer?.customer_code || '-'}</div>
+                            <div class="text-[11px] text-gray-400 font-mono">${reg.customer?.customer_code || '-'}</div>
                         </td>
 
-                        <td class="py-3.5 px-4 font-medium text-gray-800">
+                        <td class="py-3.5 px-4 font-bold text-gray-800 text-xs">
                             ${prodName}
                         </td>
 
-                        <td class="py-3.5 px-4">
+                        <td class="py-3.5 px-4 text-xs">
                             ${sched ? `
-                                <div class="font-medium text-gray-800">${App.formatDate(sched.training_date)}</div>
+                                <div class="font-bold text-gray-800">${App.formatDate(sched.training_date)}</div>
                                 <div class="text-[11px] text-gray-400">Trainer: ${sched.trainer?.name || '-'}</div>
                             ` : '<span class="text-gray-400">-</span>'}
                         </td>
 
                         <td class="py-3.5 px-4">
-                            <span class="inline-block px-2 py-0.5 border text-[10px] font-semibold uppercase tracking-wider ${rStyles[reg.status] || 'bg-gray-50 border-gray-200'}">
+                            <span class="inline-block px-2.5 py-0.5 border text-[10px] font-semibold uppercase tracking-wider rounded ${rStyles[reg.status] || 'bg-gray-50 border-gray-200'}">
                                 ${App.statusLabel(reg.status)}
                             </span>
                         </td>
 
-                        <td class="py-3.5 px-4 font-bold text-gray-900">
+                        <td class="py-3.5 px-4 font-bold text-gray-900 text-xs">
                             ${App.formatRupiah(reg.amount)}
                         </td>
 
-                        <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
-                            <button onclick="App.navigate('/registrations/${reg.id}/edit')" class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 inline-block" title="Edit">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            </button>
-                            <button onclick="App.pages.registrations.deleteReg(${reg.id})" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 inline-block" title="Hapus">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
+                        <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                            <a href="/registrations/${reg.id}/edit" onclick="event.preventDefault(); App.navigate('/registrations/${reg.id}/edit')"
+                               class="text-blue-600 hover:underline font-semibold text-xs">Edit</a>
                         </td>
                     </tr>
                 `;
@@ -88,26 +84,26 @@
                             <p class="text-xs text-gray-500 mt-0.5">Customer didaftarkan ke jadwal yang telah dibuat, bukan menentukan tanggal sendiri.</p>
                         </div>
                         <div class="flex items-center gap-2">
-                            <a href="/training-schedules" onclick="event.preventDefault(); App.navigate('/training-schedules')" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
+                            <a href="/training-schedules" onclick="event.preventDefault(); App.navigate('/training-schedules')" class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-xs transition-colors">
                                 Lihat Jadwal
                             </a>
-                            <a href="/registrations/create" onclick="event.preventDefault(); App.navigate('/registrations/create')" class="px-4 py-2 text-xs font-semibold text-white bg-gray-900 rounded-full hover:bg-black shadow-sm transition-colors">
+                            <a href="/registrations/create" onclick="event.preventDefault(); App.navigate('/registrations/create')" class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors">
                                 + Daftarkan Customer
                             </a>
                         </div>
                     </div>
 
                     <!-- Filter Card -->
-                    <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
+                    <div class="bg-white border border-gray-100 p-3.5 rounded-xl shadow-xs">
                         <div class="flex flex-col sm:flex-row items-center gap-2.5">
                             <div class="relative flex-1 w-full">
                                 <input type="text" id="reg-search" value="${this.state.search}"
                                        placeholder="Cari nomor, customer, training, trainer..."
-                                       class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 rounded"
+                                       class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500 rounded-lg"
                                        onkeydown="if(event.key==='Enter') App.pages.registrations.handleSearch()">
                             </div>
                             <div class="w-full sm:w-48">
-                                <select id="reg-status" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-blue-500 rounded"
+                                <select id="reg-status" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500 rounded-lg"
                                         onchange="App.pages.registrations.handleStatusChange(this.value)">
                                     <option value="">Semua status</option>
                                     <option value="registered" ${this.state.status === 'registered' ? 'selected' : ''}>Registered</option>
@@ -116,7 +112,7 @@
                                     <option value="cancelled" ${this.state.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                                 </select>
                             </div>
-                            <button type="button" onclick="App.pages.registrations.handleSearch()" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-sm transition-colors">
+                            <button type="button" onclick="App.pages.registrations.handleSearch()" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
                                 Filter
                             </button>
                             ${(this.state.search || this.state.status) ? `
@@ -126,7 +122,7 @@
                     </div>
 
                     <!-- Table Card -->
-                    <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
+                    <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs">
                         <div class="overflow-x-auto">
                             <table class="w-full min-w-[680px] text-left text-xs text-gray-600">
                                 <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">

@@ -95,7 +95,7 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 mt-0.5">Pelatihan, uji sertifikasi BNSP, dan paket bundling dipisahkan</p>
             </div>
             <button v-if="isAdmin" @click="emit('navigate', '/products/create')"
-                class="px-4 py-2 text-xs font-semibold text-white bg-gray-900 rounded-full hover:bg-black shadow-sm transition-colors self-start sm:self-auto">
+                class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-700 shadow-sm transition-colors self-start sm:self-auto">
                 + Tambah Program
             </button>
         </div>
@@ -106,32 +106,32 @@ onMounted(() => {
             <div class="flex flex-wrap items-center gap-1.5 border-b border-gray-100 pb-3 text-xs">
                 <button type="button" @click="setFilter('', '')"
                     class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[!selectedCategory && !selectedProductType ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
+                    :class="[!selectedCategory && !selectedProductType ? 'bg-orange-600 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
                     Semua Program
                 </button>
                 <button type="button" @click="setFilter('Pelatihan / Bootcamp', '')"
                     class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[selectedCategory === 'Pelatihan / Bootcamp' && !selectedProductType ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
+                    :class="[selectedCategory === 'Pelatihan / Bootcamp' && !selectedProductType ? 'bg-orange-600 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
                     Pelatihan / Bootcamp
                 </button>
                 <button type="button" @click="setFilter('Sertifikasi BNSP', '')"
                     class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[selectedCategory === 'Sertifikasi BNSP' && !selectedProductType ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
+                    :class="[selectedCategory === 'Sertifikasi BNSP' && !selectedProductType ? 'bg-orange-600 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
                     Sertifikasi BNSP
                 </button>
                 <button type="button" @click="setFilter('', 'training')"
                     class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[!selectedCategory && selectedProductType === 'training' ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
+                    :class="[!selectedCategory && selectedProductType === 'training' ? 'bg-orange-600 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
                     Pelatihan
                 </button>
                 <button type="button" @click="setFilter('', 'certification')"
                     class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[!selectedCategory && selectedProductType === 'certification' ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
+                    :class="[!selectedCategory && selectedProductType === 'certification' ? 'bg-orange-600 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
                     Uji Sertifikasi
                 </button>
                 <button type="button" @click="setFilter('', 'bundle')"
                     class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[!selectedCategory && selectedProductType === 'bundle' ? 'bg-slate-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
+                    :class="[!selectedCategory && selectedProductType === 'bundle' ? 'bg-orange-600 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
                     Paket Bundling
                 </button>
             </div>
@@ -141,10 +141,10 @@ onMounted(() => {
                 <div class="relative flex-1">
                     <input v-model="search" type="text"
                         placeholder="Cari nama program, kode, atau materi..."
-                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-blue-500 rounded" />
+                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500 rounded" />
                 </div>
                 <button type="submit"
-                    class="px-5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 shadow-sm transition-colors">
+                    class="px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-700 shadow-sm transition-colors">
                     Cari
                 </button>
                 <button v-if="search || selectedCategory || selectedProductType" type="button" @click="resetFilter"

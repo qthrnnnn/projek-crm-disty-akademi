@@ -126,22 +126,22 @@ const App = {
     renderShell() {
         const c = this.state.sidebarCollapsed;
         return `
-            <div class="h-screen h-[100dvh] max-h-[100dvh] flex bg-gray-50 text-gray-900 overflow-hidden">
+            <div class="h-screen h-[100dvh] max-h-[100dvh] flex bg-gray-100 text-gray-900 overflow-hidden font-sans">
                 <!-- Desktop Sidebar (Independent vertical scroll container) -->
-                <aside id="sidebar-desktop" class="hidden lg:flex flex-col h-full h-[100dvh] max-h-[100dvh] bg-white border-r border-gray-100 shrink-0 sidebar-transition overflow-hidden ${c ? 'w-[72px]' : 'w-[260px]'}">
+                <aside id="sidebar-desktop" class="hidden lg:flex flex-col h-full h-[100dvh] max-h-[100dvh] bg-white border-r border-gray-200 shrink-0 overflow-hidden transition-all duration-200 ${c ? 'w-[68px]' : 'w-[230px]'}">
                     ${this.renderSidebarContent(c, false)}
                 </aside>
 
                 <!-- Mobile Sidebar Overlay -->
                 <div id="mobile-overlay" class="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden ${this.state.mobileSidebarOpen ? '' : 'hidden'}" onclick="App.toggleMobileSidebar()"></div>
-                <aside id="sidebar-mobile" class="fixed inset-y-0 left-0 z-50 w-72 max-w-[85vw] h-full h-[100dvh] max-h-[100dvh] bg-white shadow-2xl lg:hidden flex flex-col overflow-hidden transform transition-transform duration-300 ${this.state.mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}">
+                <aside id="sidebar-mobile" class="fixed inset-y-0 left-0 z-50 w-[230px] max-w-[85vw] h-full h-[100dvh] max-h-[100dvh] bg-white shadow-2xl lg:hidden flex flex-col overflow-hidden transform transition-transform duration-300 ${this.state.mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}">
                     ${this.renderSidebarContent(false, true)}
                 </aside>
 
                 <!-- Main Area (Topbar + Independent vertical scroll container) -->
                 <div class="flex-1 flex flex-col min-w-0 min-h-0 h-full h-[100dvh] max-h-[100dvh] overflow-hidden">
                     ${this.renderTopbar()}
-                    <main id="main-content" class="flex-1 min-h-0 overflow-y-auto p-5 scrollbar-thin overscroll-contain">
+                    <main id="main-content" class="flex-1 min-h-0 overflow-y-auto p-5 scrollbar-thin overscroll-contain bg-gray-100">
                         <div class="flex items-center justify-center py-20 text-gray-400">
                             <svg class="w-5 h-5 animate-spin text-orange-500 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
                             <span class="text-xs">Memuat...</span>
@@ -159,13 +159,13 @@ const App = {
         const c = collapsed;
 
         const navItem = (path, icon, label, badge = '') => {
-            const active = p === path || (path !== '/' && p.startsWith(path));
+            const active = path === '/' ? (p === '/' || p === '/dashboard') : (p === path || p.startsWith(path + '/'));
             return `
                 <a href="${path}" onclick="event.preventDefault(); App.navigate('${path}')"
-                   class="flex items-center gap-3 ${c ? 'justify-center px-0' : 'px-3.5'} py-2.5 rounded-xl text-[13px] font-semibold transition-all group relative
-                   ${active ? 'bg-orange-500 text-white shadow-sm shadow-orange-500/25' : 'text-gray-600 hover:text-orange-600 hover:bg-orange-50'}"
+                   class="flex items-center gap-2.5 ${c ? 'justify-center px-0' : 'px-3'} py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap
+                   ${active ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'}"
                    ${c ? `onmouseenter="App.showTooltip(this, '${label}')" onmouseleave="App.hideTooltip()"` : ''}>
-                    <span class="w-[19px] h-[19px] shrink-0">${icon}</span>
+                    <span class="w-5 h-5 shrink-0 flex items-center justify-center">${icon}</span>
                     ${c ? '' : `<span class="truncate">${label}</span>`}
                     ${(!c && badge) ? badge : ''}
                 </a>
@@ -173,26 +173,26 @@ const App = {
         };
 
         const sectionLabel = (text) => c ? `<div class="border-t border-gray-100 my-2"></div>` :
-            `<div class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3.5 pt-4 pb-1.5">${text}</div>`;
+            `<div class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3.5 pt-3 pb-1">${text}</div>`;
 
-        // Icon SVGs (Heroicons outline)
+        // Icon SVGs (Exact Blade Icons)
         const ic = {
-            dashboard: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/></svg>',
-            leads: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
-            followup: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
-            activity: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-            customer: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
-            institution: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>',
-            registration: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',
-            schedule: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
-            trainer: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m0 0V10"/></svg>',
-            product: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
-            payment: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
-            commission: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
-            reminder: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>',
-            user: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
-            import: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>',
-            logout: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>',
+            dashboard: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>',
+            leads: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+            followup: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
+            activity: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+            customer: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>',
+            institution: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>',
+            registration: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>',
+            schedule: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>',
+            trainer: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m0 0V10"/></svg>',
+            product: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>',
+            payment: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>',
+            commission: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>',
+            reminder: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>',
+            user: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>',
+            import: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>',
+            logout: '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>',
         };
 
         const unreadBadge = this.state.unreadCount > 0
@@ -241,32 +241,44 @@ const App = {
 
         return `
             <!-- Header (Logo) -->
-            <div class="p-4 flex items-center shrink-0 ${c ? 'justify-center' : 'gap-3.5'} border-b border-gray-100">
-                <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center shrink-0 shadow-xs">
-                    <img src="/images/disty-icon.png" alt="Logo" class="w-7 h-7 rounded-lg object-contain" onerror="this.outerHTML='<span class=\\'font-black text-sm text-orange-600\\'>D</span>'">
-                </div>
-                ${c ? '' : `
-                    <div class="flex-1 min-w-0 leading-tight">
-                        <h2 class="font-bold text-[15px] text-gray-900 leading-none">Disty</h2>
-                        <p class="text-xs text-gray-500 font-medium mt-0.5">Akademi</p>
+            <div class="flex items-center px-3 border-b border-gray-200 shrink-0" style="height: 68px">
+                ${!c ? `
+                    <div class="flex items-center justify-between w-full">
+                        <a href="/" onclick="event.preventDefault(); App.navigate('/')" class="flex items-center gap-2.5 min-w-0">
+                            <img src="/images/disty-icon.png" alt="Disty Akademi" class="w-11 h-11 rounded-xl bg-white p-1.5 object-contain shadow-sm">
+                            <span class="font-semibold leading-tight tracking-wide text-gray-900">
+                                <span class="block text-base">Disty</span>
+                                <span class="block text-xs text-gray-500 font-normal">Akademi</span>
+                            </span>
+                        </a>
+                        ${!isMobile ? `
+                            <button onclick="App.toggleSidebar()" type="button" class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors" title="Perkecil menu">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                            </button>
+                        ` : `
+                            <button onclick="App.toggleMobileSidebar()" class="p-1.5 rounded-lg text-gray-400 hover:text-gray-600">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        `}
+                    </div>
+                ` : `
+                    <div class="flex items-center justify-center w-full">
+                        <a href="/" onclick="event.preventDefault(); App.navigate('/')" class="flex items-center justify-center w-11 h-11 rounded-xl bg-white shadow-sm hover:scale-105 transition-all p-1.5" title="Disty Akademi">
+                            <img src="/images/disty-icon.png" alt="Disty Akademi" class="w-full h-full object-contain">
+                        </a>
                     </div>
                 `}
-                ${isMobile ? `
-                    <button onclick="App.toggleMobileSidebar()" class="p-1 rounded-lg text-gray-400 hover:text-gray-600">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                ` : ''}
             </div>
 
             <!-- Nav (Independent Scrollable Container) -->
-            <nav class="flex-1 min-h-0 overflow-y-auto p-3 space-y-0.5 no-scrollbar scrollbar-none overscroll-contain" style="scrollbar-width: none; -ms-overflow-style: none;">
+            <nav class="flex-1 min-h-0 overflow-y-auto py-3 px-2 space-y-1 overscroll-contain" style="scrollbar-width: none; -ms-overflow-style: none;">
                 ${nav}
             </nav>
 
             <!-- Footer: Logout (Anchored at Bottom) -->
-            <div class="p-3 shrink-0 border-t border-gray-100">
-                <button onclick="App.handleLogout()" class="w-full flex items-center ${c ? 'justify-center' : 'gap-3.5 px-3.5'} py-2.5 rounded-xl text-[13px] font-semibold text-gray-500 hover:text-red-600 hover:bg-red-50 transition-all">
-                    <span class="w-[19px] h-[19px] shrink-0">${ic.logout}</span>
+            <div class="border-t border-gray-200 p-3 shrink-0">
+                <button onclick="App.handleLogout()" class="w-full flex items-center ${c ? 'justify-center' : 'gap-3 px-3.5'} py-2.5 rounded-lg text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors">
+                    <span class="w-5 h-5 shrink-0 flex items-center justify-center">${ic.logout}</span>
                     ${c ? '' : '<span>Sign Out</span>'}
                 </button>
             </div>
@@ -340,54 +352,56 @@ const App = {
         const dateStr = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
 
         return `
-            <header class="h-14 bg-white border-b border-gray-100 px-4 flex items-center justify-between sticky top-0 z-30 shrink-0">
-                <div class="flex items-center gap-3">
-                    <button onclick="App.toggleMobileSidebar()" class="lg:hidden p-1.5 rounded-lg text-gray-900 hover:bg-gray-100 transition-colors" title="Buka Menu">
-                        <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+            <header class="bg-white border-b border-orange-100 flex items-center px-3 sm:px-4 gap-2 sm:gap-3 shrink-0" style="height: 56px;">
+                <div class="flex items-center gap-2">
+                    <button onclick="App.toggleMobileSidebar()" type="button" class="lg:hidden w-9 h-9 flex items-center justify-center rounded-xl bg-orange-50 text-orange-600 hover:bg-orange-100 transition-colors -ml-1" aria-label="Buka Menu">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
-                    <button onclick="App.toggleSidebar()" class="hidden lg:flex p-1.5 rounded-lg text-gray-900 hover:bg-gray-100 transition-colors" title="Toggle Sidebar">
-                        <svg class="w-5 h-5 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                    <button onclick="App.toggleSidebar()" type="button" class="hidden lg:flex items-center justify-center w-8 h-8 rounded-lg text-gray-500 hover:text-orange-600 hover:bg-orange-50 transition-colors -ml-1 mr-1" title="Toggle Sidebar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
                     </button>
-                    <div class="text-xs flex items-center gap-3">
-                        <span class="text-gray-500 font-medium">Disty Akademi</span>
-                        <span id="topbar-page-title" class="text-gray-900 font-bold">${title}</span>
+                    <div class="flex items-center gap-1.5 text-sm">
+                        <span class="text-gray-400 hidden sm:block">Disty Akademi</span>
+                        <span class="text-gray-300 hidden sm:block">/</span>
+                        <span id="topbar-page-title" class="text-gray-700 font-medium">${title}</span>
                     </div>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="hidden sm:inline text-[11px] text-gray-400 font-medium">${dateStr}</span>
+                <div class="ml-auto flex items-center gap-2">
+                    <span class="hidden md:block text-xs text-gray-400">${dateStr}</span>
 
                     ${user.role === 'sales' ? `
                         <div class="relative">
-                            <button id="notif-btn" onclick="App.toggleNotif()" class="relative p-2 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 transition-colors">
-                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-                                ${this.state.unreadCount > 0 ? `<span class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center animate-pulse">${this.state.unreadCount}</span>` : ''}
+                            <button id="notif-btn" onclick="App.toggleNotif()" type="button" class="relative p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-colors">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                                ${this.state.unreadCount > 0 ? `<span class="absolute top-1 right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-white animate-pulse">${this.state.unreadCount}</span>` : ''}
                             </button>
-                            <div id="notif-dropdown" class="hidden absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-2xl shadow-xl z-50 overflow-hidden">
-                                <div class="p-3 border-b border-gray-100 flex items-center justify-between">
-                                    <span class="text-xs font-bold text-gray-900">Notifikasi</span>
+                            <div id="notif-dropdown" class="hidden absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 shadow-xl py-2 z-50 overflow-hidden rounded-lg">
+                                <div class="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
+                                    <span class="font-bold text-xs text-gray-900">Notifikasi</span>
                                     <button onclick="App.markAllRead()" class="text-[10px] font-semibold text-orange-600 hover:text-orange-700">Tandai Dibaca</button>
                                 </div>
                                 <div id="notif-list" class="max-h-64 overflow-y-auto divide-y divide-gray-50">
                                     <div class="p-4 text-center text-xs text-gray-400">Memuat...</div>
                                 </div>
-                                <a href="/reminders" onclick="event.preventDefault(); App.navigate('/reminders')" class="block p-2.5 text-center text-[10px] font-bold text-orange-600 bg-orange-50/50 hover:bg-orange-50">Lihat Semua Notifikasi</a>
+                                <a href="/reminders" onclick="event.preventDefault(); App.navigate('/reminders')" class="block p-2 text-center text-xs font-semibold text-orange-600 hover:text-orange-700 border-t border-gray-100">Lihat Semua Notifikasi &rarr;</a>
                             </div>
                         </div>
                     ` : ''}
 
                     <div class="relative">
-                        <button id="profile-btn" onclick="App.toggleProfile()" class="flex items-center gap-2 px-2 py-1 rounded-xl hover:bg-gray-50 transition-colors">
-                            <div class="w-7 h-7 rounded-full bg-orange-500 text-white flex items-center justify-center text-xs font-bold shadow-xs">
+                        <button id="profile-btn" onclick="App.toggleProfile()" type="button" class="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-colors">
+                            <div class="w-7 h-7 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">
                                 ${((user && user.name) || 'Admin CRM').charAt(0).toUpperCase()}
                             </div>
-                            <span class="text-xs font-bold text-gray-900 hidden sm:inline">${(user && user.name) || 'Admin CRM'}</span>
+                            <span class="hidden sm:block text-sm text-gray-700 font-medium">${(user && user.name) || 'Admin CRM'}</span>
+                            <svg class="w-3 h-3 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
                         </button>
-                        <div id="profile-dropdown" class="hidden absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-xl shadow-lg z-50 py-1">
-                            <div class="px-3 py-2 border-b border-gray-100">
-                                <p class="text-xs font-bold text-gray-900">${(user && user.name) || 'User'}</p>
-                                <p class="text-[10px] text-gray-400">${(user && user.email) || ''}</p>
+                        <div id="profile-dropdown" class="hidden absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 shadow-lg py-1.5 z-50 rounded-lg">
+                            <div class="px-3 py-2 border-b border-gray-100 mb-1">
+                                <p class="text-xs font-semibold text-gray-900 truncate">${(user && user.name) || 'Admin CRM'}</p>
+                                <p class="text-xs text-gray-400 truncate">${user && user.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Admin'}</p>
                             </div>
-                            <button onclick="App.handleLogout()" class="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 font-semibold flex items-center gap-2">
+                            <button onclick="App.handleLogout()" class="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition-colors text-left">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
                                 Keluar
                             </button>

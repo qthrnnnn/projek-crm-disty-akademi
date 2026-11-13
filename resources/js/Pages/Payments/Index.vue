@@ -2,8 +2,6 @@
 import { computed, onMounted, ref } from 'vue';
 import { api } from '../../services/api';
 import Pagination from '../../Components/Pagination.vue';
-import Badge from '../../Components/Badge.vue';
-import Modal from '../../Components/Modal.vue';
 
 const props = defineProps({
     user: { type: Object, default: () => ({}) },
@@ -13,16 +11,44 @@ const emit = defineEmits(['navigate']);
 
 const payments = ref([]);
 const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
+const status = ref('');
 const loading = ref(true);
-const previewImage = ref('');
-const showModal = ref(false);
 
 const isAdmin = computed(() => props.user?.role === 'admin');
+
+function formatDate(val) {
+    if (!val) return '-';
+    try {
+        const d = new Date(val);
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch {
+        return val;
+    }
+}
+
+function formatCurrency(val) {
+    if (!val) return 'Rp 0';
+    return 'Rp ' + Number(val).toLocaleString('id-ID');
+}
+
+function statusBadgeClass(st) {
+    const s = (st || '').toLowerCase();
+    switch (s) {
+        case 'valid': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+        case 'invalid': return 'bg-red-50 text-red-700 border-red-200';
+        case 'recheck': return 'bg-orange-50 text-orange-700 border-orange-200';
+        case 'pending': return 'bg-amber-50 text-amber-700 border-amber-200';
+        default: return 'bg-gray-50 border-gray-200 text-gray-600';
+    }
+}
 
 async function loadPayments(page = 1) {
     loading.value = true;
     try {
-        const res = await api.list('payments', { page: String(page), per_page: '20' });
+        const params = { page: String(page), per_page: '20' };
+        if (status.value) params.status = status.value;
+
+        const res = await api.list('payments', params);
         payments.value = res.data || [];
         pagination.value = {
             current_page: res.current_page || page,
@@ -38,23 +64,9 @@ async function loadPayments(page = 1) {
     }
 }
 
-async function verifyPayment(id, status) {
-    if (!confirm(`Yakin ingin menandai pembayaran ini sebagai ${status === 'valid' ? 'VALID' : 'DITOLAK'}?`)) return;
-    try {
-        await api.update('payments', id, { status });
-        loadPayments(pagination.value.current_page);
-    } catch (err) {
-        alert(err.message || 'Gagal mengubah status pembayaran.');
-    }
-}
-
-function viewProof(url) {
-    previewImage.value = url;
-    showModal.value = true;
-}
-
-function formatCurrency(val) {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
+function resetFilter() {
+    status.value = '';
+    loadPayments(1);
 }
 
 onMounted(() => {
@@ -63,79 +75,97 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="space-y-5">
+    <div class="space-y-4">
+        <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-                <h1 class="text-xl font-bold text-gray-900">Verifikasi Pembayaran & Bukti Transfer</h1>
-                <p class="text-xs text-gray-500 mt-0.5">Daftar transaksi masuk calon peserta untuk pelatihan & sertifikasi</p>
+                <h1 class="text-xl font-semibold text-gray-900">Pembayaran & Bukti Transfer</h1>
+                <p class="text-xs text-gray-500 mt-0.5">Kelola verifikasi transfer peserta dan pencatatan deal akademi</p>
             </div>
             <button @click="emit('navigate', '/payments/create')"
-                class="px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm flex items-center justify-center gap-1.5">
-                <span>+</span> Kirim Bukti Bayar
+                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-600 rounded-full hover:bg-orange-700 transition-colors shadow-sm">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                Input Pembayaran
             </button>
         </div>
 
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+        <!-- Filter Card -->
+        <div class="bg-white border border-blue-100 p-3.5 shadow-sm">
+            <form @submit.prevent="loadPayments(1)" class="flex flex-wrap items-center gap-2.5">
+                <select v-model="status" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                    <option value="">Semua Status Pembayaran</option>
+                    <option value="pending">Menunggu Verifikasi</option>
+                    <option value="valid">Valid / Diterima</option>
+                    <option value="invalid">Tidak Valid</option>
+                    <option value="recheck">Perlu Cek Ulang</option>
+                </select>
+                <button type="submit" class="text-xs bg-orange-600 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-700">
+                    Filter
+                </button>
+                <button v-if="status" @click="resetFilter" type="button" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">
+                    Reset
+                </button>
+            </form>
+        </div>
+
+        <!-- Table Card -->
+        <div class="bg-white border border-blue-100 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
-                    <thead class="bg-gray-50/80 text-gray-400 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
+                <table class="w-full min-w-[640px] text-left text-xs text-gray-600">
+                    <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-medium uppercase tracking-wider text-[11px]">
                         <tr>
-                            <th class="p-4">Kode Bayar</th>
-                            <th class="p-4">Peserta / Program</th>
-                            <th class="p-4">Nominal Bayar</th>
-                            <th class="p-4">Metode & Rekening</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4 text-right">Aksi</th>
+                            <th class="py-3 px-4">Tanggal & Peserta</th>
+                            <th class="py-3 px-4">Program Pelatihan</th>
+                            <th class="py-3 px-4">Nominal</th>
+                            <th class="py-3 px-4">Metode / Bank</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4 text-right">Aksi</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-50 text-gray-700">
+                    <tbody class="divide-y divide-gray-100">
                         <tr v-if="loading">
-                            <td colspan="6" class="p-8 text-center text-gray-400 text-xs">Memuat data pembayaran...</td>
+                            <td colspan="6" class="py-8 text-center text-gray-400">Memuat pembayaran...</td>
                         </tr>
                         <tr v-else-if="payments.length === 0">
-                            <td colspan="6" class="p-8 text-center text-gray-400 text-xs">Belum ada transaksi pembayaran.</td>
+                            <td colspan="6" class="py-8 text-center text-gray-400">Belum ada riwayat pembayaran</td>
                         </tr>
-                        <tr v-for="p in payments" :key="p.id" class="hover:bg-gray-50/50 transition-colors">
-                            <td class="p-4">
-                                <span class="font-bold text-gray-900 block">#{{ p.id }}</span>
-                                <span class="text-[10px] text-gray-400">{{ p.created_at ? new Date(p.created_at).toLocaleDateString('id-ID') : '-' }}</span>
+                        <tr v-for="p in payments" :key="p.id" class="hover:bg-blue-50/30 transition-colors">
+                            <td class="py-3 px-4">
+                                <div class="font-semibold text-gray-900">{{ p.lead?.name || 'Peserta' }}</div>
+                                <div class="text-[11px] text-gray-400">{{ formatDate(p.payment_date || p.created_at) }}</div>
                             </td>
-                            <td class="p-4">
-                                <span class="font-bold text-gray-900 block">{{ p.lead?.name || 'Peserta' }}</span>
-                                <span class="text-[10px] text-gray-500">{{ p.lead?.product?.name || 'Program Akademi' }}</span>
+                            <td class="py-3 px-4">
+                                {{ p.product?.name || (p.lead?.product?.name || '-') }}
                             </td>
-                            <td class="p-4 font-black text-emerald-600">
+                            <td class="py-3 px-4 font-bold text-gray-900">
                                 {{ formatCurrency(p.amount) }}
                             </td>
-                            <td class="p-4 text-gray-600">
-                                <span class="font-bold">{{ p.bank_name || 'BCA' }}</span>
-                                <span class="text-[10px] text-gray-400 block">a.n. {{ p.sender_name || '-' }}</span>
+                            <td class="py-3 px-4">
+                                <div>{{ p.bank_name || (p.payment_method ? (p.payment_method.charAt(0).toUpperCase() + p.payment_method.slice(1)) : 'Transfer') }}</div>
+                                <div v-if="p.account_name" class="text-[11px] text-gray-400">a.n {{ p.account_name }}</div>
                             </td>
-                            <td class="p-4">
-                                <Badge :status="p.status || 'valid'" />
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-0.5 text-[10px] font-medium border" :class="statusBadgeClass(p.status)">
+                                    {{ p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : '-' }}
+                                </span>
                             </td>
-                            <td class="p-4 text-right space-x-2">
-                                <button v-if="p.proof_url || p.proof_image" @click="viewProof(p.proof_url || p.proof_image)" class="font-bold text-gray-500 hover:text-gray-900">
-                                    Bukti
+                            <td class="py-3 px-4 text-right">
+                                <button v-if="isAdmin" @click="emit('navigate', `/payments/${p.id}`)"
+                                    class="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded">
+                                    Verifikasi
                                 </button>
-                                <template v-if="isAdmin && p.status === 'pending'">
-                                    <button @click="verifyPayment(p.id, 'valid')" class="font-bold text-emerald-600 hover:text-emerald-700">Setujui</button>
-                                    <button @click="verifyPayment(p.id, 'rejected')" class="font-bold text-red-600 hover:text-red-700">Tolak</button>
-                                </template>
+                                <button v-else @click="emit('navigate', `/payments/${p.id}`)"
+                                    class="inline-flex items-center gap-1 text-xs font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded">
+                                    Detail
+                                </button>
                             </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <div class="p-4">
-                <Pagination :meta="pagination" :loading="loading" @change-page="loadPayments" />
+            <div v-if="pagination.total > 0" class="p-3 border-t border-gray-100 flex items-center justify-between">
+                <Pagination :pagination="pagination" @page="loadPayments" />
             </div>
         </div>
-
-        <Modal :show="showModal" title="Bukti Transfer Pembayaran" @close="showModal = false">
-            <div class="text-center">
-                <img :src="previewImage" alt="Bukti Transfer" class="max-h-[70vh] mx-auto rounded-xl object-contain border border-gray-100" />
-            </div>
-        </Modal>
     </div>
 </template>

@@ -24,70 +24,101 @@
             const user = App.state.user || {};
             const isAdmin = user.role === 'admin';
 
-            const rows = items.map(inst => `
-                <tr class="hover:bg-orange-50/20 transition-colors">
-                    <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
-                        ${inst.name}
-                        ${inst.industry ? `<p class="text-[10px] text-gray-400 font-normal mt-0.5">${inst.industry}</p>` : ''}
-                    </td>
+            const rowsHtml = items.length === 0
+                ? `<tr><td colspan="5" class="py-8 text-center text-gray-400">Belum ada data instansi mitra</td></tr>`
+                : items.map(inst => `
+                    <tr class="hover:bg-orange-50/20 transition-colors">
+                        <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
+                            ${inst.name}
+                            ${(inst.email || inst.phone) ? `
+                                <p class="text-[11px] text-gray-400 font-normal mt-0.5">
+                                    ${[inst.email, inst.phone].filter(Boolean).join(' · ')}
+                                </p>
+                            ` : ''}
+                        </td>
 
-                    <td class="py-3.5 px-4">
-                        <span class="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">
-                            ${inst.type || 'Mitra'}
-                        </span>
-                    </td>
+                        <td class="py-3.5 px-4">
+                            <span class="inline-block px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-700">
+                                ${inst.type || 'Perguruan Tinggi'}
+                            </span>
+                        </td>
 
-                    <td class="py-3.5 px-4 text-xs text-gray-600">
-                        ${[inst.city, inst.province].filter(Boolean).join(', ') || '-'}
-                    </td>
+                        <td class="py-3.5 px-4 text-xs text-gray-600">
+                            ${inst.city ? `${inst.city} ${inst.province ? `, ${inst.province}` : ''}` : '-'}
+                        </td>
 
-                    <td class="py-3.5 px-4 text-xs">
-                        <p class="text-gray-900">${inst.phone || '-'}</p>
-                        <p class="text-[10px] text-gray-400">${inst.email || '-'}</p>
-                    </td>
+                        <td class="py-3.5 px-4 text-xs font-semibold text-blue-600">
+                            <a href="/customers?institution_id=${inst.id}" onclick="event.preventDefault(); App.navigate('/customers?institution_id=${inst.id}')"
+                               class="hover:underline">
+                                ${inst.customers_count ?? (inst.customers ? inst.customers.length : 0)} customer
+                            </a>
+                        </td>
 
-                    <td class="py-3.5 px-4 text-right space-x-1 whitespace-nowrap">
-                        ${isAdmin ? `
-                            <button onclick="App.navigate('/institutions/${inst.id}/edit')" class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 inline-block" title="Edit">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                            </button>
-                            <button onclick="App.pages.institutions.deleteInstitution(${inst.id})" class="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 inline-block" title="Hapus">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                            </button>
-                        ` : ''}
-                    </td>
-                </tr>
-            `);
+                        <td class="py-3.5 px-4 text-right space-x-2 whitespace-nowrap text-gray-400">
+                            ${isAdmin ? `
+                                <a href="/institutions/${inst.id}/edit" onclick="event.preventDefault(); App.navigate('/institutions/${inst.id}/edit')"
+                                   class="hover:text-orange-600 inline-block" title="Edit">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                </a>
+                                <button onclick="App.pages.institutions.deleteInstitution(${inst.id})" class="hover:text-red-600 inline-block" title="Hapus">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                            ` : ''}
+                        </td>
+                    </tr>
+                `).join('');
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Daftar Instansi & Mitra Kerjasama',
-                        'Kelola data universitas, kantor pemerintahan, BUMN, dan perusahaan swasta',
-                        isAdmin ? `<button onclick="App.navigate('/institutions/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Tambah Instansi
-                        </button>` : ''
-                    )}
-
-                    <!-- Search Bar -->
-                    <div class="flex items-center gap-2 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
-                        <div class="flex-1 relative">
-                            <input type="text" id="inst-search" value="${this.state.search}" placeholder="Cari nama instansi, tipe, atau kota..."
-                                   class="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-orange-500 outline-none"
-                                   onkeydown="if(event.key==='Enter') App.pages.institutions.handleSearch()">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Daftar Instansi</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Kelola data instansi, perusahaan, kampus, atau organisasi mitra.</p>
                         </div>
-                        <button onclick="App.pages.institutions.handleSearch()" class="px-4 py-1.5 rounded-xl bg-gray-900 text-white font-semibold text-xs hover:bg-black">
-                            Cari
-                        </button>
+                        <div>
+                            <a href="/institutions/create" onclick="event.preventDefault(); App.navigate('/institutions/create')"
+                               class="px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 shadow-xs transition-colors inline-block">
+                                + Tambah Instansi
+                            </a>
+                        </div>
                     </div>
 
-                    ${App.tableShell(
-                        ['Nama Instansi', 'Jenis Lembaga', 'Kota & Provinsi', 'Kontak', 'Aksi'],
-                        rows,
-                        'Belum ada data instansi mitra.'
-                    )}
+                    <!-- Filter Card (Sesuai Screenshot 9) -->
+                    <div class="bg-white border border-gray-100 p-3.5 rounded-xl shadow-xs">
+                        <div class="flex flex-col sm:flex-row items-center gap-2.5">
+                            <div class="relative flex-1 w-full">
+                                <input type="text" id="inst-search" value="${this.state.search}"
+                                       placeholder="Cari instansi, kota, atau jenis instansi..."
+                                       class="w-full text-xs border border-gray-200 rounded-lg px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500"
+                                       onkeydown="if(event.key==='Enter') App.pages.institutions.handleSearch()">
+                            </div>
+                            <button onclick="App.pages.institutions.handleSearch()"
+                                    class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-600 rounded-lg hover:bg-orange-500 shadow-xs transition-colors whitespace-nowrap">
+                                Cari
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table Card (Sesuai Screenshot 9) -->
+                    <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[700px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3.5 px-4">INSTANSI</th>
+                                        <th class="py-3.5 px-4">JENIS</th>
+                                        <th class="py-3.5 px-4">KOTA</th>
+                                        <th class="py-3.5 px-4">CUSTOMER</th>
+                                        <th class="py-3.5 px-4 text-right">AKSI</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     ${App.pagination(meta)}
                 </div>

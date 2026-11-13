@@ -13,13 +13,6 @@
       "_api.js"
     ]
   },
-  "_StatCard.js": {
-    "file": "assets/StatCard.js",
-    "name": "StatCard",
-    "imports": [
-      "_api.js"
-    ]
-  },
   "_api.js": {
     "file": "assets/api.js",
     "name": "api"
@@ -69,8 +62,7 @@
     "imports": [
       "_api.js",
       "resources/js/app.js",
-      "_Pagination.js",
-      "_Badge.js"
+      "_Pagination.js"
     ]
   },
   "resources/js/Pages/Commissions/Index.vue": {
@@ -80,9 +72,8 @@
     "isDynamicEntry": true,
     "imports": [
       "_api.js",
-      "_Pagination.js",
-      "_Badge.js",
-      "_StatCard.js"
+      "resources/js/app.js",
+      "_Pagination.js"
     ]
   },
   "resources/js/Pages/Customers/Create.vue": {
@@ -113,8 +104,7 @@
     "imports": [
       "_api.js",
       "resources/js/app.js",
-      "_Pagination.js",
-      "_Badge.js"
+      "_Pagination.js"
     ]
   },
   "resources/js/Pages/Customers/Show.vue": {
@@ -134,8 +124,7 @@
     "isDynamicEntry": true,
     "imports": [
       "_api.js",
-      "resources/js/app.js",
-      "_StatCard.js"
+      "resources/js/app.js"
     ]
   },
   "resources/js/Pages/FollowUps/Create.vue": {
@@ -166,8 +155,7 @@
     "imports": [
       "_api.js",
       "resources/js/app.js",
-      "_Pagination.js",
-      "_Badge.js"
+      "_Pagination.js"
     ]
   },
   "resources/js/Pages/Imports/Create.vue": {
@@ -187,8 +175,7 @@
     "isDynamicEntry": true,
     "imports": [
       "_api.js",
-      "_Pagination.js",
-      "_Badge.js"
+      "_Pagination.js"
     ]
   },
   "resources/js/Pages/Imports/Show.vue": {
@@ -291,8 +278,8 @@
     "isDynamicEntry": true,
     "imports": [
       "_api.js",
-      "_Pagination.js",
-      "_Badge.js"
+      "resources/js/app.js",
+      "_Pagination.js"
     ]
   },
   "resources/js/Pages/Payments/Show.vue": {
@@ -408,8 +395,7 @@
     "imports": [
       "_api.js",
       "resources/js/app.js",
-      "_Pagination.js",
-      "_Badge.js"
+      "_Pagination.js"
     ]
   },
   "resources/js/Pages/TrainingSchedules/Create.vue": {
@@ -470,7 +456,6 @@
     "isDynamicEntry": true,
     "imports": [
       "_api.js",
-      "resources/js/app.js",
       "_Pagination.js"
     ]
   },

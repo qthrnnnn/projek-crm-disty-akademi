@@ -65,24 +65,24 @@
             const isAdmin = user.role === 'admin';
 
             const scopeTabs = `
-                <div class="flex items-center gap-1 p-1 bg-gray-100 rounded-xl mb-4 overflow-x-auto text-xs">
-                    <button type="button" onclick="App.pages.leads.setScope('all')"
-                            class="px-3.5 py-1.5 rounded-lg font-semibold transition-all shrink-0 ${this.state.scopeTab === 'all' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'}">
-                        Semua Lead
-                    </button>
+                <div class="flex items-center gap-2 overflow-x-auto pb-1 border-b border-gray-200 text-xs">
                     ${!isAdmin ? `
                         <button type="button" onclick="App.pages.leads.setScope('my')"
-                                class="px-3.5 py-1.5 rounded-lg font-semibold transition-all shrink-0 ${this.state.scopeTab === 'my' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'}">
-                            Lead Saya
+                                class="px-3.5 py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${this.state.scopeTab === 'my' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'}">
+                            <span>Lead Saya</span>
                         </button>
                     ` : ''}
                     <button type="button" onclick="App.pages.leads.setScope('unassigned')"
-                            class="px-3.5 py-1.5 rounded-lg font-semibold transition-all shrink-0 ${this.state.scopeTab === 'unassigned' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'}">
-                        Belum Ditugaskan (Pool)
+                            class="px-3.5 py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${this.state.scopeTab === 'unassigned' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'}">
+                        <span>Belum Ditugaskan (Pool Lead)</span>
                     </button>
                     <button type="button" onclick="App.pages.leads.setScope('lost')"
-                            class="px-3.5 py-1.5 rounded-lg font-semibold transition-all shrink-0 ${this.state.scopeTab === 'lost' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-500 hover:text-gray-900'}">
-                        Lost / Siap Re-claim
+                            class="px-3.5 py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${this.state.scopeTab === 'lost' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'}">
+                        <span>Lost / Siap Follow-up Ulang</span>
+                    </button>
+                    <button type="button" onclick="App.pages.leads.setScope('all')"
+                            class="px-3.5 py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 ${this.state.scopeTab === 'all' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'}">
+                        <span>Semua Lead</span>
                     </button>
                 </div>
             `;
@@ -102,58 +102,74 @@
                         <td class="py-3.5 px-4">
                             <div class="flex items-center gap-2">
                                 <a href="/leads/${item.id}" onclick="event.preventDefault(); App.navigate('/leads/${item.id}')"
-                                   class="font-bold text-gray-900 hover:text-orange-600 block text-xs">${item.name || '-'}</a>
-                                ${isOwner ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700">PIC Saya</span>' : ''}
+                                   class="font-semibold text-gray-900 hover:text-orange-600 transition-colors text-xs">${item.name || '-'}</a>
+                                ${isOwner ? '<span class="px-1.5 py-0.2 text-[9.5px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">PIC Saya</span>' : ''}
                             </div>
-                            <p class="text-[10px] text-gray-400 font-mono mt-0.5">${item.lead_code || '-'}${item.company ? ' · ' + item.company : ''}</p>
+                            <div class="flex items-center gap-1.5 text-[11px] text-gray-400 mt-0.5 font-mono">
+                                <span>${item.lead_code || '-'}</span>
+                                ${item.company || item.institution ? `
+                                    <span class="text-gray-300">•</span>
+                                    <span class="text-gray-500 font-sans truncate max-w-[180px]">${item.company || item.institution}</span>
+                                ` : ''}
+                            </div>
                         </td>
 
                         <td class="py-3.5 px-4 text-xs">
-                            ${waLink ? `
-                                <a href="https://wa.me/${waLink}" target="_blank" class="inline-flex items-center gap-1 text-emerald-600 font-semibold hover:underline">
+                            <div class="flex items-center gap-1 font-medium text-gray-800">
+                                ${item.whatsapp || item.phone ? `
+                                    <span class="text-emerald-600 font-bold text-[10px]">WA</span>
                                     <span>${item.whatsapp || item.phone}</span>
-                                </a>
-                            ` : `<span class="text-gray-400">${item.phone || '-'}</span>`}
-                            <p class="text-[10px] text-gray-400">${item.email || '-'}</p>
+                                ` : '<span class="text-gray-400">-</span>'}
+                            </div>
+                            <div class="text-[11px] text-gray-400 truncate max-w-[160px]">${item.email || '-'}</div>
                         </td>
 
                         <td class="py-3.5 px-4 text-xs">
-                            <p class="font-semibold text-gray-800">${item.product?.name || item.product_name || 'Program Pelatihan'}</p>
-                            <p class="text-[10.5px] text-emerald-600 font-bold mt-0.5">${App.formatRupiah(dealPrice)}</p>
-                            <span class="text-[9.5px] text-gray-400">Est. Komisi 10%: ${App.formatRupiah(estCommission)}</span>
+                            <span class="font-medium text-gray-900 block">${item.product?.name || item.product_name || 'Operator Komputer'}</span>
+                            ${item.deal_price ? `
+                                <div class="text-[11px] text-orange-600 font-semibold mt-0.5">
+                                    Deal: ${App.formatRupiah(item.deal_price)}
+                                    ${item.product?.price ? `<span class="text-[10px] text-gray-400 font-normal line-through ml-1">${App.formatRupiah(item.product.price)}</span>` : ''}
+                                </div>
+                            ` : (item.product?.price ? `
+                                <span class="text-[11px] text-gray-400 block mt-0.5">Harga: ${App.formatRupiah(item.product.price)}</span>
+                            ` : '')}
+                            <div class="text-[10px] text-emerald-600 font-medium">Komisi 10%: ${App.formatRupiah(estCommission)}</div>
                         </td>
 
                         <td class="py-3.5 px-4 text-xs">
                             ${item.assigned_to ? `
-                                <div class="flex items-center gap-1.5">
-                                    <div class="w-5 h-5 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center text-[9px] font-bold">
-                                        ${(item.assigned_user?.name || 'S').charAt(0)}
-                                    </div>
-                                    <span class="text-gray-800 font-medium">${item.assigned_user?.name || 'Sales PIC'}</span>
+                                <div class="inline-flex items-center gap-1.5">
+                                    <span class="w-5 h-5 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-[10px] font-bold">
+                                        ${((item.assigned_user?.name || 'S').charAt(0)).toUpperCase()}
+                                    </span>
+                                    <span class="font-medium text-gray-700 text-xs">${item.assigned_user?.name || 'Sales PIC'}</span>
                                 </div>
                             ` : (canClaim ? `
                                 <button type="button" onclick="App.pages.leads.handleClaim(${item.id})"
-                                        class="px-2.5 py-1 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold text-[10px] shadow-xs">
+                                        class="px-2.5 py-1 text-[11px] font-bold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors shadow-2xs whitespace-nowrap">
                                     + Ambil Lead
                                 </button>
-                            ` : '<span class="text-gray-400 italic text-[11px]">Belum Ada PIC</span>')}
+                            ` : '<span class="inline-flex items-center px-2 py-0.5 text-[10px] font-medium bg-amber-50 text-amber-700 border border-amber-200">Belum Ada PIC</span>')}
                         </td>
 
                         <td class="py-3.5 px-4">
-                            ${App.statusBadge(item.status)}
+                            <span class="inline-flex items-center px-2 py-0.5 text-[11px] font-medium rounded-full ${item.status === 'won' ? 'bg-emerald-100 text-emerald-700' : (item.status === 'lost' ? 'bg-rose-100 text-rose-700' : 'bg-slate-100 text-slate-700')}">
+                                ${item.status === 'won' ? 'Berhasil (Closing)' : (item.status === 'lost' ? 'Ditolak' : (item.status === 'new' ? 'Baru' : item.status))}
+                            </span>
                         </td>
 
-                        <td class="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
-                            <a href="/leads/${item.id}" onclick="event.preventDefault(); App.navigate('/leads/${item.id}')"
-                               class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 inline-block" title="Detail">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            </a>
-                            ${(isAdmin || isOwner) ? `
-                                <a href="/leads/${item.id}/edit" onclick="event.preventDefault(); App.navigate('/leads/${item.id}/edit')"
-                                   class="p-1.5 rounded-lg text-gray-400 hover:text-orange-600 hover:bg-orange-50 inline-block" title="Edit">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                        <td class="py-3.5 px-4 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                <a href="/leads/${item.id}" onclick="event.preventDefault(); App.navigate('/leads/${item.id}')"
+                                   class="p-1.5 text-gray-400 hover:text-orange-600 rounded-lg hover:bg-orange-50 transition-colors" title="Detail">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                                 </a>
-                            ` : ''}
+                                <a href="/leads/${item.id}/edit" onclick="event.preventDefault(); App.navigate('/leads/${item.id}/edit')"
+                                   class="p-1.5 text-gray-400 hover:text-orange-600 rounded-lg hover:bg-orange-50 transition-colors" title="Edit">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                                </a>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -161,52 +177,93 @@
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Semua Leads & Prospek',
-                        'Daftar kontak calon peserta pelatihan & sertifikasi',
-                        `
-                            <button onclick="App.pages.leads.openImportModal()" class="px-3.5 py-2 rounded-xl border border-gray-200 text-gray-700 font-semibold text-xs hover:bg-gray-50 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                                Import CSV
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Manajemen Leads</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Kelola prospek dan calon peserta pelatihan (Aturan: 1 Lead = 1 Sales Eksklusif)</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2">
+                            <button type="button" onclick="App.navigate('/lead-imports')"
+                                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 hover:border-gray-300 shadow-2xs transition-all">
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                                Import CSV / Excel
                             </button>
-                            <button onclick="App.navigate('/leads/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            <a href="/api/leads/template"
+                               class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 shadow-2xs transition-all"
+                               title="Unduh Format Template CSV">
+                                <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                                Template
+                            </a>
+                            <button type="button" onclick="App.navigate('/leads/create')"
+                                    class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-xl hover:bg-orange-700 shadow-sm transition-all">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Tambah Lead
                             </button>
-                        `
-                    )}
+                        </div>
+                    </div>
 
                     ${scopeTabs}
 
-                    <!-- Search & Filter Bar -->
-                    <div class="flex flex-col sm:flex-row items-center gap-2 bg-white p-3 rounded-2xl border border-gray-100 shadow-2xs">
-                        <div class="flex-1 w-full relative">
-                            <input type="text" id="lead-search" value="${this.state.search}" placeholder="Cari nama, email, no HP, kode..."
-                                   class="w-full pl-9 pr-3 py-1.5 rounded-xl border border-gray-200 text-xs focus:ring-1 focus:ring-orange-500 outline-none"
-                                   onkeydown="if(event.key==='Enter') App.pages.leads.handleSearch()">
-                            <svg class="w-4 h-4 text-gray-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        </div>
-                        <select id="lead-status-filter" onchange="App.pages.leads.handleStatusFilter(this.value)"
-                                class="w-full sm:w-44 px-3 py-1.5 rounded-xl border border-gray-200 text-xs bg-white outline-none">
-                            <option value="">Semua Status</option>
-                            <option value="new" ${this.state.statusFilter === 'new' ? 'selected' : ''}>Baru</option>
-                            <option value="contacted" ${this.state.statusFilter === 'contacted' ? 'selected' : ''}>Dikontak</option>
-                            <option value="active" ${this.state.statusFilter === 'active' ? 'selected' : ''}>Aktif</option>
-                            <option value="negotiation" ${this.state.statusFilter === 'negotiation' ? 'selected' : ''}>Negosiasi</option>
-                            <option value="won" ${this.state.statusFilter === 'won' ? 'selected' : ''}>Berhasil (Won)</option>
-                            <option value="lost" ${this.state.statusFilter === 'lost' ? 'selected' : ''}>Ditolak (Lost)</option>
-                        </select>
-                        <button onclick="App.pages.leads.handleSearch()" class="px-4 py-1.5 rounded-xl bg-gray-900 text-white font-semibold text-xs hover:bg-black">
-                            Cari
-                        </button>
+                    <!-- Filter bar -->
+                    <div class="bg-white border border-gray-200 p-3.5 shadow-xs">
+                        <form onsubmit="event.preventDefault(); App.pages.leads.handleSearch();" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                            <div>
+                                <input type="text" id="lead-search" value="${this.state.search}" placeholder="Cari nama, email, hp, instansi..."
+                                       class="w-full text-xs border border-gray-200 px-3.5 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500">
+                            </div>
+                            <div>
+                                <select id="lead-status-filter" onchange="App.pages.leads.handleStatusFilter(this.value)"
+                                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                                    <option value="">Semua Status</option>
+                                    <option value="new" ${this.state.statusFilter === 'new' ? 'selected' : ''}>Baru</option>
+                                    <option value="contacted" ${this.state.statusFilter === 'contacted' ? 'selected' : ''}>Dikontak</option>
+                                    <option value="qualified" ${this.state.statusFilter === 'qualified' ? 'selected' : ''}>Aktif (Merespon)</option>
+                                    <option value="proposal" ${this.state.statusFilter === 'proposal' ? 'selected' : ''}>Negosiasi</option>
+                                    <option value="won" ${this.state.statusFilter === 'won' ? 'selected' : ''}>Berhasil (Closing)</option>
+                                    <option value="lost" ${this.state.statusFilter === 'lost' ? 'selected' : ''}>Ditolak</option>
+                                    <option value="invalid" ${this.state.statusFilter === 'invalid' ? 'selected' : ''}>Tidak Valid</option>
+                                </select>
+                            </div>
+                            <div>
+                                <select id="lead-assigned-filter" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                                    <option value="">Semua Sales PIC</option>
+                                    ${this.state.users.map(u => `<option value="${u.id}">${u.name}</option>`).join('')}
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <button type="submit" class="w-full text-xs bg-orange-600 hover:bg-orange-700 text-white font-medium py-2 px-3 rounded-xl transition-colors">
+                                    Filter
+                                </button>
+                                ${this.state.search || this.state.statusFilter ? `
+                                    <button type="button" onclick="App.pages.leads.handleReset()" class="p-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50" title="Reset">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </form>
                     </div>
 
-                    <!-- Table -->
-                    ${App.tableShell(
-                        ['Calon Pelanggan / Lead', 'Kontak', 'Program & Deal', 'Sales PIC', 'Status', 'Aksi'],
-                        rows,
-                        'Belum ada data lead pada kriteria ini.'
-                    )}
+                    <!-- Leads Table -->
+                    <div class="bg-white border border-gray-200 overflow-hidden shadow-xs">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-xs text-gray-600 min-w-[700px]">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3.5 px-4">Calon Pelanggan / Lead</th>
+                                        <th class="py-3.5 px-4">Kontak</th>
+                                        <th class="py-3.5 px-4">Program Minat</th>
+                                        <th class="py-3.5 px-4">Sales Penanggung Jawab</th>
+                                        <th class="py-3.5 px-4">Status Prospek</th>
+                                        <th class="py-3.5 px-4 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${rows.join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     ${App.pagination(meta)}
                 </div>

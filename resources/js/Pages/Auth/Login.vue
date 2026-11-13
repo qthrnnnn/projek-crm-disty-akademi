@@ -9,6 +9,7 @@ const password = ref('password');
 const remember = ref(false);
 const loading = ref(false);
 const error = ref('');
+const currentYear = new Date().getFullYear();
 
 async function submit() {
     loading.value = true;
@@ -30,7 +31,8 @@ async function submit() {
             <div class="bg-white border border-blue-100 p-8 shadow-sm">
                 <!-- Logo Disty Akademi -->
                 <div class="flex justify-center mb-6">
-                    <img src="/images/disty-logo.png" alt="Disty Akademi" class="h-12 w-auto object-contain" />
+                    <img src="/images/disty-logo.png" alt="Disty Akademi" class="h-12 w-auto object-contain"
+                         @error="(e) => { e.target.src = '/images/disty-icon.png'; }" />
                 </div>
 
                 <div class="text-center mb-6">
@@ -59,21 +61,20 @@ async function submit() {
 
                     <div class="flex items-center justify-between pt-1">
                         <label class="flex items-center gap-2 cursor-pointer text-gray-600">
-                            <input v-model="remember" type="checkbox" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
+                            <input type="checkbox" v-model="remember" class="h-4 w-4 border-gray-300 text-blue-600 focus:ring-blue-500" />
                             <span>Ingat saya</span>
                         </label>
                     </div>
 
                     <button type="submit" :disabled="loading"
                         class="w-full rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2.5 shadow-sm transition-colors text-xs mt-2 disabled:opacity-50">
-                        <span v-if="loading">Memverifikasi...</span>
-                        <span v-else>Masuk</span>
+                        <span>{{ loading ? 'Memverifikasi...' : 'Masuk' }}</span>
                     </button>
                 </form>
 
                 <div class="mt-6 pt-6 border-t border-gray-100 text-center">
                     <p class="text-[11px] text-gray-400">
-                        &copy; {{ new Date().getFullYear() }} Disty Akademi. All rights reserved.
+                        &copy; {{ currentYear }} Disty Akademi. All rights reserved.
                     </p>
                 </div>
             </div>

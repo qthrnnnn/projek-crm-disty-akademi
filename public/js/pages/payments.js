@@ -16,7 +16,10 @@
         },
 
         async loadList() {
-            const res = await api.list('payments', { page: this.state.page, per_page: 20 });
+            const params = { page: this.state.page, per_page: 20 };
+            if (this.state.statusFilter) params.status = this.state.statusFilter;
+
+            const res = await api.list('payments', params);
             const items = res.data || [];
             this.renderList(items, res);
         },
@@ -25,73 +28,125 @@
             const user = App.state.user || {};
             const isAdmin = user.role === 'admin';
 
-            const rows = items.map(p => {
-                const leadName = p.lead?.name || 'Lead #' + p.lead_id;
-                const isPending = p.status === 'pending' || p.status === 'recheck';
+            const statusStyles = {
+                valid: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                invalid: 'bg-red-50 text-red-700 border-red-200',
+                recheck: 'bg-orange-50 text-orange-700 border-orange-200',
+                pending: 'bg-amber-50 text-amber-700 border-amber-200',
+            };
 
-                return `
-                    <tr class="hover:bg-orange-50/20 transition-colors">
-                        <td class="py-3.5 px-4 text-xs font-mono font-bold text-gray-900">
-                            ${p.payment_code || '#' + p.id}
-                            <p class="text-[10px] text-gray-400 font-sans mt-0.5">${App.formatDate(p.payment_date || p.created_at)}</p>
-                        </td>
+            const rowsHtml = items.length === 0
+                ? `<tr><td colspan="6" class="py-12 text-center text-gray-400 text-xs">Belum ada pembayaran</td></tr>`
+                : items.map(p => {
+                    const leadName = p.lead?.name || 'Peserta #' + p.lead_id;
+                    const isPending = p.status === 'pending' || p.status === 'recheck';
 
-                        <td class="py-3.5 px-4 text-xs font-bold text-gray-900">
-                            <a href="/leads/${p.lead_id}" onclick="event.preventDefault(); App.navigate('/leads/${p.lead_id}')" class="hover:text-orange-600">
-                                ${leadName}
-                            </a>
-                            <p class="text-[10px] text-gray-400 font-normal mt-0.5">${p.product?.name || 'Program Akademi'}</p>
-                        </td>
+                    return `
+                        <tr class="hover:bg-blue-50/20 transition-colors">
+                            <td class="py-3 px-4">
+                                <a href="/leads/${p.lead_id}" onclick="event.preventDefault(); App.navigate('/leads/${p.lead_id}')"
+                                   class="font-semibold text-gray-900 hover:text-orange-600 block text-xs">${leadName}</a>
+                                <div class="text-[11px] text-gray-400 font-normal">${App.formatDate(p.payment_date || p.created_at)}</div>
+                            </td>
 
-                        <td class="py-3.5 px-4 text-xs font-extrabold text-emerald-600">
-                            ${App.formatRupiah(p.amount)}
-                        </td>
+                            <td class="py-3 px-4 text-xs font-medium text-gray-800">
+                                ${p.product?.name || (p.lead?.product?.name ?? '-')}
+                            </td>
 
-                        <td class="py-3.5 px-4 text-xs text-gray-700">
-                            <span class="font-medium">${p.bank_name || p.payment_method || 'Transfer Bank'}</span>
-                            ${p.account_name ? `<p class="text-[10px] text-gray-400">a.n. ${p.account_name}</p>` : ''}
-                        </td>
+                            <td class="py-3 px-4 text-xs font-bold text-gray-900">
+                                ${App.formatRupiah(p.amount)}
+                            </td>
 
-                        <td class="py-3.5 px-4">
-                            ${App.statusBadge(p.status || 'pending')}
-                        </td>
+                            <td class="py-3 px-4 text-xs">
+                                <div class="text-gray-800 font-medium">${p.bank_name || (p.payment_method ? p.payment_method.charAt(0).toUpperCase() + p.payment_method.slice(1) : 'Transfer')}</div>
+                                <div class="text-[11px] text-gray-400">${p.account_name ? 'a.n ' + p.account_name : ''}</div>
+                            </td>
 
-                        <td class="py-3.5 px-4 text-right space-x-1.5 whitespace-nowrap">
-                            <a href="/payments/${p.id}" onclick="event.preventDefault(); App.navigate('/payments/${p.id}')"
-                               class="p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 inline-block" title="Lihat Bukti">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                            </a>
-                            ${(isAdmin && isPending) ? `
-                                <button onclick="App.pages.payments.verify(${p.id})"
-                                        class="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[10px] shadow-xs">
-                                    Verifikasi
-                                </button>
-                            ` : ''}
-                        </td>
-                    </tr>
-                `;
-            });
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-0.5 text-[10px] font-semibold border rounded ${statusStyles[p.status] || 'bg-gray-50 border-gray-200'}">
+                                    ${(p.status || '').charAt(0).toUpperCase() + (p.status || '').slice(1)}
+                                </span>
+                            </td>
+
+                            <td class="py-3 px-4 text-right space-x-2 whitespace-nowrap">
+                                <a href="/payments/${p.id}" onclick="event.preventDefault(); App.navigate('/payments/${p.id}')"
+                                   class="text-xs text-blue-600 hover:text-blue-800 font-medium p-1">Detail</a>
+                                ${(isAdmin && isPending) ? `
+                                    <button onclick="App.pages.payments.verify(${p.id})"
+                                            class="px-2.5 py-1 rounded bg-orange-600 hover:bg-orange-500 text-white font-semibold text-xs shadow-xs">
+                                        Verifikasi
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
 
             this.container.innerHTML = `
                 <div class="space-y-4">
-                    ${App.pageHeader(
-                        'Verifikasi Pembayaran & Bukti Transfer',
-                        'Daftar transaksi masuk calon peserta untuk pelatihan & sertifikasi',
-                        `<button onclick="App.navigate('/payments/create')" class="px-4 py-2 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-semibold text-xs shadow-sm flex items-center gap-1.5">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                            Kirim Bukti Bayar
-                        </button>`
-                    )}
+                    <!-- Header -->
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">Pembayaran & Bukti Transfer</h1>
+                            <p class="text-xs text-gray-500 mt-0.5">Kelola verifikasi transfer peserta dan pencatatan deal akademi</p>
+                        </div>
+                        <div>
+                            <a href="/payments/create" onclick="event.preventDefault(); App.navigate('/payments/create')"
+                               class="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-orange-600 rounded-full hover:bg-orange-500 transition-colors shadow-xs">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                                Input Pembayaran
+                            </a>
+                        </div>
+                    </div>
 
-                    ${App.tableShell(
-                        ['Kode Bayar', 'Peserta / Program', 'Nominal Bayar', 'Metode & Rekening', 'Status', 'Aksi'],
-                        rows,
-                        'Belum ada transaksi pembayaran yang tercatat.'
-                    )}
+                    <!-- Filter Card -->
+                    <div class="bg-white border border-gray-100 p-3.5 rounded-xl shadow-xs">
+                        <div class="flex flex-wrap items-center gap-2.5">
+                            <select id="pay-status" class="text-xs border border-gray-200 rounded-lg px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500"
+                                    onchange="App.pages.payments.handleStatusChange(this.value)">
+                                <option value="">Semua Status Pembayaran</option>
+                                <option value="pending" ${this.state.statusFilter === 'pending' ? 'selected' : ''}>Menunggu Verifikasi</option>
+                                <option value="valid" ${this.state.statusFilter === 'valid' ? 'selected' : ''}>Valid / Diterima</option>
+                                <option value="invalid" ${this.state.statusFilter === 'invalid' ? 'selected' : ''}>Tidak Valid</option>
+                                <option value="recheck" ${this.state.statusFilter === 'recheck' ? 'selected' : ''}>Perlu Cek Ulang</option>
+                            </select>
+                            <button onclick="App.pages.payments.loadList()"
+                                    class="text-xs bg-orange-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-orange-500 shadow-xs transition-colors">
+                                Filter
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table Card -->
+                    <div class="bg-white border border-gray-100 rounded-xl overflow-hidden shadow-xs">
+                        <div class="overflow-x-auto">
+                            <table class="w-full min-w-[640px] text-left text-xs text-gray-600">
+                                <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                                    <tr>
+                                        <th class="py-3 px-4">Tanggal & Peserta</th>
+                                        <th class="py-3 px-4">Program Pelatihan</th>
+                                        <th class="py-3 px-4">Nominal</th>
+                                        <th class="py-3 px-4">Metode / Bank</th>
+                                        <th class="py-3 px-4">Status</th>
+                                        <th class="py-3 px-4 text-right">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-100">
+                                    ${rowsHtml}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
 
                     ${App.pagination(meta)}
                 </div>
             `;
+        },
+
+        handleStatusChange(val) {
+            this.state.statusFilter = val;
+            this.state.page = 1;
+            this.loadList();
         },
 
         goToPage(page) {
