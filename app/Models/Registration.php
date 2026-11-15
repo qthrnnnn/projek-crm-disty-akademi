@@ -13,6 +13,7 @@ class Registration extends Model
     protected $fillable = [
         'registration_number',
         'customer_id',
+        'user_id',
         'product_id',
         'training_schedule_id',
         'training_date',
@@ -21,7 +22,7 @@ class Registration extends Model
         'notes',
     ];
 
-    protected $appends = ['product_name', 'schedule_info'];
+    protected $appends = ['product_name', 'schedule_info', 'sales_name', 'sales_pic'];
 
     protected function casts(): array
     {
@@ -31,9 +32,55 @@ class Registration extends Model
         ];
     }
 
+    protected static function booted(): void
+    {
+        static::creating(function (Registration $registration) {
+            if (empty($registration->registration_number)) {
+                $registration->registration_number = static::generateNumber();
+            }
+
+            // HANYA berstatus confirmed jika customer/lead benar-benar memiliki pembayaran valid yang di-ACC admin
+            if ($registration->customer_id) {
+                $customer = Customer::find($registration->customer_id);
+                if ($customer) {
+                    $hasValidPayment = Payment::where('lead_id', $customer->lead_id)->where('status', 'valid')->exists()
+                        || Payment::whereHas('lead', fn ($q) => $q->where('phone', $customer->phone))->where('status', 'valid')->exists();
+
+                    if ($hasValidPayment) {
+                        if (! $registration->status || $registration->status === 'registered') {
+                            $registration->status = 'confirmed';
+                        }
+                    } else {
+                        // Jangan biarkan status confirmed jika pembayaran belum di-ACC admin
+                        if (empty($registration->status) || $registration->status === 'confirmed') {
+                            $registration->status = 'registered';
+                        }
+                    }
+                }
+            }
+        });
+    }
+
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function getSalesNameAttribute(): ?string
+    {
+        return $this->customer?->lead?->assignedUser?->name
+            ?? $this->user?->name
+            ?? 'Admin';
+    }
+
+    public function getSalesPicAttribute(): ?string
+    {
+        return $this->getSalesNameAttribute();
     }
 
     public function product(): BelongsTo

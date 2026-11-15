@@ -25,6 +25,15 @@ function formatCurrency(val) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 }
 
+function getProofSrc(p) {
+    if (!p) return '';
+    if (p.proof_url) return p.proof_url;
+    if (p.proof_file) {
+        return p.proof_file.startsWith('http') ? p.proof_file : `/storage/${p.proof_file}`;
+    }
+    return p.proof_image || '';
+}
+
 async function loadPayment() {
     loading.value = true;
     error.value = '';
@@ -42,6 +51,10 @@ async function loadPayment() {
 }
 
 async function submitVerification() {
+    if (statusForm.value.status === 'invalid' && !statusForm.value.verification_notes.trim()) {
+        alert('Mohon cantumkan keterangan/alasan penolakan agar sales mengetahui alasan bukti tidak valid.');
+        return;
+    }
     saving.value = true;
     try {
         await api.update('payments', props.id, {
@@ -49,7 +62,13 @@ async function submitVerification() {
             verification_notes: statusForm.value.verification_notes,
         });
         await loadPayment();
-        alert('Status verifikasi berhasil disimpan!');
+        if (statusForm.value.status === 'valid') {
+            alert('Status verifikasi berhasil disimpan! Pembayaran valid dan pendaftaran peserta terkonfirmasi.');
+        } else if (statusForm.value.status === 'invalid') {
+            alert('Bukti pembayaran ditolak (tidak valid). Notifikasi dan keterangan alasan telah dikirimkan ke akun sales penanggung jawab.');
+        } else {
+            alert('Hasil verifikasi berhasil disimpan.');
+        }
     } catch (err) {
         alert(err.message || 'Gagal menyimpan status verifikasi.');
     } finally {
@@ -75,11 +94,11 @@ onMounted(() => {
         </div>
 
         <div v-if="loading" class="text-center py-16 text-gray-400 text-xs">Memuat detail pembayaran...</div>
-        <div v-else-if="error" class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">{{ error }}</div>
+        <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 text-red-700 text-xs">{{ error }}</div>
 
         <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <!-- Detail transaksi -->
-            <div class="bg-white border border-blue-100 p-5 shadow-xs space-y-3 text-xs rounded-xl">
+            <div class="bg-white border border-blue-100 p-5 shadow-xs space-y-3 text-xs">
                 <h3 class="font-semibold text-gray-900 text-sm border-b border-gray-100 pb-2">Detail Transaksi</h3>
                 <div class="space-y-2.5">
                     <div>
@@ -94,8 +113,22 @@ onMounted(() => {
                         <span class="font-semibold text-gray-800">{{ payment.product?.name || (payment.lead?.product?.name || '-') }}</span>
                     </div>
                     <div>
-                        <span class="text-gray-400 block text-[11px]">Nominal Transfer</span>
+                        <span class="text-gray-400 block text-[11px]">Nominal Transfer Customer</span>
                         <span class="text-base font-bold text-emerald-600">{{ formatCurrency(payment.amount) }}</span>
+                        <div v-if="payment.product?.price || payment.lead?.product?.price" class="text-[11px] text-gray-500 mt-1.5 bg-gray-50 p-2.5 border border-gray-100 space-y-1">
+                            <div class="flex justify-between">
+                                <span>Harga Resmi Katalog (Disty):</span>
+                                <span class="font-medium text-gray-700">{{ formatCurrency(payment.product?.price || payment.lead?.product?.price) }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Hak Komisi Sales (10%):</span>
+                                <span class="font-medium text-emerald-600">{{ formatCurrency(Math.round((payment.product?.price || payment.lead?.product?.price || 0) * 0.10)) }}</span>
+                            </div>
+                            <div class="flex justify-between border-t border-gray-200 pt-1 font-semibold text-gray-900">
+                                <span>Total Ditransfer Customer:</span>
+                                <span>{{ formatCurrency(payment.amount) }}</span>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <span class="text-gray-400 block text-[11px]">Metode / Bank / Rekening</span>
@@ -121,39 +154,64 @@ onMounted(() => {
 
             <!-- Bukti Transfer & Form Verifikasi -->
             <div class="space-y-4">
-                <div class="bg-white border border-blue-100 p-5 shadow-xs space-y-3 text-xs rounded-xl">
-                    <h3 class="font-semibold text-gray-900 text-sm border-b border-gray-100 pb-2">Bukti Struk Transfer</h3>
-                    <div v-if="payment.proof_file || payment.proof_url || payment.proof_image" class="border border-gray-100 overflow-hidden bg-gray-50 rounded-lg">
-                        <img :src="payment.proof_url || (payment.proof_file ? `/storage/${payment.proof_file}` : payment.proof_image)" alt="Bukti Transfer" class="w-full h-48 object-contain">
+                <div class="bg-white border border-blue-100 p-5 shadow-xs space-y-3 text-xs">
+                    <div class="flex items-center justify-between border-b border-gray-100 pb-2">
+                        <h3 class="font-semibold text-gray-900 text-sm">Bukti Struk Transfer</h3>
+                        <a v-if="getProofSrc(payment)" :href="getProofSrc(payment)" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-orange-600 hover:text-orange-700 hover:underline">
+                            Buka Gambar Penuh
+                        </a>
                     </div>
-                    <div v-else class="h-32 bg-gray-50 flex items-center justify-center text-gray-400 text-xs rounded-lg">
+                    <div v-if="getProofSrc(payment)" class="border border-gray-200 overflow-hidden bg-gray-50 p-2 flex flex-col items-center">
+                        <a :href="getProofSrc(payment)" target="_blank" rel="noopener noreferrer" class="block w-full text-center group cursor-zoom-in">
+                            <img :src="getProofSrc(payment)" alt="Bukti Transfer" class="w-full max-h-72 object-contain mx-auto transition-transform group-hover:scale-[1.01]">
+                        </a>
+                        <p class="text-[11px] text-gray-400 mt-2">Klik gambar untuk melihat dalam ukuran penuh di tab baru</p>
+                    </div>
+                    <div v-else class="h-32 bg-gray-50 flex items-center justify-center text-gray-400 text-xs border border-dashed border-gray-200">
                         Tidak ada lampiran file struk
                     </div>
                 </div>
 
                 <!-- Form Verifikasi -->
-                <div class="bg-white border border-blue-100 p-5 shadow-xs space-y-3 text-xs rounded-xl">
+                <div class="bg-white border border-blue-100 p-5 shadow-xs space-y-3 text-xs">
                     <h3 class="font-semibold text-gray-900 text-sm">Status Verifikasi</h3>
                     <form v-if="isAdmin" @submit.prevent="submitVerification" class="space-y-3">
                         <div>
                             <label class="block font-semibold text-gray-700 mb-1">Keputusan Verifikasi</label>
-                            <select v-model="statusForm.status" required class="w-full border border-gray-200 px-3 py-2 text-gray-800 rounded-lg focus:outline-none focus:border-blue-500">
+                            <select v-model="statusForm.status" required class="w-full border border-gray-200 px-3 py-2 text-gray-800 focus:outline-none focus:border-blue-500">
                                 <option value="valid">Valid (Dana Masuk - Terbitkan Komisi Sales & Deal)</option>
                                 <option value="recheck">Perlu Cek Ulang (Minta sales cross-check)</option>
                                 <option value="invalid">Tidak Valid (Tolak Pembayaran)</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block font-semibold text-gray-700 mb-1">Catatan Verifikasi</label>
-                            <textarea v-model="statusForm.verification_notes" rows="2" class="w-full border border-gray-200 px-3 py-2 text-gray-800 rounded-lg" placeholder="Catatan audit..."></textarea>
+                            <label class="block font-semibold text-gray-700 mb-1">
+                                {{ statusForm.status === 'invalid' ? 'Alasan Bukti Tidak Valid' : 'Catatan Verifikasi' }}
+                                <span v-if="statusForm.status === 'invalid'" class="text-red-500">* (Wajib)</span>
+                            </label>
+                            <textarea v-model="statusForm.verification_notes" rows="2"
+                                :required="statusForm.status === 'invalid'"
+                                class="w-full border px-3 py-2 text-gray-800"
+                                :class="statusForm.status === 'invalid' ? 'border-red-300 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'"
+                                :placeholder="statusForm.status === 'invalid' ? 'Tuliskan alasan penolakan (misal: bukti palsu, mutasi tidak ditemukan, dll). Keterangan ini akan langsung dikirimkan sebagai notifikasi ke akun Sales.' : 'Catatan audit...'"></textarea>
+                            <p v-if="statusForm.status === 'invalid'" class="text-[11px] text-red-500 mt-0.5">
+                                Keterangan ini otomatis dikirimkan sebagai notifikasi ke akun Sales yang menangani prospek ini.
+                            </p>
                         </div>
                         <button type="submit" :disabled="saving" class="w-full py-2 bg-orange-500 hover:bg-orange-600 text-white font-medium rounded-xl shadow-xs transition-colors disabled:opacity-50">
                             {{ saving ? 'Menyimpan...' : 'Simpan Hasil Verifikasi' }}
                         </button>
                     </form>
-                    <div v-else class="p-3 bg-gray-50 text-gray-600 space-y-2 rounded-lg">
+                    <div v-else class="p-3 bg-gray-50 text-gray-600 space-y-2">
                         <p>Status: <strong class="uppercase text-gray-900">{{ payment.status }}</strong></p>
-                        <p v-if="payment.verification_notes" class="text-[11px] text-gray-500">Catatan Admin: "{{ payment.verification_notes }}"</p>
+                        <div v-if="payment.status === 'invalid'" class="p-3 bg-red-50 border border-red-200 text-red-800 space-y-1">
+                            <p class="font-bold text-xs">Bukti Pembayaran Dinyatakan Tidak Valid</p>
+                            <p class="text-xs">Alasan Penolakan: "<strong>{{ payment.verification_notes || 'Bukti transfer tidak sesuai/tidak valid.' }}</strong>"</p>
+                            <p class="text-[11px] text-red-600 pt-1 border-t border-red-200">
+                                Silakan hubungi calon peserta untuk meminta bukti struk transfer yang sah atau transfer ulang.
+                            </p>
+                        </div>
+                        <p v-else-if="payment.verification_notes" class="text-[11px] text-gray-500">Catatan Admin: "{{ payment.verification_notes }}"</p>
                         <p class="text-[10.5px] text-gray-400 border-t border-gray-200 pt-1.5">
                             Verifikasi pembayaran dilakukan secara terpusat oleh Admin/Keuangan. Begitu diverifikasi valid, komisi affiliate 10% otomatis diterbitkan untuk Anda.
                         </p>

@@ -65,10 +65,10 @@ onMounted(() => {
         </div>
 
         <div v-if="loading" class="text-center py-12 text-xs text-gray-400">Memuat data...</div>
-        <div v-else-if="error" class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
+        <div v-else-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
 
-        <form v-else @submit.prevent="save" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
-            <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 text-xs space-y-1">
+        <form v-else @submit.prevent="save" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+            <div class="p-4 bg-gray-50 border border-gray-100 text-xs space-y-1">
                 <p class="font-bold text-gray-900">{{ reg?.customer?.name || reg?.lead?.name }}</p>
                 <p class="text-gray-500">{{ reg?.product?.name || reg?.schedule?.product?.name || reg?.training_schedule?.product?.name || reg?.product_name || 'Program Pelatihan' }}</p>
             </div>
@@ -76,11 +76,12 @@ onMounted(() => {
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Status Kehadiran / Sertifikasi</label>
                 <select v-model="form.status"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
-                    <option value="registered">Terdaftar / Menunggu Jadwal</option>
-                    <option value="attended">Hadir / Kelas Berjalan</option>
-                    <option value="completed">Lulus / Sertifikat Diberikan</option>
-                    <option value="cancelled">Batal</option>
+                    class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
+                    <option value="registered">Registered (Terdaftar)</option>
+                    <option value="confirmed">Confirmed (Terkonfirmasi)</option>
+                    <option value="attended">Attended (Hadir / Pelatihan)</option>
+                    <option value="completed">Completed (Selesai Pelatihan)</option>
+                    <option value="cancelled">Cancelled (Batal)</option>
                 </select>
             </div>
 

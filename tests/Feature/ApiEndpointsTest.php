@@ -3,10 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
-use App\Models\FollowUp;
 use App\Models\Lead;
 use App\Models\Product;
 use App\Models\User;
+use App\Support\Jwt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,7 +14,7 @@ class ApiEndpointsTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_auth_login_successful_and_returns_token(): void
+    public function test_auth_login_successful_and_returns_jwt_token(): void
     {
         $user = User::factory()->create([
             'email' => 'sales@distyakademi.com',
@@ -23,23 +23,28 @@ class ApiEndpointsTest extends TestCase
             'is_active' => true,
         ]);
 
-        $response = $this->postJson(route('api.auth.login'), [
+        $response = $this->postJson('/api/login', [
             'email' => 'sales@distyakademi.com',
             'password' => 'password123',
         ]);
 
-        $response->assertStatus(200)
-            ->assertJson([
-                'success' => true,
-                'message' => 'Login berhasil.',
-            ])
+        $response->assertOk()
             ->assertJsonStructure([
-                'data' => [
-                    'token',
-                    'token_type',
-                    'user' => ['id', 'name', 'email', 'role'],
-                ],
+                'token',
+                'tokenType',
+                'expiresIn',
+                'user' => ['id', 'name', 'email', 'role'],
             ]);
+
+        $token = $response->json('token');
+        $this->assertNotEmpty($token);
+
+        // Test mengakses API terproteksi menggunakan JWT Bearer token
+        $meResponse = $this->withHeader('Authorization', 'Bearer '.$token)
+            ->getJson('/api/user');
+
+        $meResponse->assertOk()
+            ->assertJsonPath('data.email', 'sales@distyakademi.com');
     }
 
     public function test_auth_login_fails_with_invalid_credentials(): void
@@ -49,25 +54,20 @@ class ApiEndpointsTest extends TestCase
             'password' => bcrypt('password123'),
         ]);
 
-        $response = $this->postJson(route('api.auth.login'), [
+        $response = $this->postJson('/api/login', [
             'email' => 'sales@distyakademi.com',
             'password' => 'wrongpassword',
         ]);
 
-        $response->assertStatus(401)
-            ->assertJson([
-                'success' => false,
-                'message' => 'Kredensial email atau password salah.',
-            ]);
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors(['email']);
     }
 
     public function test_authenticated_user_can_get_profile_and_dashboard(): void
     {
         $user = User::factory()->create(['role' => 'sales', 'is_active' => true]);
-        $token = $user->createToken('test')->plainTextToken;
-
         // Profile
-        $profileResponse = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $profileResponse = $this->actingAs($user)
             ->getJson(route('api.auth.me'));
 
         $profileResponse->assertStatus(200)
@@ -81,7 +81,7 @@ class ApiEndpointsTest extends TestCase
             ]);
 
         // Dashboard
-        $dashboardResponse = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $dashboardResponse = $this->actingAs($user)
             ->getJson(route('api.dashboard.index'));
 
         $dashboardResponse->assertStatus(200)
@@ -97,10 +97,8 @@ class ApiEndpointsTest extends TestCase
     public function test_leads_crud_via_api(): void
     {
         $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
-        $token = $sales->createToken('test')->plainTextToken;
-
         // Create Lead
-        $storeResponse = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $storeResponse = $this->actingAs($sales)
             ->postJson(route('api.leads.store'), [
                 'name' => 'Budi Santoso',
                 'phone' => '081234567890',
@@ -121,7 +119,7 @@ class ApiEndpointsTest extends TestCase
         $leadId = $storeResponse->json('data.id');
 
         // Show Lead
-        $showResponse = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $showResponse = $this->actingAs($sales)
             ->getJson(route('api.leads.show', $leadId));
 
         $showResponse->assertStatus(200)
@@ -134,7 +132,7 @@ class ApiEndpointsTest extends TestCase
             ]);
 
         // Update Status
-        $statusResponse = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $statusResponse = $this->actingAs($sales)
             ->patchJson(route('api.leads.update-status', $leadId), [
                 'status' => 'contacted',
             ]);
@@ -156,10 +154,8 @@ class ApiEndpointsTest extends TestCase
     public function test_customer_and_product_api(): void
     {
         $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
-        $token = $admin->createToken('test')->plainTextToken;
-
         // Store Product as Admin
-        $prodResponse = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $prodResponse = $this->actingAs($admin)
             ->postJson(route('api.products.store'), [
                 'name' => 'Data Science Certification',
                 'code' => 'DSC-2026',
@@ -176,7 +172,7 @@ class ApiEndpointsTest extends TestCase
             ]);
 
         // Store Customer
-        $custResponse = $this->withHeader('Authorization', 'Bearer ' . $token)
+        $custResponse = $this->actingAs($admin)
             ->postJson(route('api.customers.store'), [
                 'name' => 'Andi Wijaya',
                 'email' => 'andi@example.com',
@@ -191,5 +187,20 @@ class ApiEndpointsTest extends TestCase
                     'name' => 'Andi Wijaya',
                 ],
             ]);
+    }
+
+    public function test_protected_api_rejects_missing_token(): void
+    {
+        $this->getJson('/api/user')->assertUnauthorized();
+    }
+
+    public function test_logout_endpoint_succeeds(): void
+    {
+        $user = User::factory()->create(['is_active' => true]);
+
+        $this->actingAs($user)
+            ->postJson('/api/logout')
+            ->assertOk()
+            ->assertJson(['success' => true]);
     }
 }

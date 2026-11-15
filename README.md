@@ -7,6 +7,22 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Autentikasi Session Laravel
+
+Web dan API menggunakan session authentication Laravel. Login tersedia di `POST /api/login`,
+session disimpan oleh Laravel, dan endpoint terlindungi menggunakan middleware `auth`.
+Request API dari Vue mengirim cookie session serta CSRF token dari halaman Inertia.
+
+Pilihan **Ingat saya** menggunakan remember token Laravel untuk mempertahankan session
+lintas sesi browser.
+
+## Frontend Inertia + Vue
+
+Route halaman web menggunakan Inertia dan dirender melalui page `Spa`, yang membungkus
+Vue SPA yang sudah ada. Pola ini menjaga navigasi dan tampilan saat ini tetap kompatibel
+sambil memungkinkan migrasi halaman ke page Inertia terpisah secara bertahap. Endpoint
+data dan autentikasi tetap menggunakan [`routes/api.php`](routes/api.php) dengan session Laravel.
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

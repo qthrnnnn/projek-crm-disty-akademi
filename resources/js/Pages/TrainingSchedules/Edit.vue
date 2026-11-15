@@ -86,14 +86,14 @@ onMounted(() => {
         </div>
 
         <div v-if="loading" class="text-center py-12 text-xs text-gray-400">Memuat data...</div>
-        <div v-else-if="error" class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
+        <div v-else-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
 
-        <form v-else @submit.prevent="save" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+        <form v-else @submit.prevent="save" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Program Pelatihan *</label>
                     <select v-model="form.product_id" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
                         <option value="">-- Pilih Program Pelatihan --</option>
                         <option v-for="p in products" :key="p.id" :value="p.id">{{ p.name }}</option>
                     </select>
@@ -102,7 +102,7 @@ onMounted(() => {
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Trainer Pengampu *</label>
                     <select v-model="form.trainer_id" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
                         <option value="">-- Pilih Trainer --</option>
                         <option v-for="t in trainers" :key="t.id" :value="t.id">{{ t.name }}</option>
                     </select>
@@ -113,17 +113,17 @@ onMounted(() => {
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Tanggal Pelatihan *</label>
                     <input v-model="form.training_date" type="date" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white" />
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white" />
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Jam Mulai *</label>
                     <input v-model="form.start_time" type="time" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white" />
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white" />
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Jam Selesai *</label>
                     <input v-model="form.end_time" type="time" required
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white" />
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white" />
                 </div>
             </div>
 
@@ -131,12 +131,12 @@ onMounted(() => {
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Kapasitas Kuota *</label>
                     <input v-model="form.capacity" type="number" required min="1"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" />
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" />
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Status Jadwal</label>
                     <select v-model="form.status"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
                         <option value="scheduled">Scheduled (Terjadwal)</option>
                         <option value="ongoing">Ongoing (Sedang Berjalan)</option>
                         <option value="completed">Completed (Selesai)</option>
@@ -146,14 +146,14 @@ onMounted(() => {
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Lokasi / Media</label>
                     <input v-model="form.location" type="text"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Zoom / Offline Kampus" />
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Zoom / Offline Kampus" />
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Catatan Tambahan</label>
                 <textarea v-model="form.notes" rows="2"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Kebutuhan software, persiapan kelas, dll..."></textarea>
+                    class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Kebutuhan software, persiapan kelas, dll..."></textarea>
             </div>
 
             <div class="pt-2 flex justify-end gap-2">

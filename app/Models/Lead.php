@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends Model
@@ -13,7 +14,7 @@ class Lead extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'lead_code', 'name', 'email', 'phone', 'whatsapp', 'company',
+        'lead_code', 'name', 'nik', 'birth_date', 'email', 'phone', 'whatsapp', 'company', 'institution',
         'job_title', 'city', 'province', 'address',
         'lead_source_id', 'product_id', 'deal_price', 'assigned_to', 'assigned_at',
         'status', 'rejection_reason_id', 'rejection_notes',
@@ -25,6 +26,7 @@ class Lead extends Model
     protected function casts(): array
     {
         return [
+            'birth_date' => 'date:Y-m-d',
             'deal_price' => 'decimal:2',
             'assigned_at' => 'datetime',
             'first_contacted_at' => 'datetime',
@@ -35,11 +37,21 @@ class Lead extends Model
         ];
     }
 
-    protected $appends = ['product_name'];
+    protected $appends = ['product_name', 'institution'];
 
     public function getProductNameAttribute(): ?string
     {
-        return $this->product?->name ?? 'Program Pelatihan';
+        return $this->product?->name ?? null;
+    }
+
+    public function getInstitutionAttribute(): ?string
+    {
+        return $this->attributes['company'] ?? null;
+    }
+
+    public function setInstitutionAttribute($value): void
+    {
+        $this->attributes['company'] = $value;
     }
 
     /* ---- Constants ---- */
@@ -78,6 +90,11 @@ class Lead extends Model
         return $this->belongsTo(LeadSource::class, 'lead_source_id');
     }
 
+    public function customer(): HasOne
+    {
+        return $this->hasOne(Customer::class);
+    }
+
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
@@ -89,6 +106,16 @@ class Lead extends Model
     }
 
     public function assignedUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function sales(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function pic(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }

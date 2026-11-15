@@ -159,112 +159,93 @@ watch(() => props.collapsed, () => {
                 <span v-if="!collapsed">Riwayat Aktivitas</span>
             </a>
 
-            <!-- Section 2: CUSTOMER & MITRA (Admin) -->
-            <template v-if="isAdmin">
-                <div v-if="collapsed" class="border-t border-gray-100 my-2"></div>
-                <div v-else class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3 pt-3 pb-1">CUSTOMER & MITRA</div>
+            <!-- Section 2: CUSTOMER & MITRA (Admin & Sales) -->
+            <div v-if="collapsed" class="border-t border-gray-100 my-2"></div>
+            <div v-else class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3 pt-3 pb-1">
+                {{ isAdmin ? 'CUSTOMER & MITRA' : 'DATA CUSTOMER' }}
+            </div>
 
-                <a href="/customers" @click.prevent="handleNavClick('/customers')"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
-                    :class="[
-                        collapsed ? 'justify-center px-0' : '',
-                        isItemActive('/customers') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
-                    ]"
-                    :title="collapsed ? 'Daftar Customer' : ''">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-                    </svg>
-                    <span v-if="!collapsed">Daftar Customer</span>
-                </a>
+            <a href="/customers" @click.prevent="handleNavClick('/customers')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
+                :class="[
+                    collapsed ? 'justify-center px-0' : '',
+                    isItemActive('/customers') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
+                ]"
+                :title="collapsed ? 'Daftar Customer' : ''">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                </svg>
+                <span v-if="!collapsed">Daftar Customer</span>
+            </a>
 
-                <a href="/institutions" @click.prevent="handleNavClick('/institutions')"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
-                    :class="[
-                        collapsed ? 'justify-center px-0' : '',
-                        isItemActive('/institutions') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
-                    ]"
-                    :title="collapsed ? 'Daftar Instansi' : ''">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
-                    </svg>
-                    <span v-if="!collapsed">Daftar Instansi</span>
-                </a>
+            <a v-if="isAdmin" href="/institutions" @click.prevent="handleNavClick('/institutions')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
+                :class="[
+                    collapsed ? 'justify-center px-0' : '',
+                    isItemActive('/institutions') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
+                ]"
+                :title="collapsed ? 'Daftar Instansi' : ''">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/>
+                </svg>
+                <span v-if="!collapsed">Daftar Instansi</span>
+            </a>
 
-                <!-- Section 3: PELATIHAN & OPERASIONAL (Admin) -->
-                <div v-if="collapsed" class="border-t border-gray-100 my-2"></div>
-                <div v-else class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3 pt-3 pb-1">PELATIHAN & OPERASIONAL</div>
+            <!-- Section 3: PELATIHAN & OPERASIONAL (Admin & Sales) -->
+            <div v-if="collapsed" class="border-t border-gray-100 my-2"></div>
+            <div v-else class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3 pt-3 pb-1">PELATIHAN & OPERASIONAL</div>
 
-                <a href="/registrations" @click.prevent="handleNavClick('/registrations')"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
-                    :class="[
-                        collapsed ? 'justify-center px-0' : '',
-                        isItemActive('/registrations') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
-                    ]"
-                    :title="collapsed ? 'Pendaftaran Peserta' : ''">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
-                    </svg>
-                    <span v-if="!collapsed">Pendaftaran Peserta</span>
-                </a>
+            <a href="/registrations" @click.prevent="handleNavClick('/registrations')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
+                :class="[
+                    collapsed ? 'justify-center px-0' : '',
+                    isItemActive('/registrations') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
+                ]"
+                :title="collapsed ? 'Pendaftaran Peserta' : ''">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                </svg>
+                <span v-if="!collapsed">Pendaftaran Peserta</span>
+            </a>
 
-                <a href="/training-schedules" @click.prevent="handleNavClick('/training-schedules')"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
-                    :class="[
-                        collapsed ? 'justify-center px-0' : '',
-                        isItemActive('/training-schedules') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
-                    ]"
-                    :title="collapsed ? 'Jadwal Pelatihan' : ''">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                    <span v-if="!collapsed">Jadwal Pelatihan</span>
-                </a>
+            <a href="/training-schedules" @click.prevent="handleNavClick('/training-schedules')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
+                :class="[
+                    collapsed ? 'justify-center px-0' : '',
+                    isItemActive('/training-schedules') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
+                ]"
+                :title="collapsed ? 'Jadwal Pelatihan' : ''">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <span v-if="!collapsed">Jadwal Pelatihan</span>
+            </a>
 
-                <a href="/trainers" @click.prevent="handleNavClick('/trainers')"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
-                    :class="[
-                        collapsed ? 'justify-center px-0' : '',
-                        isItemActive('/trainers') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
-                    ]"
-                    :title="collapsed ? 'Daftar Trainer' : ''">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                    <span v-if="!collapsed">Daftar Trainer</span>
-                </a>
+            <a v-if="isAdmin" href="/trainers" @click.prevent="handleNavClick('/trainers')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
+                :class="[
+                    collapsed ? 'justify-center px-0' : '',
+                    isItemActive('/trainers') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
+                ]"
+                :title="collapsed ? 'Daftar Trainer' : ''">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                </svg>
+                <span v-if="!collapsed">Daftar Trainer</span>
+            </a>
 
-                <a href="/products" @click.prevent="handleNavClick('/products')"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
-                    :class="[
-                        collapsed ? 'justify-center px-0' : '',
-                        isItemActive('/products') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
-                    ]"
-                    :title="collapsed ? 'Katalog Program' : ''">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                    <span v-if="!collapsed">Katalog Program</span>
-                </a>
-            </template>
-
-            <template v-else>
-                <!-- PRODUK & HARGA (Sales) -->
-                <div v-if="collapsed" class="border-t border-gray-100 my-2"></div>
-                <div v-else class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3 pt-3 pb-1">PRODUK & HARGA</div>
-
-                <a href="/products" @click.prevent="handleNavClick('/products')"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
-                    :class="[
-                        collapsed ? 'justify-center px-0' : '',
-                        isItemActive('/products') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
-                    ]"
-                    :title="collapsed ? 'Katalog Program' : ''">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                    </svg>
-                    <span v-if="!collapsed">Katalog Program</span>
-                </a>
-            </template>
+            <a href="/products" @click.prevent="handleNavClick('/products')"
+                class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
+                :class="[
+                    collapsed ? 'justify-center px-0' : '',
+                    isItemActive('/products') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
+                ]"
+                :title="collapsed ? 'Katalog Program' : ''">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                </svg>
+                <span v-if="!collapsed">Katalog Program</span>
+            </a>
 
             <!-- Section 4: KEUANGAN & KOMISI -->
             <div v-if="collapsed" class="border-t border-gray-100 my-2"></div>
@@ -314,19 +295,6 @@ watch(() => props.collapsed, () => {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
                     </svg>
                     <span v-if="!collapsed">Manajemen Pengguna</span>
-                </a>
-
-                <a href="/lead-imports" @click.prevent="handleNavClick('/lead-imports')"
-                    class="flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13.5px] transition-colors whitespace-nowrap"
-                    :class="[
-                        collapsed ? 'justify-center px-0' : '',
-                        isItemActive('/lead-imports') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-500 hover:bg-orange-50 hover:text-orange-600 font-medium'
-                    ]"
-                    :title="collapsed ? 'Import Batch CRM' : ''">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                    </svg>
-                    <span v-if="!collapsed">Import Batch CRM</span>
                 </a>
             </template>
         </nav>
@@ -403,47 +371,47 @@ watch(() => props.collapsed, () => {
                 <span>Riwayat Aktivitas</span>
             </a>
 
-            <template v-if="isAdmin">
-                <div class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3.5 pt-3 pb-1">CUSTOMER & MITRA</div>
-                <a href="/customers" @click.prevent="handleNavClick('/customers')"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
-                    :class="isItemActive('/customers') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
-                    <span>Daftar Customer</span>
-                </a>
-                <a href="/institutions" @click.prevent="handleNavClick('/institutions')"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
-                    :class="isItemActive('/institutions') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
-                    <span>Daftar Instansi</span>
-                </a>
+            <div class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3.5 pt-3 pb-1">
+                {{ isAdmin ? 'CUSTOMER & MITRA' : 'DATA CUSTOMER' }}
+            </div>
+            <a href="/customers" @click.prevent="handleNavClick('/customers')"
+                class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
+                :class="isItemActive('/customers') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg>
+                <span>Daftar Customer</span>
+            </a>
+            <a v-if="isAdmin" href="/institutions" @click.prevent="handleNavClick('/institutions')"
+                class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
+                :class="isItemActive('/institutions') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z"/></svg>
+                <span>Daftar Instansi</span>
+            </a>
 
-                <div class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3.5 pt-3 pb-1">PELATIHAN & OPERASIONAL</div>
-                <a href="/registrations" @click.prevent="handleNavClick('/registrations')"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
-                    :class="isItemActive('/registrations') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-                    <span>Pendaftaran Peserta</span>
-                </a>
-                <a href="/training-schedules" @click.prevent="handleNavClick('/training-schedules')"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
-                    :class="isItemActive('/training-schedules') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-                    <span>Jadwal Pelatihan</span>
-                </a>
-                <a href="/trainers" @click.prevent="handleNavClick('/trainers')"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
-                    :class="isItemActive('/trainers') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                    <span>Daftar Trainer</span>
-                </a>
-                <a href="/products" @click.prevent="handleNavClick('/products')"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
-                    :class="isItemActive('/products') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                    <span>Katalog Program</span>
-                </a>
-            </template>
+            <div class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3.5 pt-3 pb-1">PELATIHAN & OPERASIONAL</div>
+            <a href="/registrations" @click.prevent="handleNavClick('/registrations')"
+                class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
+                :class="isItemActive('/registrations') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                <span>Pendaftaran Peserta</span>
+            </a>
+            <a href="/training-schedules" @click.prevent="handleNavClick('/training-schedules')"
+                class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
+                :class="isItemActive('/training-schedules') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Jadwal Pelatihan</span>
+            </a>
+            <a v-if="isAdmin" href="/trainers" @click.prevent="handleNavClick('/trainers')"
+                class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
+                :class="isItemActive('/trainers') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                <span>Daftar Trainer</span>
+            </a>
+            <a href="/products" @click.prevent="handleNavClick('/products')"
+                class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
+                :class="isItemActive('/products') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
+                <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                <span>Katalog Program</span>
+            </a>
 
             <div class="text-[10px] font-bold tracking-wider text-gray-400 uppercase px-3.5 pt-3 pb-1">
                 {{ isAdmin ? 'KEUANGAN & KOMISI' : 'TRANSAKSI & KOMISI' }}
@@ -468,12 +436,6 @@ watch(() => props.collapsed, () => {
                     :class="isItemActive('/users') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
                     <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
                     <span>Manajemen Pengguna</span>
-                </a>
-                <a href="/lead-imports" @click.prevent="handleNavClick('/lead-imports')"
-                    class="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-sm transition-colors"
-                    :class="isItemActive('/lead-imports') ? 'bg-orange-500 text-white font-semibold shadow-xs' : 'text-gray-600 hover:bg-orange-50 hover:text-orange-600 font-medium'">
-                    <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-                    <span>Import Batch CRM</span>
                 </a>
             </template>
         </nav>

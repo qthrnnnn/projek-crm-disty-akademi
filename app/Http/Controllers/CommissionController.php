@@ -42,32 +42,98 @@ class CommissionController extends Controller
             abort(403, 'Hanya Admin yang berwenang menyetujui komisi.');
         }
 
-        $commission->update(['status' => 'approved', 'approved_at' => now()]);
+        $commission->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+        ]);
 
-        return back()->with('success', 'Komisi berhasil disetujui.');
+        // Otomatis sinkronkan status pembayaran transaksi customer menjadi valid jika masih pending
+        $payment = $commission->payment ?: $commission->lead?->payments()->where('status', 'pending')->first();
+        if ($payment && $payment->status === 'pending') {
+            $payment->update([
+                'status' => 'valid',
+                'verified_by' => auth()->id(),
+                'verified_at' => now(),
+                'verification_notes' => 'Otomatis diverifikasi valid saat komisi disetujui Admin',
+            ]);
+        }
+
+        return back()->with('success', 'Komisi berhasil disetujui dan siap ditransfer.');
     }
 
-    public function markPaid(Commission $commission)
+    public function markPaid($requestOrCommission, $commission = null)
     {
         if (! auth()->user()->isAdmin()) {
             abort(403, 'Hanya Admin yang berwenang memproses pembayaran komisi.');
         }
 
-        $commission->update(['status' => 'paid', 'paid_at' => now()]);
+        if ($requestOrCommission instanceof Commission) {
+            $commission = $requestOrCommission;
+            $request = request();
+        } else {
+            $request = $requestOrCommission instanceof Request ? $requestOrCommission : request();
+            $commission = $commission ?: $request->route('commission');
+        }
 
-        // Buat notifikasi pencairan komisi untuk Sales
-        SalesReminder::create([
-            'type' => 'commission_paid',
-            'lead_id' => $commission->lead_id,
-            'commission_id' => $commission->id,
-            'admin_id' => auth()->id(),
-            'sales_id' => $commission->user_id,
-            'message' => 'Selamat! Komisi 10% sebesar Rp ' . number_format($commission->commission_amount, 0, ',', '.') . ' untuk prospek ' . ($commission->lead?->name ?? 'Pelanggan') . ' telah berhasil dibayarkan.',
-            'priority' => 'normal',
-            'is_read' => false,
-            'is_completed' => true,
-        ]);
+        if (! $commission) {
+            abort(404, 'Data komisi tidak ditemukan.');
+        }
 
-        return back()->with('success', 'Komisi ditandai sudah dibayar dan notifikasi telah dikirim ke Sales.');
+        $paidAtInput = $request->input('paid_at');
+        $paidAt = $paidAtInput ? \Carbon\Carbon::parse($paidAtInput) : now();
+        $notes = $request->input('notes');
+
+        $updates = [
+            'status' => 'paid',
+            'paid_at' => $paidAt,
+        ];
+
+        // Kunci snapshot rekening tujuan transfer secara permanen pada saat pencairan
+        if (! $commission->bank_account_number) {
+            $salesUser = $commission->user;
+            if ($salesUser) {
+                $updates['bank_name'] = $salesUser->bank_name;
+                $updates['bank_account_number'] = $salesUser->bank_account_number;
+                $updates['bank_account_name'] = $salesUser->bank_account_name ?: $salesUser->name;
+            }
+        }
+
+        if ($notes !== null) {
+            $updates['notes'] = $notes;
+        }
+
+        $commission->update($updates);
+
+        // Pastikan pembayaran transaksi customer juga berstatus valid
+        $payment = $commission->payment ?: $commission->lead?->payments()->where('status', 'pending')->first();
+        if ($payment && $payment->status === 'pending') {
+            $payment->update([
+                'status' => 'valid',
+                'verified_by' => auth()->id(),
+                'verified_at' => now(),
+                'verification_notes' => 'Otomatis diverifikasi valid saat komisi dicairkan oleh Admin',
+            ]);
+        }
+
+        $transferTimeFormatted = $paidAt->translatedFormat('d M Y, H:i') . ' WIB';
+
+        // Buat atau perbarui notifikasi pencairan komisi untuk Sales (1 komisi = tepat 1 notifikasi)
+        SalesReminder::updateOrCreate(
+            [
+                'type' => 'commission_paid',
+                'commission_id' => $commission->id,
+            ],
+            [
+                'lead_id' => $commission->lead_id,
+                'admin_id' => auth()->id(),
+                'sales_id' => $commission->user_id,
+                'message' => 'Selamat! Komisi 10% sebesar Rp ' . number_format($commission->commission_amount, 0, ',', '.') . ' untuk prospek ' . ($commission->lead?->name ?? 'Pelanggan') . ' telah berhasil ditransfer pada ' . $transferTimeFormatted . ($notes ? ' (Ref Mutasi: ' . $notes . ')' : '') . '.',
+                'priority' => 'normal',
+                'is_read' => false,
+                'is_completed' => true,
+            ]
+        );
+
+        return back()->with('success', 'Komisi berhasil ditandai sudah ditransfer pada ' . $transferTimeFormatted . ' dan notifikasi telah dikirim ke Sales.');
     }
 }

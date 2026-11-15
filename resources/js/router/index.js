@@ -76,14 +76,35 @@ export const routes = {
 };
 
 export function resolveRoute(path) {
-    const clean = path.replace(/^\//, '').split('?')[0];
+    const raw = path || '';
+    const qIndex = raw.indexOf('?');
+    const pathPart = qIndex >= 0 ? raw.slice(0, qIndex) : raw;
+    const queryPart = qIndex >= 0 ? raw.slice(qIndex + 1) : '';
+
+    const clean = pathPart.replace(/^\//, '');
     const parts = clean.split('/').filter(Boolean);
 
+    let query = {};
+    try {
+        const searchStr = queryPart || (typeof window !== 'undefined' ? window.location.search.replace(/^\?/, '') : '');
+        if (searchStr) {
+            query = Object.fromEntries(new URLSearchParams(searchStr).entries());
+        }
+    } catch (e) {
+        query = {};
+    }
+
     if (parts.length === 0 || parts[0] === 'dashboard') {
-        return { componentKey: 'Dashboard.Index', title: 'Dashboard', id: null };
+        return { componentKey: 'Dashboard.Index', title: 'Dashboard', id: null, query };
     }
     if (parts[0] === 'login') {
-        return { componentKey: 'Auth.Login', title: 'Login', id: null };
+        return { componentKey: 'Auth.Login', title: 'Login', id: null, query };
+    }
+    if (parts[0] === 'lead-imports' || parts[0] === 'imports') {
+        if (parts[1] === 'create') {
+            return { componentKey: 'Imports.Create', title: 'Upload Excel Leads', id: null, query };
+        }
+        return { componentKey: 'Leads.Index', title: 'Leads & Prospek', id: null, query };
     }
 
     const resourceMap = {
@@ -106,17 +127,17 @@ export function resolveRoute(path) {
 
     const res = resourceMap[parts[0]];
     if (!res) {
-        return { componentKey: 'Dashboard.Index', title: 'Dashboard', id: null };
+        return { componentKey: 'Dashboard.Index', title: 'Dashboard', id: null, query };
     }
 
     // e.g. /leads/create
     if (parts[1] === 'create') {
-        return { componentKey: `${res.key}.Create`, title: res.title, id: null };
+        return { componentKey: `${res.key}.Create`, title: res.title, id: null, query };
     }
 
     // e.g. /leads/123/edit
     if (parts.length === 3 && parts[2] === 'edit') {
-        return { componentKey: `${res.key}.Edit`, title: res.title, id: parts[1] };
+        return { componentKey: `${res.key}.Edit`, title: res.title, id: parts[1], query };
     }
 
     // e.g. /leads/123
@@ -127,8 +148,9 @@ export function resolveRoute(path) {
             componentKey: routes[showKey] ? showKey : `${res.key}.Edit`,
             title: res.title,
             id: parts[1],
+            query,
         };
     }
 
-    return { componentKey: `${res.key}.Index`, title: res.title, id: null };
+    return { componentKey: `${res.key}.Index`, title: res.title, id: null, query };
 }

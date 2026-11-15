@@ -32,7 +32,10 @@ class FollowUpController extends Controller
 
     public function create(Request $request)
     {
-        $leadsQuery = Lead::whereNotIn('status', ['won', 'lost'])->orderBy('name');
+        $leadsQuery = Lead::whereNotIn('status', ['won', 'lost'])
+            ->whereDoesntHave('payments', fn ($p) => $p->where('status', 'valid'))
+            ->whereDoesntHave('customer', fn ($c) => $c->whereHas('registrations'))
+            ->orderBy('name');
         if (auth()->user()->isSales()) {
             $leadsQuery->where('assigned_to', auth()->id());
         }
@@ -94,7 +97,10 @@ class FollowUpController extends Controller
             return redirect()->route('follow-ups.index')->with('error', 'Akses dibatasi: Anda hanya dapat mengedit follow-up milik Anda.');
         }
 
-        $leadsQuery = Lead::whereNotIn('status', ['won', 'lost'])->orderBy('name');
+        $leadsQuery = Lead::whereNotIn('status', ['won', 'lost'])
+            ->whereDoesntHave('payments', fn ($p) => $p->where('status', 'valid'))
+            ->whereDoesntHave('customer', fn ($c) => $c->whereHas('registrations'))
+            ->orderBy('name');
         if (auth()->user()->isSales()) {
             $leadsQuery->where('assigned_to', auth()->id());
         }
@@ -144,6 +150,95 @@ class FollowUpController extends Controller
             'result_notes' => $request->result_notes,
             'completed_at' => now(),
         ]);
+
+        // Perbarui status lead dan feedback penolakan jika disediakan
+        if ($followUp->lead) {
+            $lead = $followUp->lead;
+            $leadUpdates = [
+                'last_contacted_at' => now(),
+            ];
+            if (! $lead->first_contacted_at) {
+                $leadUpdates['first_contacted_at'] = now();
+            }
+
+            if ($request->filled('rejection_reason_id')) {
+                $leadUpdates['status'] = 'lost';
+                $leadUpdates['lost_at'] = now();
+                $leadUpdates['rejection_reason_id'] = $request->rejection_reason_id;
+                $leadUpdates['rejection_notes'] = $request->result_notes;
+            } elseif ($request->filled('lead_status')) {
+                $leadUpdates['status'] = $request->lead_status;
+                if ($request->lead_status === 'lost') {
+                    $leadUpdates['lost_at'] = now();
+                    $leadUpdates['rejection_notes'] = $request->result_notes;
+                    if ($request->filled('rejection_reason_id')) {
+                        $leadUpdates['rejection_reason_id'] = $request->rejection_reason_id;
+                    } elseif ($request->filled('feedback_type')) {
+                        $reasonId = \App\Models\RejectionReason::where('name', $request->feedback_type)->value('id');
+                        if ($reasonId) {
+                            $leadUpdates['rejection_reason_id'] = $reasonId;
+                        }
+                    }
+                } else {
+                    $leadUpdates['lost_at'] = null;
+                    $leadUpdates['rejection_reason_id'] = null;
+                    $leadUpdates['rejection_notes'] = null;
+                }
+            } elseif ($request->filled('feedback_type')) {
+                $ft = $request->feedback_type;
+                if (in_array($ft, ['not_interested', 'not_willing', 'wrong_number', 'unreachable'])) {
+                    $leadUpdates['status'] = 'lost';
+                    $leadUpdates['lost_at'] = now();
+                    $leadUpdates['rejection_notes'] = $request->result_notes;
+                    $reasonId = \App\Models\RejectionReason::where('name', $ft)->value('id');
+                    if ($reasonId) {
+                        $leadUpdates['rejection_reason_id'] = $reasonId;
+                    }
+                } elseif ($ft === 'contacted') {
+                    $leadUpdates['status'] = 'contacted';
+                    $leadUpdates['lost_at'] = null;
+                    $leadUpdates['rejection_reason_id'] = null;
+                    $leadUpdates['rejection_notes'] = null;
+                } elseif ($ft === 'interested') {
+                    $leadUpdates['status'] = 'active';
+                    $leadUpdates['lost_at'] = null;
+                    $leadUpdates['rejection_reason_id'] = null;
+                    $leadUpdates['rejection_notes'] = null;
+                } elseif ($ft === 'negotiation') {
+                    $leadUpdates['status'] = 'negotiation';
+                    $leadUpdates['lost_at'] = null;
+                    $leadUpdates['rejection_reason_id'] = null;
+                    $leadUpdates['rejection_notes'] = null;
+                } elseif ($ft === 'won') {
+                    $leadUpdates['status'] = 'won';
+                    $leadUpdates['lost_at'] = null;
+                    $leadUpdates['rejection_reason_id'] = null;
+                    $leadUpdates['rejection_notes'] = null;
+                }
+            }
+
+            $lead->update($leadUpdates);
+
+            // Log aktivitas perubahan status
+            $statusLabel = match($leadUpdates['status'] ?? $lead->status) {
+                'new' => 'Baru',
+                'contacted' => 'Dikontak',
+                'active' => 'Aktif',
+                'negotiation' => 'Negosiasi',
+                'lost' => 'Ditolak (Lost)',
+                'won' => 'Berhasil (Won)',
+                default => $leadUpdates['status'] ?? $lead->status,
+            };
+
+            \App\Models\Activity::create([
+                'lead_id' => $lead->id,
+                'user_id' => auth()->id() ?? ($followUp->assigned_to ?: 1),
+                'type' => 'status_change',
+                'subject' => "Status Diperbarui ke {$statusLabel}",
+                'description' => "Hasil follow-up dicatat: \"{$request->result_notes}\". Status prospek otomatis diperbarui menjadi {$statusLabel}.",
+                'activity_at' => now(),
+            ]);
+        }
 
         // Tandai SalesReminder terkait juga selesai
         SalesReminder::where('lead_id', $followUp->lead_id)

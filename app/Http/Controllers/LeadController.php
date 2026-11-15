@@ -50,6 +50,9 @@ class LeadController extends Controller
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
         if ($request->filled('assigned')) {
             $query->where('assigned_to', $request->assigned);
         }
@@ -83,12 +86,19 @@ class LeadController extends Controller
 
     public function store(Request $request)
     {
+        if (auth()->user()->isAdmin()) {
+            return back()->with('error', 'Akses ditolak: Penambahan data lead hanya dapat dilakukan oleh Sales. Akun Admin hanya memiliki akses pemantauan.');
+        }
+
         $data = $request->validate([
             'name' => 'required|string|max:255',
+            'nik' => 'nullable|string|max:30',
+            'birth_date' => 'nullable|date',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'whatsapp' => 'nullable|string|max:50',
             'company' => 'nullable|string|max:255',
+            'institution' => 'nullable|string|max:255',
             'job_title' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'province' => 'nullable|string|max:100',
@@ -99,6 +109,11 @@ class LeadController extends Controller
             'priority' => 'nullable|in:low,normal,high,urgent',
             'notes' => 'nullable|string',
         ]);
+
+        if (! empty($data['institution']) && empty($data['company'])) {
+            $data['company'] = $data['institution'];
+        }
+        unset($data['institution']);
 
         // Bersihkan input strip '-'
         if (isset($data['phone']) && in_array(trim($data['phone']), ['-', '--', 'none', 'tidak ada', 'null'])) {
@@ -239,10 +254,13 @@ class LeadController extends Controller
 
         $data = $request->validate([
             'name' => 'required|string|max:255',
+            'nik' => 'nullable|string|max:30',
+            'birth_date' => 'nullable|date',
             'email' => 'nullable|email|max:255',
             'phone' => 'nullable|string|max:50',
             'whatsapp' => 'nullable|string|max:50',
             'company' => 'nullable|string|max:255',
+            'institution' => 'nullable|string|max:255',
             'job_title' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'province' => 'nullable|string|max:100',
@@ -253,6 +271,11 @@ class LeadController extends Controller
             'priority' => 'nullable|in:low,normal,high,urgent',
             'notes' => 'nullable|string',
         ]);
+
+        if (! empty($data['institution']) && empty($data['company'])) {
+            $data['company'] = $data['institution'];
+        }
+        unset($data['institution']);
 
         // Bersihkan input strip '-'
         if (isset($data['phone']) && in_array(trim($data['phone']), ['-', '--', 'none', 'tidak ada', 'null'])) {
@@ -357,6 +380,9 @@ class LeadController extends Controller
             $this->ensureCustomerCreated($lead);
             $customerCreated = true;
 
+            // Buat komisi 10% untuk Sales dengan status pending (perlu persetujuan admin)
+            \App\Models\Commission::ensureCommissionCreated($lead, $lead->deal_price);
+
             // Otomatis selesaikan follow-up & pengingat pending untuk lead ini
             $lead->followUps()->where('status', 'pending')->update([
                 'status' => 'completed',
@@ -406,8 +432,19 @@ class LeadController extends Controller
             ->first();
 
         if ($existing) {
+            $updates = [];
             if (! $existing->lead_id) {
-                $existing->update(['lead_id' => $lead->id]);
+                $updates['lead_id'] = $lead->id;
+            }
+            if (empty($existing->nik) && ! empty($lead->nik)) {
+                $updates['nik'] = $lead->nik;
+                $updates['document_number'] = $lead->nik;
+            }
+            if (empty($existing->birth_date) && ! empty($lead->birth_date)) {
+                $updates['birth_date'] = $lead->birth_date;
+            }
+            if (! empty($updates)) {
+                $existing->update($updates);
             }
 
             return $existing;
@@ -426,6 +463,9 @@ class LeadController extends Controller
             'name' => $lead->name,
             'email' => $lead->email,
             'phone' => $lead->phone ?: ($lead->whatsapp ?: '-'),
+            'nik' => $lead->nik,
+            'birth_date' => $lead->birth_date,
+            'document_number' => $lead->nik,
             'institution_id' => $institutionId,
             'lead_id' => $lead->id,
             'city' => $lead->city,
@@ -518,12 +558,30 @@ class LeadController extends Controller
 
         // Format CSV dengan UTF-8 BOM agar langsung rapi saat dibuka di Microsoft Excel
         $output = "\xEF\xBB\xBF";
-        $output .= "Nama,WhatsApp,Email,Perusahaan,Kota,Provinsi,Program,Catatan\n";
-        $output .= "Ahmad Fauzi,081234567890,ahmad.fauzi@gmail.com,PT Telekomunikasi Indonesia,Surabaya,Jawa Timur,Fullstack Web Development,Tertarik batch weekend\n";
-        $output .= "Siti Nurhaliza,082198765432,siti.nur@unair.ac.id,Universitas Airlangga,Surabaya,Jawa Timur,Data Science,Rekomendasi dari dosen\n";
-        $output .= "Bambang Prasetyo,085712345678,bambang@dinas-jatim.go.id,Dinas Pendidikan Prov Jatim,Surabaya,Jawa Timur,Operator Komputer,Pelatihan peningkatan kompetensi staf\n";
+        $output .= "Nama,NIK,Tanggal Lahir,WhatsApp,Email,Instansi,Kota,Provinsi,Program,Catatan\n";
+        $output .= "Ahmad Fauzi,3578012304950001,1995-04-23,081234567890,ahmad.fauzi@gmail.com,PT Pelindo Daya Sejahtera,Surabaya,Jawa Timur,Pelatihan dan Sertifikasi Digital Filing,Peminat program Digital Filing batch Surabaya\n";
+        $output .= "Siti Nurhaliza,3578025508980002,1998-08-15,082198765432,siti.nur@unair.ac.id,Universitas Airlangga,Surabaya,Jawa Timur,Pelatihan Pelayanan Prima,Peningkatan keterampilan pelayanan prima staf\n";
+        $output .= "Bambang Prasetyo,3578031201900003,1990-01-12,085712345678,bambang@dinas-jatim.go.id,Dinas Pendidikan Prov Jatim,Surabaya,Jawa Timur,Sertifikasi Pelayanan Prima (Excellent Service) Lisensi BNSP,Mengikuti uji kompetensi sertifikasi BNSP resmi\n";
 
         return response($output, 200, $headers);
+    }
+
+    /**
+     * Download template Excel (.xlsx) resmi untuk import data lead.
+     */
+    public function downloadTemplateExcel()
+    {
+        $path = public_path('downloads/template_import_leads.xlsx');
+        if (! file_exists($path)) {
+            $dir = dirname($path);
+            if (! is_dir($dir)) {
+                mkdir($dir, 0777, true);
+            }
+        }
+
+        return response()->download($path, 'template_import_leads.xlsx', [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        ]);
     }
 
     /**
@@ -596,6 +654,8 @@ class LeadController extends Controller
             $city = isset($headerMap['city']) && isset($row[$headerMap['city']]) ? trim($row[$headerMap['city']]) : null;
             $province = isset($headerMap['province']) && isset($row[$headerMap['province']]) ? trim($row[$headerMap['province']]) : null;
             $prodName = isset($headerMap['product']) && isset($row[$headerMap['product']]) ? trim($row[$headerMap['product']]) : null;
+            $nik = isset($headerMap['nik']) && isset($row[$headerMap['nik']]) ? trim($row[$headerMap['nik']]) : null;
+            $birthDate = isset($headerMap['birth_date']) && isset($row[$headerMap['birth_date']]) ? trim($row[$headerMap['birth_date']]) : null;
             $notes = isset($headerMap['notes']) && isset($row[$headerMap['notes']]) ? trim($row[$headerMap['notes']]) : null;
 
             if ($whatsapp && in_array($whatsapp, ['-', '--', 'none', 'null', 'tidak ada'])) {
@@ -625,6 +685,8 @@ class LeadController extends Controller
             Lead::create([
                 'lead_code' => Lead::generateCode(),
                 'name' => $name,
+                'nik' => $nik,
+                'birth_date' => $birthDate ? date('Y-m-d', strtotime($birthDate)) : null,
                 'email' => $email,
                 'phone' => $phone,
                 'whatsapp' => $whatsapp,
@@ -802,6 +864,12 @@ class LeadController extends Controller
 
         if (in_array($h, ['nama', 'namalengkap', 'namapeserta', 'namalead', 'peserta', 'name', 'fullname', 'nama_lengkap'])) {
             return 'name';
+        }
+        if (in_array($h, ['nik', 'nomornik', 'noktp', 'ktp', 'nomorktp', 'noidentitas', 'identitas'])) {
+            return 'nik';
+        }
+        if (in_array($h, ['tanggallahir', 'tgllahir', 'tgl_lahir', 'birthdate', 'birth_date', 'dob'])) {
+            return 'birth_date';
         }
         if (in_array($h, ['whatsapp', 'wa', 'nowa', 'nomorwa', 'nowhatsapp', 'hp', 'nohp', 'nomorhp', 'handphone', 'telepon', 'telp', 'phone', 'notelp', 'no_wa', 'no_hp'])) {
             return 'whatsapp';

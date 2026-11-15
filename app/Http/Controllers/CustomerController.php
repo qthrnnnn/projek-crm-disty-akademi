@@ -13,6 +13,19 @@ class CustomerController extends Controller
     {
         $query = Customer::with('institution')->latest();
 
+        // Hanya customer yang terkonfirmasi bayar (confirmed/attended atau pembayaran valid)
+        $query->where(function ($sub) {
+            $sub->whereHas('registrations', function ($r) {
+                $r->whereIn('status', ['confirmed', 'attended']);
+            })
+            ->orWhereHas('lead.payments', function ($p) {
+                $p->where('status', 'valid');
+            })
+            ->orWhere(function ($m) {
+                $m->where('source', 'manual')->where('status', 'active');
+            });
+        });
+
         if ($request->filled('search')) {
             $q = $request->search;
             $query->where(fn ($s) => $s->where('name', 'like', "%$q%")

@@ -3,7 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>CRM Disty Akademi</title>
+    @inertiaHead
     <link rel="icon" type="image/png" href="/images/disty-icon.png">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -98,6 +100,6 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="h-full h-[100dvh] max-h-[100dvh] overflow-hidden bg-gray-50 text-gray-900 antialiased selection:bg-orange-500 selection:text-white">
-    <div id="app" class="h-full h-[100dvh] max-h-[100dvh] overflow-hidden"></div>
+    @inertia
 </body>
 </html>

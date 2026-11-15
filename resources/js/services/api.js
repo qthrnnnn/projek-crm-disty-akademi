@@ -1,29 +1,33 @@
 /**
- * CRM Disty Akademi — REST API Service for Vue SPA
+ * CRM Disty Akademi — REST API Service for Vue SPA (JWT Auth)
  */
 
 const API_BASE = '/api';
+const TOKEN_KEY = 'crm_jwt_token';
 
 class ApiService {
     constructor() {
-        this.token = localStorage.getItem('crm_token') || null;
-        this.user = JSON.parse(localStorage.getItem('crm_user') || 'null');
+        this.user = null;
     }
 
-    setAuth(token, user) {
-        this.token = token;
-        this.user = user;
+    getToken() {
+        return localStorage.getItem(TOKEN_KEY);
+    }
+
+    setToken(token) {
         if (token) {
-            localStorage.setItem('crm_token', token);
-            localStorage.setItem('crm_user', JSON.stringify(user));
+            localStorage.setItem(TOKEN_KEY, token);
         } else {
-            localStorage.removeItem('crm_token');
-            localStorage.removeItem('crm_user');
+            localStorage.removeItem(TOKEN_KEY);
         }
     }
 
+    setUser(user) {
+        this.user = user;
+    }
+
     isAuthenticated() {
-        return Boolean(this.token && this.user);
+        return Boolean(this.getToken() || this.user);
     }
 
     isAdmin() {
@@ -37,19 +41,31 @@ class ApiService {
     async request(endpoint, options = {}) {
         const url = `${API_BASE}${endpoint.startsWith('/') ? endpoint : '/' + endpoint}`;
         const headers = { 'Accept': 'application/json', ...(options.headers || {}) };
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const token = this.getToken();
 
-        if (!(options.body instanceof FormData)) {
+        const fetchOptions = { ...options };
+        fetchOptions.credentials = 'same-origin';
+        if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+        }
+        if (csrfToken) {
+            headers['X-CSRF-TOKEN'] = csrfToken;
+        }
+        if (fetchOptions.body && !(fetchOptions.body instanceof FormData) && typeof fetchOptions.body === 'object') {
+            fetchOptions.body = JSON.stringify(fetchOptions.body);
+            headers['Content-Type'] = 'application/json';
+        } else if (!(fetchOptions.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
         }
-        if (this.token) {
-            headers['Authorization'] = `Bearer ${this.token}`;
-        }
+        fetchOptions.headers = headers;
 
         try {
-            const response = await fetch(url, { ...options, headers });
+            const response = await fetch(url, fetchOptions);
 
             if (response.status === 401) {
-                this.setAuth(null, null);
+                this.setToken(null);
+                this.setUser(null);
                 window.location.href = '/login';
                 throw new Error('Sesi telah berakhir, silakan login kembali.');
             }
@@ -70,27 +86,41 @@ class ApiService {
     }
 
     // ── Auth ──
-    async login(email, password) {
+    async login(email, password, remember = false) {
         const res = await this.request('/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password, device_name: 'disty-vue' })
+            body: JSON.stringify({ email, password, remember })
         });
-        if (res.token) this.setAuth(res.token, res.user);
+        const token = res.token || res.data?.token;
+        if (token) {
+            this.setToken(token);
+        }
+        this.setUser(res.user || res.data?.user);
         return res;
+    }
+
+    async refresh() {
+        throw new Error('JWT token berlaku selama 8 jam tanpa refresh token.');
     }
 
     async logout() {
         try {
             await this.request('/logout', { method: 'POST' });
-        } catch (e) {
-            /* ignore */
         } finally {
-            this.setAuth(null, null);
+            this.setToken(null);
+            this.setUser(null);
         }
     }
 
     async getUser() {
         return await this.request('/user');
+    }
+
+    async updateBankAccount(data) {
+        return await this.request('/user/bank-account', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        });
     }
 
     // ── Dashboard ──
@@ -133,6 +163,18 @@ class ApiService {
 
     async destroy(resource, id) {
         return await this.request(`/${resource}/${id}`, { method: 'DELETE' });
+    }
+
+    // ── Commissions Actions ──
+    async approveCommission(id) {
+        return await this.request(`/commissions/${id}/approve`, { method: 'PATCH' });
+    }
+
+    async payCommission(id, data = {}) {
+        return await this.request(`/commissions/${id}/pay`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        });
     }
 }
 

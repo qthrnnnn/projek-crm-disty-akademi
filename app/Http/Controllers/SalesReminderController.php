@@ -63,6 +63,10 @@ class SalesReminderController extends Controller
             return back()->with('error', 'Akses ditolak: Hanya Admin yang dapat mengirim instruksi pengingat ke Sales.');
         }
 
+        if (! $request->filled('sales_id') && $lead->assigned_to) {
+            $request->merge(['sales_id' => $lead->assigned_to]);
+        }
+
         $validated = $request->validate([
             'sales_id' => ['required', 'exists:users,id'],
             'message' => ['required', 'string', 'max:1000'],
@@ -83,6 +87,7 @@ class SalesReminderController extends Controller
         }
 
         $priority = $validated['priority'] ?? 'urgent';
+        $dueDate = $request->filled('due_date') ? \Carbon\Carbon::parse($request->due_date) : now()->addWeek();
 
         // Buat record pengingat
         $reminder = SalesReminder::create([
@@ -93,6 +98,18 @@ class SalesReminderController extends Controller
             'priority' => $priority,
             'is_read' => false,
             'is_completed' => false,
+        ]);
+
+        // Otomatis buat jadwal FollowUp untuk Sales dengan batas waktu 1 minggu (atau sesuai due_date)
+        FollowUp::create([
+            'lead_id' => $lead->id,
+            'assigned_to' => $sales->id,
+            'title' => 'Pengingat Follow-up Admin',
+            'description' => $validated['message'],
+            'follow_up_at' => $dueDate,
+            'method' => 'whatsapp',
+            'priority' => $priority === 'urgent' ? 'high' : 'normal',
+            'status' => 'pending',
         ]);
 
         // Rekam di timeline aktivitas lead

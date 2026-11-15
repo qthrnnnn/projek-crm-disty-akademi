@@ -17,6 +17,8 @@ class Customer extends Model
         'name',
         'email',
         'phone',
+        'nik',
+        'birth_date',
         'document_number',
         'institution_id',
         'lead_id',
@@ -27,6 +29,35 @@ class Customer extends Model
         'notes',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'birth_date' => 'date',
+        ];
+    }
+
+    protected $appends = ['company', 'address', 'nik', 'birth_date'];
+
+    public function getNikAttribute(): ?string
+    {
+        return $this->attributes['nik'] ?? ($this->attributes['document_number'] ?? $this->lead?->nik);
+    }
+
+    public function getBirthDateAttribute(): ?string
+    {
+        return $this->attributes['birth_date'] ?? $this->lead?->birth_date;
+    }
+
+    public function getCompanyAttribute(): ?string
+    {
+        return $this->institution?->name ?? $this->lead?->company;
+    }
+
+    public function getAddressAttribute(): ?string
+    {
+        return $this->attributes['address'] ?? ($this->institution?->address ?? ($this->city ? ($this->province ? "{$this->city}, {$this->province}" : $this->city) : null));
+    }
+
     public function institution(): BelongsTo
     {
         return $this->belongsTo(Institution::class);
@@ -35,6 +66,11 @@ class Customer extends Model
     public function lead(): BelongsTo
     {
         return $this->belongsTo(Lead::class);
+    }
+
+    public function leads(): BelongsTo
+    {
+        return $this->belongsTo(Lead::class, 'lead_id');
     }
 
     public function registrations(): HasMany

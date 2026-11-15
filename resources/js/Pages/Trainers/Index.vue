@@ -13,12 +13,15 @@ const trainers = ref([]);
 const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
 const search = ref('');
 const loading = ref(true);
+let searchTimeout = null;
 
 async function loadTrainers(page = 1) {
     loading.value = true;
     try {
         const params = { page: String(page), per_page: '20' };
-        if (search.value) params.search = search.value;
+        if (search.value && search.value.trim() !== '') {
+            params.search = search.value.trim();
+        }
         const res = await api.list('trainers', params);
         trainers.value = res.data || [];
         pagination.value = {
@@ -36,10 +39,19 @@ async function loadTrainers(page = 1) {
 }
 
 function handleFilter() {
+    if (searchTimeout) clearTimeout(searchTimeout);
     loadTrainers(1);
 }
 
+function onSearchInput() {
+    if (searchTimeout) clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadTrainers(1);
+    }, 250);
+}
+
 function resetFilter() {
+    if (searchTimeout) clearTimeout(searchTimeout);
     search.value = '';
     loadTrainers(1);
 }
@@ -69,7 +81,7 @@ onMounted(() => {
         <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
             <form @submit.prevent="handleFilter" class="flex flex-col sm:flex-row items-center gap-2.5">
                 <div class="relative flex-1 w-full">
-                    <input v-model="search" type="text"
+                    <input v-model="search" @input="onSearchInput" type="text"
                         placeholder="Cari trainer, email, atau telepon..."
                         class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
                 </div>
@@ -100,7 +112,10 @@ onMounted(() => {
                             <td colspan="5" class="p-8 text-center text-gray-400">Memuat data trainer...</td>
                         </tr>
                         <tr v-else-if="trainers.length === 0">
-                            <td colspan="5" class="p-8 text-center text-gray-400">Belum ada trainer.</td>
+                            <td colspan="5" class="p-8 text-center text-gray-400">
+                                <span v-if="search">Tidak ditemukan trainer dengan kata kunci "<strong>{{ search }}</strong>".</span>
+                                <span v-else>Belum ada data trainer.</span>
+                            </td>
                         </tr>
                         <tr v-for="t in trainers" :key="t.id" class="hover:bg-blue-50/20 transition-colors">
                             <td class="py-3.5 px-4 font-semibold text-gray-900">

@@ -61,16 +61,17 @@ onMounted(() => {
                             <th class="py-3 px-4">Nama & Email</th>
                             <th class="py-3 px-4">Role</th>
                             <th class="py-3 px-4">No. HP / WA</th>
+                            <th class="py-3 px-4">Rekening Bank (Komisi)</th>
                             <th class="py-3 px-4">Status</th>
                             <th class="py-3 px-4 text-right">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         <tr v-if="loading">
-                            <td colspan="5" class="py-8 text-center text-gray-400">Memuat data pengguna...</td>
+                            <td colspan="6" class="py-8 text-center text-gray-400">Memuat data pengguna...</td>
                         </tr>
                         <tr v-else-if="users.length === 0">
-                            <td colspan="5" class="py-8 text-center text-gray-400">Belum ada pengguna.</td>
+                            <td colspan="6" class="py-8 text-center text-gray-400">Belum ada pengguna.</td>
                         </tr>
                         <tr v-for="u in users" :key="u.id" class="hover:bg-blue-50/30 transition-colors">
                             <td class="py-3 px-4">
@@ -84,6 +85,20 @@ onMounted(() => {
                                 </span>
                             </td>
                             <td class="py-3 px-4 text-gray-700">{{ u.phone || '-' }}</td>
+                            <td class="py-3 px-4">
+                                <div v-if="u.bank_account_number" class="text-xs">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="px-1.5 py-0.5 bg-gray-100 text-gray-800 font-mono text-[10px] font-bold border border-gray-200">
+                                            {{ u.bank_name || 'Bank' }}
+                                        </span>
+                                        <span class="font-mono text-gray-900 font-bold">{{ u.bank_account_number }}</span>
+                                    </div>
+                                    <div v-if="u.bank_account_name" class="text-[10px] text-gray-500 mt-0.5">
+                                        a.n {{ u.bank_account_name }}
+                                    </div>
+                                </div>
+                                <span v-else class="text-[11px] text-gray-400 italic">Belum diatur</span>
+                            </td>
                             <td class="py-3 px-4">
                                 <span class="px-2 py-0.5 text-[10px] font-medium border"
                                     :class="u.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'">

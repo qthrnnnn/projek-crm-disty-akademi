@@ -92,7 +92,7 @@ onMounted(() => {
         <!-- Filter Card -->
         <div class="bg-white border border-blue-100 p-3.5 shadow-sm">
             <form @submit.prevent="loadPayments(1)" class="flex flex-wrap items-center gap-2.5">
-                <select v-model="status" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                <select v-model="status" @change="loadPayments(1)" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
                     <option value="">Semua Status Pembayaran</option>
                     <option value="pending">Menunggu Verifikasi</option>
                     <option value="valid">Valid / Diterima</option>
@@ -148,6 +148,12 @@ onMounted(() => {
                                 <span class="px-2 py-0.5 text-[10px] font-medium border" :class="statusBadgeClass(p.status)">
                                     {{ p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : '-' }}
                                 </span>
+                                <div v-if="p.status === 'invalid' && p.verification_notes" class="text-[10.5px] text-red-600 mt-1 max-w-[190px] leading-tight">
+                                    <span class="font-semibold">Alasan:</span> {{ p.verification_notes }}
+                                </div>
+                                <div v-else-if="p.status === 'recheck' && p.verification_notes" class="text-[10.5px] text-orange-600 mt-1 max-w-[190px] leading-tight">
+                                    <span class="font-semibold">Catatan:</span> {{ p.verification_notes }}
+                                </div>
                             </td>
                             <td class="py-3 px-4 text-right">
                                 <button v-if="isAdmin" @click="emit('navigate', `/payments/${p.id}`)"

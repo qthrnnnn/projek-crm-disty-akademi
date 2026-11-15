@@ -41,25 +41,25 @@ async function save() {
             </button>
         </div>
 
-        <div v-if="error" class="p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
+        <div v-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
 
-        <form @submit.prevent="save" class="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+        <form @submit.prevent="save" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Program Pelatihan *</label>
                 <input v-model="form.name" type="text" required
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Misal: Fullstack Laravel & Vue Mastery" />
+                    class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Misal: Fullstack Laravel & Vue Mastery" />
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Kode Program</label>
                     <input v-model="form.code" type="text"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="PRD-FLV-01" />
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="PRD-FLV-01" />
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Kategori</label>
                     <select v-model="form.category"
-                        class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
+                        class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
                         <option value="Reguler">Reguler / Bootcamp</option>
                         <option value="Sertifikasi">Sertifikasi BNSP / Industri</option>
                         <option value="Corporate">Corporate Training</option>
@@ -70,13 +70,13 @@ async function save() {
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Biaya Pelatihan (Rp) *</label>
                 <input v-model="form.price" type="number" required min="0"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="1500000" />
+                    class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="1500000" />
             </div>
 
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Deskripsi & Cakupan Silabus</label>
                 <textarea v-model="form.description" rows="3"
-                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Ringkasan modul pembelajaran..."></textarea>
+                    class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Ringkasan modul pembelajaran..."></textarea>
             </div>
 
             <div class="pt-2 flex justify-end gap-2">

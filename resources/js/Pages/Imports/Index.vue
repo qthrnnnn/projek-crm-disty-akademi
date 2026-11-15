@@ -1,11 +1,14 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { api } from '../../services/api';
 import Pagination from '../../Components/Pagination.vue';
 
 const props = defineProps({
     user: { type: Object, default: () => ({}) },
 });
+
+const isSales = computed(() => props.user?.role === 'sales');
+const isAdmin = computed(() => props.user?.role === 'admin');
 
 const emit = defineEmits(['navigate']);
 
@@ -58,11 +61,15 @@ onMounted(() => {
                 <h1 class="text-xl font-semibold text-gray-900">Riwayat Import Lead (CSV / Excel)</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Daftar batch upload prospek masal dari CSV atau Excel</p>
             </div>
-            <button @click="emit('navigate', '/lead-imports/create')"
+            <button v-if="isSales" @click="emit('navigate', '/lead-imports/create')"
                 class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition-colors shadow-sm">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
-                Upload File Baru
+                Upload File Baru (Sales)
             </button>
+            <div v-else-if="isAdmin" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200">
+                <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                Mode Pemantauan Admin (Hanya Sales yang Unggah File)
+            </div>
         </div>
 
         <!-- Table Card -->

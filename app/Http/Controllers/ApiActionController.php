@@ -53,9 +53,9 @@ class ApiActionController extends Controller
         return $this->run(CommissionController::class, 'approve', [$commission], $commission);
     }
 
-    public function payCommission(Commission $commission): JsonResponse
+    public function payCommission(Request $request, Commission $commission): JsonResponse
     {
-        return $this->run(CommissionController::class, 'markPaid', [$commission], $commission);
+        return $this->run(CommissionController::class, 'markPaid', [$request, $commission], $commission);
     }
 
     public function createReminder(Request $request, Lead $lead): JsonResponse
@@ -92,12 +92,19 @@ class ApiActionController extends Controller
     {
         $response = app(DashboardController::class)->index($request);
 
-        return response()->json(['data' => $response->getData(true)]);
+        return response()->json([
+            'success' => true,
+            'data' => $response->getData(true),
+        ]);
     }
 
     private function run(string $controller, string $method, array $arguments, ?object $resource = null): JsonResponse
     {
         $response = app($controller)->{$method}(...$arguments);
+
+        if ($response instanceof JsonResponse) {
+            return $response;
+        }
 
         if ($response instanceof Response && ! $response instanceof \Illuminate\Http\RedirectResponse) {
             return response()->json(['data' => $response->getContent()], $response->getStatusCode());
@@ -106,6 +113,7 @@ class ApiActionController extends Controller
         $message = session('success') ?: session('error') ?: 'Operasi berhasil.';
 
         return response()->json([
+            'success' => ! session('error'),
             'message' => $message,
             'data' => $resource?->fresh(),
         ], session('error') ? 422 : 200);

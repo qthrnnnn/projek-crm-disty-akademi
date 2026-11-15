@@ -68,89 +68,43 @@ class DatabaseSeeder extends Seeder
         $r3 = RejectionReason::create(['name' => 'no_budget', 'label' => 'Belum Ada Anggaran Kantor']);
         $r4 = RejectionReason::create(['name' => 'competitor', 'label' => 'Memilih Vendor Lain']);
         $r5 = RejectionReason::create(['name' => 'no_response', 'label' => 'Tidak Merespon Chat/Telp']);
+        $r6 = RejectionReason::create(['name' => 'wrong_number', 'label' => 'Nomor Salah']);
+        $r7 = RejectionReason::create(['name' => 'unreachable', 'label' => 'Tidak Dapat Dihubungi']);
+        $r8 = RejectionReason::create(['name' => 'not_willing', 'label' => 'Tidak Bersedia']);
+        $r9 = RejectionReason::create(['name' => 'not_interested', 'label' => 'Tidak Tertarik']);
 
-        // 4. Products (Pelatihan / Bootcamp & Sertifikasi BNSP)
-        // Kategori: Pelatihan / Bootcamp
-        $pAWS = Product::create([
-            'name' => 'Cloud Computing with AWS',
-            'code' => 'PRD-AWS',
-            'category' => 'Pelatihan / Bootcamp',
-            'price' => 150000,
+        // 4. Products (Katalog Produk CRM: 3 Program Resmi)
+        $pDigitalFiling = Product::create([
+            'name' => 'Pelatihan dan Sertifikasi Digital Filing',
+            'code' => 'PRD-DF',
+            'category' => 'Pelatihan & Sertifikasi',
+            'product_type' => 'bundle',
+            'price' => 3885000,
             'duration_hours' => 24,
-            'description' => 'Intensive Live Class bersama Experts. Praktikal & Mendalam. Benefit: Gratis E-Certificate, Live Class dan Q&A bersama mentor profesional, Case Study, Praktik, Tes dan membangun Portofolio, Join community secara lifetime.',
+            'description' => 'Pelatihan dan Sertifikasi Digital Filing dirancang untuk membekali peserta dengan keterampilan mengelola, menyimpan, dan menata dokumen secara digital secara efektif, aman, dan efisien sesuai kebutuhan instansi dan organisasi modern. Harga sudah termasuk: Pelatihan Digital Filing, Sertifikat Peserta, Konsumsi Peserta, Transportasi Trainer, Akomodasi Trainer, Pajak.',
+            'is_active' => true,
         ]);
 
-        $pUI = Product::create([
-            'name' => 'UI/UX Research and Design',
-            'code' => 'PRD-UIUX',
-            'category' => 'Pelatihan / Bootcamp',
-            'price' => 0,
+        $pPelayananPrima = Product::create([
+            'name' => 'Pelatihan Pelayanan Prima',
+            'code' => 'PRD-PP',
+            'category' => 'Pelatihan',
+            'product_type' => 'training',
+            'price' => 1665000,
             'duration_hours' => 16,
-            'description' => 'Intensive Live Class bersama Experts. Praktikal & Mendalam. Benefit: Gratis E-Certificate, Live Class dan Q&A bersama mentor profesional, Case Study, Praktik, Tes dan membangun Portofolio, Join community secara lifetime.',
+            'description' => 'Pelatihan Pelayanan Prima dirancang untuk meningkatkan pengetahuan, keterampilan, dan sikap peserta dalam memberikan pelayanan yang efektif, ramah, profesional, dan berorientasi pada kepuasan pelanggan. Harga sudah termasuk: Pelatihan, Materi Pelatihan, Konsumsi Peserta, Transportasi Trainer, Akomodasi Trainer.',
+            'is_active' => true,
         ]);
 
-        $pWeb = Product::create([
-            'name' => 'Fullstack Web Development',
-            'code' => 'PRD-WEB',
-            'category' => 'Pelatihan / Bootcamp',
-            'price' => 1500000,
-            'duration_hours' => 48,
-            'description' => 'Web Programming Laravel & React. Benefit: Gratis E-Certificate, Live Class dan Q&A bersama mentor profesional, Case Study, Praktik, Tes dan membangun Portofolio, Join community secara lifetime.',
-        ]);
-
-        // Kategori: Sertifikasi BNSP
-        $pTot4 = Product::create([
-            'name' => 'ToT KKNI Level 4',
-            'code' => 'BNSP-TOT4',
+        $pSertifikasiBNSP = Product::create([
+            'name' => 'Sertifikasi Pelayanan Prima (Excellent Service) Lisensi BNSP',
+            'code' => 'BNSP-ES',
             'category' => 'Sertifikasi BNSP',
-            'price' => 0,
-            'duration_hours' => 32,
-            'description' => 'Program resmi uji kompetensi sesuai standar nasional ToT KKNI Level 4 Sertifikasi BNSP. Materi intensif, simulasi & persiapan uji kompetensi, sertifikat resmi BNSP.',
-        ]);
-
-        $pTot3 = Product::create([
-            'name' => 'ToT KKNI Level 3',
-            'code' => 'BNSP-TOT3',
-            'category' => 'Sertifikasi BNSP',
-            'price' => 500000,
-            'duration_hours' => 24,
-            'description' => 'Program resmi uji kompetensi sesuai standar nasional ToT KKNI Level 3 Sertifikasi BNSP. Materi intensif, simulasi & persiapan uji kompetensi, sertifikat resmi BNSP.',
-        ]);
-
-        $pDM = Product::create([
-            'name' => 'Digital Marketing',
-            'code' => 'BNSP-DM',
-            'category' => 'Sertifikasi BNSP',
-            'price' => 0,
-            'duration_hours' => 20,
-            'description' => 'Program resmi uji kompetensi sesuai standar nasional Digital Marketing Sertifikasi BNSP. Materi intensif, simulasi & persiapan uji kompetensi, sertifikat resmi BNSP.',
-        ]);
-
-        $pOK = Product::create([
-            'name' => 'Operator Komputer',
-            'code' => 'BNSP-OK',
-            'category' => 'Sertifikasi BNSP',
-            'price' => 1200000,
-            'duration_hours' => 30,
-            'description' => 'Program resmi uji kompetensi sesuai standar nasional Operator Komputer Sertifikasi BNSP. Materi intensif, simulasi & persiapan uji kompetensi, sertifikat resmi BNSP.',
-        ]);
-
-        $pSS = Product::create([
-            'name' => 'Soft Skills',
-            'code' => 'BNSP-SS',
-            'category' => 'Sertifikasi BNSP',
-            'price' => 0,
+            'product_type' => 'certification',
+            'price' => 888000,
             'duration_hours' => 16,
-            'description' => 'Program resmi uji kompetensi sesuai standar nasional Soft Skills Sertifikasi BNSP. Materi intensif, simulasi & persiapan uji kompetensi, sertifikat resmi BNSP.',
-        ]);
-
-        $pSE = Product::create([
-            'name' => 'Service Excellent',
-            'code' => 'BNSP-SE',
-            'category' => 'Sertifikasi BNSP',
-            'price' => 0,
-            'duration_hours' => 16,
-            'description' => 'Program resmi uji kompetensi sesuai standar nasional Service Excellent Sertifikasi BNSP. Materi intensif, simulasi & persiapan uji kompetensi, sertifikat resmi BNSP.',
+            'description' => 'Sertifikasi BNSP untuk Skema Pelayanan Prima (Excellent Service) berdasarkan SKKNI Bidang Administratif Profesional. Fasilitas: Harga sudah termasuk pajak, Harga belum termasuk makan, minum dan tempat, Asesmen oleh Asesor yang kompeten sesuai bidangnya, Materi Uji Kompetensi versi 2023, Sertifikat Kompetensi BNSP (bagi yang telah mengikuti asesmen dan direkomendasikan kompeten).',
+            'is_active' => true,
         ]);
 
         // 5. Sample Leads
@@ -165,7 +119,8 @@ class DatabaseSeeder extends Seeder
             'job_title' => 'Junior Developer',
             'city' => 'Jakarta Selatan',
             'lead_source_id' => $sourceWeb->id,
-            'product_id' => $pWeb->id,
+            'product_id' => $pDigitalFiling->id,
+            'deal_price' => 3885000,
             'assigned_to' => $budi->id,
             'assigned_at' => now()->subDays(2),
             'status' => 'won',
@@ -177,9 +132,9 @@ class DatabaseSeeder extends Seeder
 
         $payment1 = Payment::create([
             'lead_id' => $lead1->id,
-            'product_id' => $pWeb->id,
+            'product_id' => $pDigitalFiling->id,
             'verified_by' => $admin->id,
-            'amount' => 1500000,
+            'amount' => 3885000,
             'payment_method' => 'transfer_bank',
             'bank_name' => 'BCA',
             'account_number' => '883019281',
@@ -187,16 +142,16 @@ class DatabaseSeeder extends Seeder
             'payment_date' => now()->subHours(6),
             'status' => 'valid',
             'verified_at' => now()->subHours(5),
-            'verification_notes' => 'Dana mutasi BCA Rp 1.500.000 terverifikasi valid',
+            'verification_notes' => 'Dana mutasi BCA Rp 3.885.000 terverifikasi valid',
         ]);
 
         Commission::create([
             'user_id' => $budi->id,
             'lead_id' => $lead1->id,
             'payment_id' => $payment1->id,
-            'deal_amount' => 1500000,
+            'deal_amount' => 3885000,
             'commission_rate' => 10.0,
-            'commission_amount' => 150000,
+            'commission_amount' => 388500,
             'status' => 'approved',
             'approved_at' => now()->subHours(4),
         ]);
@@ -212,7 +167,8 @@ class DatabaseSeeder extends Seeder
             'job_title' => 'Business Analyst',
             'city' => 'Surabaya',
             'lead_source_id' => $sourceWa->id,
-            'product_id' => $pTot3->id,
+            'product_id' => $pSertifikasiBNSP->id,
+            'deal_price' => 888000,
             'assigned_to' => $sari->id,
             'assigned_at' => now()->subHours(4),
             'status' => 'negotiation',
@@ -235,8 +191,8 @@ class DatabaseSeeder extends Seeder
             'lead_id' => $lead2->id,
             'user_id' => $sari->id,
             'type' => 'whatsapp',
-            'subject' => 'Kirim skema ToT KKNI Level 3 & diskon kelompok',
-            'description' => 'Prospek berminat untuk 3 orang trainer internal kantor.',
+            'subject' => 'Kirim skema Sertifikasi BNSP Pelayanan Prima',
+            'description' => 'Prospek berminat untuk 3 orang staf pelayanan kantor.',
             'activity_at' => now()->subHours(3),
         ]);
 
@@ -251,7 +207,8 @@ class DatabaseSeeder extends Seeder
             'job_title' => 'Mahasiswa Akhir',
             'city' => 'Surabaya',
             'lead_source_id' => $sourceWeb->id,
-            'product_id' => $pUI->id,
+            'product_id' => $pPelayananPrima->id,
+            'deal_price' => 1665000,
             'assigned_to' => $andi->id,
             'assigned_at' => now()->subHours(2),
             'status' => 'new',
@@ -268,7 +225,8 @@ class DatabaseSeeder extends Seeder
             'company' => 'CV Prima Perkasa',
             'city' => 'Bandung',
             'lead_source_id' => $sourceManual->id,
-            'product_id' => $pOK->id,
+            'product_id' => $pPelayananPrima->id,
+            'deal_price' => 1665000,
             'assigned_to' => $budi->id,
             'status' => 'lost',
             'rejection_reason_id' => $r1->id,
@@ -380,66 +338,77 @@ class DatabaseSeeder extends Seeder
             'notes' => 'Calon peserta bootcamp UI/UX batch berikutnya.',
         ]);
 
-        // 8. Trainers (Sesuai Gambar 2)
-        $trEko = Trainer::create([
-            'name' => 'Dr. Ir. Eko Prasetyo, M.Kom',
-            'email' => 'eko.prasetyo@distyakademi.com',
-            'phone' => '081122334455',
-            'notes' => 'Senior Web Architecture & Lead Technical Trainer',
-            'is_active' => true,
-        ]);
+        // 8. 15 Trainer Resmi Disty Akademi
+        $officialTrainersList = [
+            ['name' => 'Drs. Purwanto, M.Si.', 'email' => 'purwanto@distyakademi.com'],
+            ['name' => 'Drs. Mochammad Saleh, M.Si.', 'email' => 'saleh@distyakademi.com'],
+            ['name' => 'Bayu Pancoroadi, ST.,MT', 'email' => 'bayu@distyakademi.com'],
+            ['name' => 'Miftahul Ulum, ST., M.Si.', 'email' => 'miftahul@distyakademi.com'],
+            ['name' => 'Mochamad Samsukadi, Lc., M.Th.I', 'email' => 'samsukadi@distyakademi.com'],
+            ['name' => 'Galuh Tisna Widiana, M.Pd.', 'email' => 'galuh@distyakademi.com'],
+            ['name' => 'M. Yusuf Wibowo, ST.', 'email' => 'yusuf@distyakademi.com'],
+            ['name' => 'M. Ali Murtadlo, M.Kom.', 'email' => 'ali@distyakademi.com'],
+            ['name' => 'Chandra Sukma Anugrah, M.Kom.', 'email' => 'chandra@distyakademi.com'],
+            ['name' => 'Wiwit Denny Fitriana, M.Si.', 'email' => 'wiwit@distyakademi.com'],
+            ['name' => 'Dr. Nur Ulwiyah, M.Pd.I', 'email' => 'ulwiyah@distyakademi.com'],
+            ['name' => 'Dr. Miftakhul Ilmi S. Putra, M.Pd.', 'email' => 'ilmi@distyakademi.com'],
+            ['name' => 'Dr. Dhikrul Hakim, M.Pd.I', 'email' => 'dhikrul@distyakademi.com'],
+            ['name' => 'Dr. Moh. Makmun, M.HI', 'email' => 'makmun@distyakademi.com'],
+            ['name' => 'Mahmud Huda, M.S.I', 'email' => 'mahmud@distyakademi.com'],
+        ];
 
-        $trRina = Trainer::create([
-            'name' => 'Rina Wulandari, S.Kom, M.Sc',
-            'email' => 'rina.wulandari@distyakademi.com',
-            'phone' => '081133445566',
-            'notes' => 'Data Scientist & AI Specialist with 8+ years experience',
-            'is_active' => true,
-        ]);
+        $createdTrainers = [];
+        foreach ($officialTrainersList as $idx => $tData) {
+            $createdTrainers[] = Trainer::firstOrCreate(
+                ['name' => $tData['name']],
+                [
+                    'email' => $tData['email'],
+                    'phone' => '08' . str_pad(($idx + 1) * 111222, 10, '0', STR_PAD_RIGHT),
+                    'notes' => 'Trainer profesional resmi Disty Akademi',
+                    'is_active' => true,
+                ]
+            );
+        }
 
-        $trFajar = Trainer::create([
-            'name' => 'Fajar Hidayat, S.Ds',
-            'email' => 'fajar.hidayat@distyakademi.com',
-            'phone' => '081144556677',
-            'notes' => 'Principal UI/UX Designer & Design Sprint Master',
-            'is_active' => true,
-        ]);
+        $trPurwanto = $createdTrainers[0];
+        $trSaleh = $createdTrainers[1];
+        $trBayu = $createdTrainers[2];
 
         // 9. Jadwal Pelatihan (Sesuai Gambar 3)
-        $schWeb = TrainingSchedule::create([
-            'product_id' => $pWeb->id,
-            'trainer_id' => $trEko->id,
+        $schDF = TrainingSchedule::create([
+            'product_id' => $pDigitalFiling->id,
+            'trainer_id' => $trPurwanto->id,
             'training_date' => now()->addDays(3)->toDateString(),
             'start_time' => '09:00:00',
             'end_time' => '16:00:00',
             'location' => 'Disty Lab Komputer A / Live Zoom Online',
             'capacity' => 25,
             'status' => 'scheduled',
-            'notes' => 'Siapkan laptop dengan spesifikasi minimal RAM 8GB dan Node.js / PHP 8.2 terinstal.',
+            'notes' => 'Siapkan laptop dengan spesifikasi minimal RAM 8GB dan koneksi internet stabil.',
         ]);
 
-        $schTot3 = TrainingSchedule::create([
-            'product_id' => $pTot3->id,
-            'trainer_id' => $trRina->id,
+        $schBNSP = TrainingSchedule::create([
+            'product_id' => $pSertifikasiBNSP->id,
+            'trainer_id' => $trSaleh->id,
             'training_date' => now()->addDays(7)->toDateString(),
             'start_time' => '09:00:00',
             'end_time' => '15:30:00',
             'location' => 'Disty Academy Training Hall Surabaya',
             'capacity' => 20,
             'status' => 'scheduled',
-            'notes' => 'Materi skema sertifikasi ToT KKNI Level 3 & panduan asesmen disediakan sebelum uji kompetensi.',
+            'notes' => 'Materi skema Sertifikasi BNSP Pelayanan Prima disediakan sebelum uji kompetensi.',
         ]);
 
-        $schUI = TrainingSchedule::create([
-            'product_id' => $pUI->id,
-            'trainer_id' => $trFajar->id,
+        $schPP = TrainingSchedule::create([
+            'product_id' => $pPelayananPrima->id,
+            'trainer_id' => $trBayu->id,
             'training_date' => now()->addDays(12)->toDateString(),
             'start_time' => '10:00:00',
             'end_time' => '16:00:00',
             'location' => 'Zoom Meeting VIP (Interactive)',
             'capacity' => 30,
             'status' => 'scheduled',
-            'notes' => 'Akun Figma profesional gratis selama durasi program.',
+            'notes' => 'Modul panduan service excellent digital dibagikan pada hari pertama pelatihan.',
         ]);
 
         // 10. Pendaftaran Peserta (Sesuai Gambar 1)
@@ -447,10 +416,10 @@ class DatabaseSeeder extends Seeder
         Registration::create([
             'registration_number' => 'REG-20261022-0001',
             'customer_id' => $custDimas->id,
-            'training_schedule_id' => $schWeb->id,
-            'product_id' => $pWeb->id,
-            'training_date' => $schWeb->training_date,
-            'amount' => 1500000,
+            'training_schedule_id' => $schDF->id,
+            'product_id' => $pDigitalFiling->id,
+            'training_date' => $schDF->training_date,
+            'amount' => 3885000,
             'status' => 'confirmed',
             'notes' => 'Pembayaran lunas via transfer BCA.',
         ]);
@@ -458,14 +427,15 @@ class DatabaseSeeder extends Seeder
         Registration::create([
             'registration_number' => 'REG-20261022-0002',
             'customer_id' => $custSiti->id,
-            'training_schedule_id' => $schTot3->id,
-            'product_id' => $pTot3->id,
-            'training_date' => $schTot3->training_date,
-            'amount' => 500000,
+            'training_schedule_id' => $schBNSP->id,
+            'product_id' => $pSertifikasiBNSP->id,
+            'training_date' => $schBNSP->training_date,
+            'amount' => 888000,
             'status' => 'registered',
             'notes' => 'Menunggu verifikasi transfer dari finance kantor.',
         ]);
 
         $this->call(CompanyProfileSeeder::class);
+        $this->call(CommissionSeeder::class);
     }
 }

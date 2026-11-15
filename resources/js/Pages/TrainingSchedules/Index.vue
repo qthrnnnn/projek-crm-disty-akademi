@@ -60,7 +60,21 @@ async function loadSchedules(page = 1) {
     }
 }
 
+let searchTimeout = null;
+function onSearchInput() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadSchedules(1);
+    }, 250);
+}
+
+function handleFilter() {
+    clearTimeout(searchTimeout);
+    loadSchedules(1);
+}
+
 function resetFilter() {
+    clearTimeout(searchTimeout);
     search.value = '';
     status.value = '';
     loadSchedules(1);
@@ -93,14 +107,14 @@ onMounted(() => {
 
         <!-- Filter Card -->
         <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
-            <form @submit.prevent="loadSchedules(1)" class="flex flex-col sm:flex-row items-center gap-2.5">
+            <form @submit.prevent="handleFilter" class="flex flex-col sm:flex-row items-center gap-2.5">
                 <div class="relative flex-1 w-full">
-                    <input v-model="search" type="text"
+                    <input v-model="search" @input="onSearchInput" type="text"
                         placeholder="Cari pelatihan, trainer, atau lokasi..."
                         class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
                 </div>
                 <div class="w-full sm:w-48">
-                    <select v-model="status" @change="loadSchedules(1)"
+                    <select v-model="status" @change="handleFilter"
                         class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
                         <option value="">Semua status</option>
                         <option value="scheduled">Scheduled</option>
@@ -141,7 +155,10 @@ onMounted(() => {
                             <td colspan="8" class="py-8 text-center text-gray-400 text-xs">Memuat jadwal...</td>
                         </tr>
                         <tr v-else-if="schedules.length === 0">
-                            <td colspan="8" class="py-8 text-center text-gray-400 text-xs">Belum ada jadwal pelatihan.</td>
+                            <td colspan="8" class="py-8 text-center text-gray-400 text-xs">
+                                <span v-if="search">Tidak ditemukan jadwal pelatihan dengan kata kunci "<strong>{{ search }}</strong>".</span>
+                                <span v-else>Belum ada jadwal pelatihan.</span>
+                            </td>
                         </tr>
                         <tr v-for="s in schedules" :key="s.id" class="hover:bg-blue-50/20 transition-colors">
                             <td class="py-3.5 px-4 font-semibold text-gray-900">

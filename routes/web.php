@@ -1,16 +1,48 @@
 <?php
 
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
-Route::get('/', function () {
-    return view('app');
-})->name('home');
+Route::inertia('/login', 'Spa')->name('login');
 
-Route::get('/login', function () {
-    return view('app');
-})->name('login');
+// Named routes for SPA views to satisfy redirect()->route(...) calls across Laravel controllers
+$spaNamedRoutes = [
+    'dashboard' => '/dashboard',
+    'payments.index' => '/payments',
+    'payments.create' => '/payments/create',
+    'payments.show' => '/payments/{payment}',
+    'commissions.index' => '/commissions',
+    'customers.index' => '/customers',
+    'customers.create' => '/customers/create',
+    'customers.show' => '/customers/{customer}',
+    'follow-ups.index' => '/follow-ups',
+    'follow-ups.create' => '/follow-ups/create',
+    'follow-ups.show' => '/follow-ups/{followUp}',
+    'institutions.index' => '/institutions',
+    'leads.index' => '/leads',
+    'leads.create' => '/leads/create',
+    'leads.show' => '/leads/{lead}',
+    'lead-imports.index' => '/lead-imports',
+    'products.index' => '/products',
+    'registrations.index' => '/registrations',
+    'registrations.create' => '/registrations/create',
+    'trainers.index' => '/trainers',
+    'training-schedules.index' => '/training-schedules',
+    'users.index' => '/users',
+];
+
+Route::middleware('auth')->group(function () use ($spaNamedRoutes) {
+    Route::inertia('/', 'Spa')->name('home');
+
+    foreach ($spaNamedRoutes as $name => $uri) {
+        Route::inertia($uri, 'Spa')->name($name);
+    }
+});
+
+Route::get('/leads/template', [\App\Http\Controllers\LeadController::class, 'downloadTemplate']);
+Route::get('/leads/template-excel', [\App\Http\Controllers\LeadController::class, 'downloadTemplateExcel']);
 
 /* Alamat yang tidak dikenal (mis. /admin/dashboard diketik langsung oleh Klien) dialihkan ke halaman awal SPA.
    Hanya untuk navigasi browser. Permintaan API atau JSON tetap mendapat 404 JSON sesuai kontrak. */
@@ -19,7 +51,7 @@ Route::fallback(function (Request $request) {
         throw new NotFoundHttpException;
     }
 
-    return view('app');
+    return Inertia::render('Spa');
 });
 
 require __DIR__.'/settings.php';

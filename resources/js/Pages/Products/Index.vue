@@ -12,9 +12,8 @@ const emit = defineEmits(['navigate']);
 const products = ref([]);
 const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
 const search = ref('');
-const selectedCategory = ref('');
-const selectedProductType = ref('');
 const loading = ref(true);
+const viewMode = ref('grid'); // 'grid' | 'table'
 
 const isAdmin = computed(() => props.user?.role === 'admin');
 
@@ -22,25 +21,11 @@ function formatCurrency(val) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 }
 
-function typeLabel(p) {
-    if (p.product_type === 'certification') return 'Uji Sertifikasi BNSP';
-    if (p.product_type === 'bundle') return 'Paket Bundling';
-    return 'Pelatihan / Kelas';
-}
-
-function typeBadgeClass(p) {
-    if (p.product_type === 'certification') return 'bg-red-50 text-red-700 border-red-200';
-    if (p.product_type === 'bundle') return 'bg-amber-50 text-amber-700 border-amber-200';
-    return 'bg-blue-50 text-blue-700 border-blue-200';
-}
-
 async function loadProducts(page = 1) {
     loading.value = true;
     try {
         const params = { page: String(page), per_page: '20' };
         if (search.value) params.search = search.value;
-        if (selectedCategory.value) params.category = selectedCategory.value;
-        if (selectedProductType.value) params.product_type = selectedProductType.value;
 
         const res = await api.list('products', params);
         products.value = res.data || [];
@@ -58,15 +43,21 @@ async function loadProducts(page = 1) {
     }
 }
 
-function setFilter(cat, type) {
-    selectedCategory.value = cat;
-    selectedProductType.value = type;
+let searchTimeout = null;
+function onSearchInput() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadProducts(1);
+    }, 250);
+}
+
+function handleFilter() {
+    clearTimeout(searchTimeout);
     loadProducts(1);
 }
 
 function resetFilter() {
-    selectedCategory.value = '';
-    selectedProductType.value = '';
+    clearTimeout(searchTimeout);
     search.value = '';
     loadProducts(1);
 }
@@ -91,135 +82,145 @@ onMounted(() => {
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-                <h1 class="text-xl font-bold text-gray-900">Katalog Program Pelatihan & Sertifikasi</h1>
-                <p class="text-xs text-gray-500 mt-0.5">Pelatihan, uji sertifikasi BNSP, dan paket bundling dipisahkan</p>
+                <h1 class="text-xl font-bold text-gray-900">Katalog Program</h1>
+                <p class="text-xs text-gray-500 mt-0.5">Daftar kode, nama program, dan harga</p>
             </div>
-            <button v-if="isAdmin" @click="emit('navigate', '/products/create')"
-                class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 shadow-sm transition-colors self-start sm:self-auto">
-                + Tambah Program
-            </button>
+            <div class="flex items-center gap-2">
+                <div class="flex items-center bg-gray-100 p-1 text-xs font-semibold">
+                    <button type="button" @click="viewMode = 'grid'"
+                        class="px-3 py-1.5 rounded-lg transition"
+                        :class="viewMode === 'grid' ? 'bg-white text-orange-600 shadow-2xs font-bold' : 'text-gray-500 hover:text-gray-900'">
+                        Kartu
+                    </button>
+                    <button type="button" @click="viewMode = 'table'"
+                        class="px-3 py-1.5 rounded-lg transition"
+                        :class="viewMode === 'table' ? 'bg-white text-orange-600 shadow-2xs font-bold' : 'text-gray-500 hover:text-gray-900'">
+                        Tabel
+                    </button>
+                </div>
+
+                <button v-if="isAdmin" @click="emit('navigate', '/products/create')"
+                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 shadow-xs transition-colors">
+                    + Tambah Program
+                </button>
+            </div>
         </div>
 
-        <!-- Filter Kategori & Pencarian -->
-        <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm space-y-3">
-            <!-- Category Pills -->
-            <div class="flex flex-wrap items-center gap-1.5 border-b border-gray-100 pb-3 text-xs">
-                <button type="button" @click="setFilter('', '')"
-                    class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[!selectedCategory && !selectedProductType ? 'bg-orange-500 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
-                    Semua Program
-                </button>
-                <button type="button" @click="setFilter('Pelatihan / Bootcamp', '')"
-                    class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[selectedCategory === 'Pelatihan / Bootcamp' && !selectedProductType ? 'bg-orange-500 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
-                    Pelatihan / Bootcamp
-                </button>
-                <button type="button" @click="setFilter('Sertifikasi BNSP', '')"
-                    class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[selectedCategory === 'Sertifikasi BNSP' && !selectedProductType ? 'bg-orange-500 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
-                    Sertifikasi BNSP
-                </button>
-                <button type="button" @click="setFilter('', 'training')"
-                    class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[!selectedCategory && selectedProductType === 'training' ? 'bg-orange-500 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
-                    Pelatihan
-                </button>
-                <button type="button" @click="setFilter('', 'certification')"
-                    class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[!selectedCategory && selectedProductType === 'certification' ? 'bg-orange-500 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
-                    Uji Sertifikasi
-                </button>
-                <button type="button" @click="setFilter('', 'bundle')"
-                    class="px-3 py-1.5 rounded-lg font-medium transition-colors"
-                    :class="[!selectedCategory && selectedProductType === 'bundle' ? 'bg-orange-500 text-white shadow-xs' : 'bg-gray-100 text-gray-600 hover:bg-gray-200']">
-                    Paket Bundling
-                </button>
-            </div>
-
-            <!-- Search Input -->
-            <form @submit.prevent="loadProducts(1)" class="flex items-center gap-2">
+        <!-- Pencarian Sederhana -->
+        <div class="bg-white border border-gray-100 p-3 shadow-xs">
+            <form @submit.prevent="handleFilter" class="flex items-center gap-2">
                 <div class="relative flex-1">
-                    <input v-model="search" type="text"
-                        placeholder="Cari nama program, kode, atau materi..."
-                        class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500 rounded" />
+                    <input v-model="search" @input="onSearchInput" type="text"
+                        placeholder="Cari berdasarkan nama atau kode program..."
+                        class="w-full text-xs border border-gray-200 px-3.5 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
                 </div>
                 <button type="submit"
-                    class="px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow-sm transition-colors">
+                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 shadow-2xs transition-colors">
                     Cari
                 </button>
-                <button v-if="search || selectedCategory || selectedProductType" type="button" @click="resetFilter"
-                    class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
+                <button v-if="search" type="button" @click="resetFilter"
+                    class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-xl">
                     Reset
                 </button>
             </form>
         </div>
 
-        <!-- Table Card -->
-        <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
+        <!-- Loading State -->
+        <div v-if="loading" class="py-12 text-center text-gray-400 text-xs">
+            Memuat katalog program...
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="products.length === 0" class="p-8 text-center text-gray-400 text-xs bg-white border border-gray-100">
+            <span v-if="search">Tidak ditemukan program dengan kata kunci "<strong>{{ search }}</strong>".</span>
+            <span v-else>Tidak ada program ditemukan.</span>
+        </div>
+
+        <!-- Tampilan Kartu Minimalis (Hanya Kode, Nama, dan Harga) -->
+        <div v-else-if="viewMode === 'grid'" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div v-for="p in products" :key="p.id"
+                class="bg-white p-5 border border-gray-200 shadow-xs hover:border-orange-200 transition flex flex-col justify-between">
+                <div>
+                    <!-- Kode Program -->
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="font-mono text-xs font-bold text-orange-600 bg-orange-50 px-2.5 py-1 border border-orange-100">
+                            {{ p.code }}
+                        </span>
+                    </div>
+
+                    <!-- Nama Program -->
+                    <h2 class="font-bold text-gray-900 text-sm leading-snug">
+                        {{ p.name }}
+                    </h2>
+                </div>
+
+                <!-- Rincian Biaya Transfer & Komisi Sales -->
+                <div class="mt-4 pt-3.5 border-t border-gray-100 space-y-2">
+                    <div class="bg-orange-50/70 p-2.5 border border-orange-100 flex items-center justify-between">
+                        <div>
+                            <span class="text-[10px] text-orange-800 font-bold uppercase tracking-wider block">Customer Wajib Transfer</span>
+                            <span class="text-base font-black text-orange-600 leading-tight">
+                                {{ formatCurrency(Math.round((p.price || 0) * 1.10)) }}
+                            </span>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">Komisi Sales (10%)</span>
+                            <span class="text-xs font-black text-emerald-600">
+                                + {{ formatCurrency(Math.round((p.price || 0) * 0.10)) }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-[11px] text-gray-500 px-0.5">
+                        <span>Harga Resmi Katalog: <strong>{{ formatCurrency(p.price) }}</strong></span>
+                        <div v-if="isAdmin" class="flex items-center gap-1.5">
+                            <button @click="emit('navigate', `/products/${p.id}/edit`)"
+                                class="px-2 py-0.5 text-xs font-semibold text-gray-600 hover:text-gray-900 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
+                                Edit
+                            </button>
+                            <button @click="deleteProduct(p.id)"
+                                class="px-2 py-0.5 text-xs font-semibold text-red-600 hover:text-red-700 border border-red-200 rounded-lg hover:bg-red-50 transition">
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tampilan Tabel Minimalis (Hanya Kode, Nama, dan Harga) -->
+        <div v-else class="bg-white border border-gray-200 overflow-hidden shadow-xs">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[620px] text-left text-xs text-gray-600">
-                    <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
+                <table class="w-full min-w-[650px] text-left text-xs text-gray-600">
+                    <thead class="bg-gray-50/80 border-b border-gray-100 text-gray-400 font-bold uppercase tracking-wider text-[10px]">
                         <tr>
-                            <th class="py-3.5 px-4">KODE & NAMA PROGRAM</th>
-                            <th class="py-3.5 px-4">TIPE LAYANAN</th>
-                            <th class="py-3.5 px-4">KATEGORI</th>
-                            <th class="py-3.5 px-4">TIPE BIAYA</th>
-                            <th class="py-3.5 px-4">HARGA</th>
-                            <th class="py-3.5 px-4">DURASI</th>
-                            <th class="py-3.5 px-4">STATUS</th>
-                            <th v-if="isAdmin" class="py-3.5 px-4 text-right">AKSI</th>
+                            <th class="py-3.5 px-4 w-28">KODE</th>
+                            <th class="py-3.5 px-4">NAMA PROGRAM</th>
+                            <th class="py-3.5 px-4">HARGA KATALOG</th>
+                            <th class="py-3.5 px-4">KOMISI SALES (10%)</th>
+                            <th class="py-3.5 px-4">CUSTOMER HARUS TRANSFER</th>
+                            <th v-if="isAdmin" class="py-3.5 px-4 text-right w-24">AKSI</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        <tr v-if="loading">
-                            <td :colspan="isAdmin ? 8 : 7" class="py-8 text-center text-gray-400 text-xs">Memuat katalog...</td>
-                        </tr>
-                        <tr v-else-if="products.length === 0">
-                            <td :colspan="isAdmin ? 8 : 7" class="py-8 text-center text-gray-400 text-xs">
-                                Tidak ada program pelatihan atau sertifikasi ditemukan.
+                        <tr v-for="p in products" :key="p.id" class="hover:bg-gray-50/50 transition-colors">
+                            <td class="py-3.5 px-4 font-mono font-bold text-orange-600">
+                                {{ p.code }}
                             </td>
-                        </tr>
-                        <tr v-for="p in products" :key="p.id" class="hover:bg-blue-50/20 transition-colors">
-                            <td class="py-3.5 px-4">
-                                <div class="font-semibold text-gray-900 text-sm">{{ p.name }}</div>
-                                <div class="text-[11px] text-gray-400 font-mono mt-0.5">{{ p.code }}</div>
-                                <div v-if="p.description" class="text-[11px] text-gray-500 line-clamp-1 mt-0.5">{{ p.description }}</div>
+                            <td class="py-3.5 px-4 font-bold text-gray-900 text-xs">
+                                {{ p.name }}
                             </td>
-                            <td class="py-3.5 px-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-semibold border" :class="typeBadgeClass(p)">
-                                    {{ typeLabel(p) }}
-                                </span>
+                            <td class="py-3.5 px-4 font-semibold text-gray-600 text-xs">
+                                {{ formatCurrency(p.price) }}
                             </td>
-                            <td class="py-3.5 px-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-semibold border"
-                                    :class="p.category === 'Sertifikasi BNSP' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-blue-50 text-blue-700 border-blue-200'">
-                                    {{ p.category || 'Pelatihan / Bootcamp' }}
-                                </span>
+                            <td class="py-3.5 px-4 font-bold text-emerald-600 text-xs">
+                                + {{ formatCurrency(Math.round((p.price || 0) * 0.10)) }}
                             </td>
-                            <td class="py-3.5 px-4 whitespace-nowrap">
-                                <span v-if="Number(p.price) === 0" class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-bold bg-slate-900 text-white">
-                                    Gratis
-                                </span>
-                                <span v-else class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-bold bg-blue-900 text-white">
-                                    Berbayar
-                                </span>
-                            </td>
-                            <td class="py-3.5 px-4 font-semibold text-gray-900 whitespace-nowrap">
-                                <span v-if="Number(p.price) === 0" class="text-emerald-700 font-bold">Gratis (Rp 0)</span>
-                                <span v-else>{{ formatCurrency(p.price) }}</span>
-                            </td>
-                            <td class="py-3.5 px-4 text-gray-700 whitespace-nowrap">
-                                {{ p.duration_hours ? p.duration_hours + ' Jam' : '-' }}
-                            </td>
-                            <td class="py-3.5 px-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10.5px] font-medium border"
-                                    :class="p.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'">
-                                    {{ p.is_active ? 'Aktif' : 'Non-aktif' }}
-                                </span>
+                            <td class="py-3.5 px-4 font-black text-orange-600 text-xs">
+                                {{ formatCurrency(Math.round((p.price || 0) * 1.10)) }}
                             </td>
                             <td v-if="isAdmin" class="py-3.5 px-4 text-right whitespace-nowrap">
                                 <div class="inline-flex items-center gap-1">
-                                    <button @click="emit('navigate', `/products/${p.id}/edit`)" class="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50" title="Edit">
+                                    <button @click="emit('navigate', `/products/${p.id}/edit`)" class="p-1.5 text-gray-400 hover:text-orange-600 rounded hover:bg-orange-50" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>

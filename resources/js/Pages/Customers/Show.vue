@@ -33,9 +33,9 @@ onMounted(() => {
 <template>
     <div class="space-y-5">
         <div v-if="loading" class="text-center py-20 text-gray-400 text-xs">Memuat detail customer...</div>
-        <div v-else-if="error" class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">{{ error }}</div>
+        <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 text-red-700 text-xs">{{ error }}</div>
         <div v-else class="space-y-5">
-            <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="bg-white p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-mono font-bold text-gray-400">#{{ customer.id }}</span>
@@ -55,16 +55,30 @@ onMounted(() => {
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-3">
-                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Kontak & Perusahaan</h2>
+                <div class="bg-white p-5 border border-gray-100 shadow-xs space-y-3">
+                    <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Identitas & Kontak</h2>
                     <div class="text-xs space-y-2">
                         <div>
-                            <span class="text-gray-400 block text-[11px]">WhatsApp</span>
+                            <span class="text-gray-400 block text-[11px]">Nomor NIK (KTP)</span>
+                            <span class="font-bold text-gray-900 font-mono">{{ customer.nik || customer.document_number || '-' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block text-[11px]">Tanggal Lahir</span>
+                            <span class="font-bold text-gray-900">
+                                {{ customer.birth_date ? new Date(customer.birth_date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : '-' }}
+                            </span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block text-[11px]">WhatsApp / Telepon</span>
                             <span class="font-bold text-gray-900">{{ customer.phone || '-' }}</span>
                         </div>
                         <div>
                             <span class="text-gray-400 block text-[11px]">Email</span>
                             <span class="font-bold text-gray-900">{{ customer.email || '-' }}</span>
+                        </div>
+                        <div>
+                            <span class="text-gray-400 block text-[11px]">Instansi / Perusahaan</span>
+                            <span class="font-bold text-gray-900">{{ customer.company || '-' }}</span>
                         </div>
                         <div>
                             <span class="text-gray-400 block text-[11px]">Alamat</span>
@@ -73,7 +87,7 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div class="lg:col-span-2 bg-white p-5 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+                <div class="lg:col-span-2 bg-white p-5 border border-gray-100 shadow-xs space-y-4">
                     <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Histori Pembelian & Pendaftaran</h2>
                     <div v-if="customer.registrations?.length" class="divide-y divide-gray-50">
                         <div v-for="r in customer.registrations" :key="r.id" class="py-2.5 flex justify-between text-xs">

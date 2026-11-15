@@ -31,7 +31,12 @@ class PaymentController extends Controller
 
     public function create()
     {
-        $query = Lead::whereNotIn('status', ['lost', 'inactive'])->orderBy('name');
+        $query = Lead::whereNotNull('product_id')
+            ->whereNotIn('status', ['lost', 'inactive'])
+            ->whereDoesntHave('payments', function ($p) {
+                $p->where('status', 'valid');
+            })
+            ->orderBy('name');
         if (auth()->user()->isSales()) {
             $query->where('assigned_to', auth()->id());
         }
@@ -53,21 +58,48 @@ class PaymentController extends Controller
             'account_name' => 'nullable|string|max:255',
             'payment_date' => 'nullable|date',
             'notes' => 'nullable|string',
-            'proof_file' => 'nullable|file|image|max:5120',
+            'proof_file' => 'nullable|file|max:5120',
+            'proof' => 'nullable|file|max:5120',
         ]);
 
         $lead = Lead::findOrFail($data['lead_id']);
         if (auth()->user()->isSales() && $lead->assigned_to !== auth()->id()) {
+            if ($request->wantsJson() || $request->is('api/*')) {
+                return response()->json(['message' => 'Akses ditolak: Anda hanya dapat mencatat pembayaran untuk lead yang ditugaskan kepada Anda.'], 403);
+            }
             return back()->with('error', 'Akses ditolak: Anda hanya dapat mencatat pembayaran untuk lead yang ditugaskan kepada Anda.');
         }
 
         if ($request->hasFile('proof_file')) {
             $data['proof_file'] = $request->file('proof_file')->store('payments', 'public');
+        } elseif ($request->hasFile('proof')) {
+            $data['proof_file'] = $request->file('proof')->store('payments', 'public');
+        }
+        unset($data['proof']);
+
+        // Cegah dobel data: jika lead sudah memiliki pembayaran berstatus pending, perbarui data tersebut
+        $existingPayment = Payment::where('lead_id', $data['lead_id'])
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existingPayment) {
+            $existingPayment->update($data);
+            $payment = $existingPayment;
+        } else {
+            $payment = Payment::create($data);
         }
 
-        Payment::create($data);
+        // Otomatis buat komisi sales 10% (status pending / perlu persetujuan admin)
+        Commission::ensureCommissionCreated($lead, (float) $data['amount'], $payment->id);
 
-        return redirect()->route('payments.index')->with('success', 'Bukti pembayaran berhasil diunggah dan menunggu verifikasi.');
+        if ($request->wantsJson() || $request->is('api/*') || $request->ajax()) {
+            return response()->json([
+                'message' => 'Bukti pembayaran berhasil diunggah dan menunggu verifikasi.',
+                'data' => $payment->load(['lead', 'product']),
+            ], 201);
+        }
+
+        return redirect()->to('/payments')->with('success', 'Bukti pembayaran berhasil diunggah dan menunggu verifikasi.');
     }
 
     public function show(Payment $payment)
@@ -81,7 +113,11 @@ class PaymentController extends Controller
     {
         $payment->delete();
 
-        return redirect()->route('payments.index')->with('success', 'Data pembayaran dihapus.');
+        if (request()->wantsJson() || request()->is('api/*') || request()->ajax()) {
+            return response()->json(['message' => 'Data pembayaran dihapus.'], 200);
+        }
+
+        return redirect()->to('/payments')->with('success', 'Data pembayaran dihapus.');
     }
 
     public function verify(Request $request, Payment $payment)
@@ -91,61 +127,16 @@ class PaymentController extends Controller
             'verification_notes' => 'nullable|string',
         ]);
 
-        $payment->update([
-            'status' => $request->status,
-            'verification_notes' => $request->verification_notes,
-            'verified_by' => auth()->id(),
-            'verified_at' => now(),
-        ]);
+        $operatorId = auth()->id() ?: 1;
+        $payment->processVerification($request->status, $operatorId, $request->verification_notes);
 
-        // Jika valid dan belum ada komisi -> buat komisi otomatis 10%
-        if ($request->status === 'valid' && ! $payment->commission) {
-            $rate = 10.00; // Komisi 10% sesuai ketentuan evaluasi
-            $salesUserId = $payment->lead->assigned_to ?: auth()->id();
-            $commissionAmount = $payment->amount * ($rate / 100);
-
-            Commission::create([
-                'user_id' => $salesUserId,
-                'lead_id' => $payment->lead_id,
-                'payment_id' => $payment->id,
-                'deal_amount' => $payment->amount,
-                'commission_rate' => $rate,
-                'commission_amount' => $commissionAmount,
-                'status' => 'pending',
-            ]);
-
-            // Update lead ke won
-            $payment->lead->update(['status' => 'won', 'converted_at' => now()]);
-
-            // Otomatis selesaikan follow-up & pengingat pending untuk lead ini
-            $payment->lead->followUps()->where('status', 'pending')->update([
-                'status' => 'completed',
-                'completed_at' => now(),
-                'result_notes' => 'Otomatis selesai: Pembayaran lunas & lead closing',
-            ]);
-            \App\Models\SalesReminder::where('lead_id', $payment->lead_id)
-                ->where('type', 'follow_up')
-                ->where('is_completed', false)
-                ->update([
-                    'is_completed' => true,
-                    'completed_at' => now(),
-                    'sales_reply' => 'Selesai: Lead closing / deal won',
-                ]);
-
-            // Log activity
-            \App\Models\Activity::create([
-                'lead_id' => $payment->lead_id,
-                'user_id' => auth()->id(),
-                'type' => 'status_change',
-                'subject' => 'Pembayaran Valid - Status diubah ke Berhasil (Won)',
-                'description' => 'Pembayaran Rp '.number_format($payment->amount, 0, ',', '.').' terverifikasi. Komisi sales 10% (Rp '.number_format($commissionAmount, 0, ',', '.').') telah dicatat.',
-                'activity_at' => now(),
-            ]);
-
-            // Otomatis masukkan ke Daftar Customer
-            app(LeadController::class)->ensureCustomerCreated($payment->lead);
+        if ($request->wantsJson() || $request->is('api/*') || $request->ajax()) {
+            return response()->json([
+                'message' => 'Status pembayaran diverifikasi. Status pendaftaran peserta otomatis diubah ke Dikonfirmasi (Confirmed).',
+                'data' => $payment->fresh(['lead', 'product']),
+            ], 200);
         }
 
-        return back()->with('success', 'Status pembayaran diverifikasi. Status lead diubah ke Berhasil (Won), komisi 10% dicatat, dan data customer otomatis dibuat.');
+        return back()->with('success', 'Status pembayaran diverifikasi. Status pendaftaran peserta otomatis diubah ke Dikonfirmasi (Confirmed).');
     }
 }

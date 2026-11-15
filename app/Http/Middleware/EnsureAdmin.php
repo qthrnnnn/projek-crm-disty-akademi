@@ -13,7 +13,7 @@ class EnsureAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (!auth()->check() || !auth()->user()->isAdmin()) {
+        if (! $request->user() || ! $request->user()->isAdmin()) {
             if ($request->is('api/*') || $request->expectsJson()) {
                 return response()->json(['message' => 'Akses ditolak. Fitur operasional ini hanya dapat diakses oleh Admin.'], 403);
             }

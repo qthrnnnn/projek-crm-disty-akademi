@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { api } from '../../services/api';
 import StatCard from '../../Components/StatCard.vue';
+import Badge from '../../Components/Badge.vue';
 
 const props = defineProps({
     user: { type: Object, default: () => ({}) },
@@ -255,7 +256,7 @@ onMounted(() => {
             <span class="text-xs">Memuat data dashboard...</span>
         </div>
 
-        <div v-else-if="error" class="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs">
+        <div v-else-if="error" class="p-4 bg-red-50 border border-red-200 text-red-700 text-xs">
             {{ error }}
         </div>
 
@@ -386,7 +387,7 @@ onMounted(() => {
                         </div>
 
                         <!-- 3 Segmented Tabs -->
-                        <div class="grid grid-cols-3 gap-1 p-1 bg-gray-100 rounded-lg mb-2.5">
+                        <div class="grid grid-cols-3 gap-1 p-1 bg-gray-100 mb-2.5">
                             <button type="button" @click="setFilterMode('today')"
                                 class="py-1.5 px-2 text-center text-xs rounded-md transition-all"
                                 :class="filterMode === 'today' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'">
@@ -405,7 +406,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Mode Controls -->
-                        <div v-if="filterMode === 'today'" class="flex items-center justify-between p-2 px-2.5 bg-orange-50/60 border border-orange-100 rounded-lg mb-2.5 text-xs">
+                        <div v-if="filterMode === 'today'" class="flex items-center justify-between p-2 px-2.5 bg-orange-50/60 border border-orange-100 mb-2.5 text-xs">
                             <span class="text-gray-600 flex items-center gap-1.5">
                                 <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
                                 Target Hari Ini:
@@ -413,14 +414,14 @@ onMounted(() => {
                             <span class="font-bold text-gray-900">{{ selectedDate }}</span>
                         </div>
 
-                        <div v-else-if="filterMode === 'month'" class="flex items-center gap-1.5 p-1 bg-gray-50 border border-gray-200 rounded-lg mb-2.5">
+                        <div v-else-if="filterMode === 'month'" class="flex items-center gap-1.5 p-1 bg-gray-50 border border-gray-200 mb-2.5">
                             <button type="button" @click="prevMonth" class="p-1 rounded hover:bg-gray-200 text-gray-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                             </button>
-                            <select v-model.number="selectedFilterMonth" class="flex-1 text-xs font-semibold text-gray-800 bg-white border border-gray-300 py-1 px-2 rounded outline-none">
+                            <select v-model.number="selectedFilterMonth" class="flex-1 text-xs font-semibold text-gray-800 bg-white border border-gray-300 py-1 px-2 outline-none">
                                 <option v-for="(name, idx) in MONTH_NAMES" :key="idx" :value="idx + 1">{{ name }}</option>
                             </select>
-                            <select v-model.number="selectedFilterYear" class="w-20 text-xs font-semibold text-gray-800 bg-white border border-gray-300 py-1 px-2 rounded outline-none">
+                            <select v-model.number="selectedFilterYear" class="w-20 text-xs font-semibold text-gray-800 bg-white border border-gray-300 py-1 px-2 outline-none">
                                 <option v-for="y in [2024, 2025, 2026, 2027, 2028, 2029, 2030]" :key="y" :value="y">{{ y }}</option>
                             </select>
                             <button type="button" @click="nextMonth" class="p-1 rounded hover:bg-gray-200 text-gray-600">
@@ -428,7 +429,7 @@ onMounted(() => {
                             </button>
                         </div>
 
-                        <div v-else class="flex items-center justify-between p-2 px-2.5 bg-blue-50/60 border border-blue-100 rounded-lg mb-2.5 text-xs">
+                        <div v-else class="flex items-center justify-between p-2 px-2.5 bg-blue-50/60 border border-blue-100 mb-2.5 text-xs">
                             <span class="text-gray-600 flex items-center gap-1.5">
                                 <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                                 Akumulasi Historis:
@@ -437,7 +438,7 @@ onMounted(() => {
                         </div>
 
                         <!-- 3 Stats Summary -->
-                        <div class="grid grid-cols-3 gap-2 p-2 bg-gray-50 border border-gray-100 rounded-lg text-center mb-2.5">
+                        <div class="grid grid-cols-3 gap-2 p-2 bg-gray-50 border border-gray-100 text-center mb-2.5">
                             <div>
                                 <p class="text-[10px] text-gray-500 uppercase tracking-wide">Total Lead</p>
                                 <p class="text-base sm:text-lg font-bold text-gray-900">{{ periodTotal }}</p>
@@ -453,7 +454,7 @@ onMounted(() => {
                         </div>
 
                         <!-- Filter Status Active Pill -->
-                        <div v-if="activeStage !== 'all'" class="mb-2 flex items-center justify-between text-xs bg-amber-50 border border-amber-200 px-2.5 py-1 text-amber-800 rounded-lg">
+                        <div v-if="activeStage !== 'all'" class="mb-2 flex items-center justify-between text-xs bg-amber-50 border border-amber-200 px-2.5 py-1 text-amber-800">
                             <span>Filter status: <strong>{{ activeStageLabel }}</strong></span>
                             <button type="button" @click="activeStage = 'all'" class="text-[11px] underline font-medium hover:text-amber-900">✕ Tampilkan Semua</button>
                         </div>
@@ -465,7 +466,7 @@ onMounted(() => {
                                 <p class="text-xs text-gray-400">Tidak ada prospek pada periode & status ini</p>
                             </div>
                             <div v-else v-for="lead in filteredLeads.slice(0, 5)" :key="lead.id"
-                                class="p-2.5 border border-gray-100 bg-white rounded-lg hover:border-orange-200 transition-all">
+                                class="p-2.5 border border-gray-100 bg-white hover:border-orange-200 transition-all">
                                 <div class="flex items-start justify-between gap-2 mb-1">
                                     <div class="min-w-0 flex-1">
                                         <button @click="emit('navigate', `/leads/${lead.id}`)" class="text-xs font-bold text-gray-900 hover:text-orange-600 truncate block text-left">
@@ -473,9 +474,7 @@ onMounted(() => {
                                         </button>
                                         <p class="text-[10px] text-gray-400 truncate">{{ lead.product || '-' }}</p>
                                     </div>
-                                    <span class="text-[9px] px-1.5 py-0.5 font-bold uppercase tracking-wider rounded shrink-0" :class="getStatusPillClass(lead.status)">
-                                        {{ lead.status }}
-                                    </span>
+                                    <Badge :status="lead.status" class="shrink-0" />
                                 </div>
                                 <div class="flex items-center justify-between pt-1 text-[11px]">
                                     <span class="text-gray-400 text-[10px]">{{ lead.phone || '-' }}</span>
@@ -655,7 +654,7 @@ onMounted(() => {
                 <div class="flex items-center justify-between mb-3">
                     <h2 class="text-xs font-bold text-gray-900">Lead 6 Bulan sampai {{ calendarTitle }}</h2>
                     <span class="inline-flex items-center gap-1 text-[10px] text-gray-500">
-                        <span class="w-2 h-2 rounded-sm bg-emerald-400"></span>
+                        <span class="w-2 h-2 bg-emerald-400"></span>
                         Won
                     </span>
                 </div>

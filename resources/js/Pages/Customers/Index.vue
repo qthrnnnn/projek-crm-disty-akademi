@@ -1,13 +1,17 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { api } from '../../services/api';
 import Pagination from '../../Components/Pagination.vue';
 
 const props = defineProps({
     user: { type: Object, default: () => ({}) },
+    query: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits(['navigate']);
+
+const isAdmin = computed(() => props.user?.role === 'admin');
+const isSales = computed(() => props.user?.role === 'sales');
 
 const customers = ref([]);
 const institutions = ref([]);
@@ -50,11 +54,21 @@ async function loadCustomers(page = 1) {
     }
 }
 
+let searchTimeout = null;
+function onSearchInput() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadCustomers(1);
+    }, 250);
+}
+
 function handleFilter() {
+    clearTimeout(searchTimeout);
     loadCustomers(1);
 }
 
 function resetFilter() {
+    clearTimeout(searchTimeout);
     search.value = '';
     statusFilter.value = '';
     institutionFilter.value = '';
@@ -80,8 +94,20 @@ async function deleteCustomer(id) {
 }
 
 onMounted(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialInst = props.query?.institution_id || urlParams.get('institution_id');
+    if (initialInst) {
+        institutionFilter.value = String(initialInst);
+    }
     loadInstitutions();
     loadCustomers();
+});
+
+watch(() => props.query?.institution_id, (newInstId) => {
+    if (newInstId !== undefined) {
+        institutionFilter.value = newInstId ? String(newInstId) : '';
+        loadCustomers(1);
+    }
 });
 </script>
 
@@ -93,58 +119,25 @@ onMounted(() => {
                 <h1 class="text-xl font-bold text-gray-900">Daftar Customer</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Data pelanggan, peserta pelatihan, dan instansi mitra Disty Akademi.</p>
             </div>
-            <div class="flex flex-wrap items-center gap-2">
-                <!-- Tombol Import -->
-                <button type="button" @click="emit('navigate', '/customers/import')"
-                    class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors flex items-center gap-1.5">
-                    <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-                    </svg>
-                    Import Data
-                </button>
-
-                <!-- Tombol Export -->
-                <button type="button" @click="exportCsv"
-                    class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors flex items-center gap-1.5"
-                    title="Export Customer ke CSV">
-                    <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-                    </svg>
-                    Export Excel/CSV
-                </button>
-
-                <!-- Tombol Template -->
-                <button type="button" @click="downloadTemplate"
-                    class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg bg-white"
-                    title="Unduh Format Template CSV">
-                    Template CSV
-                </button>
-
-                <!-- Tombol Tambah -->
-                <button type="button" @click="emit('navigate', '/customers/create')"
-                    class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 shadow-sm transition-colors">
-                    + Tambah Customer
-                </button>
-            </div>
         </div>
 
         <!-- Filter Card -->
         <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
             <form @submit.prevent="handleFilter" class="flex flex-col sm:flex-row items-center gap-2.5">
                 <div class="relative flex-1 w-full">
-                    <input v-model="search" type="text"
+                    <input v-model="search" @input="onSearchInput" type="text"
                         placeholder="Cari customer, email, telepon, instansi..."
                         class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
                 </div>
                 <div class="w-full sm:w-44">
-                    <select v-model="statusFilter" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                    <select v-model="statusFilter" @change="handleFilter" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
                         <option value="">Semua Status</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                     </select>
                 </div>
                 <div class="w-full sm:w-44">
-                    <select v-model="institutionFilter" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                    <select v-model="institutionFilter" @change="handleFilter" class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
                         <option value="">Semua Instansi</option>
                         <option v-for="inst in institutions" :key="inst.id" :value="inst.id">{{ inst.name }}</option>
                     </select>
@@ -178,7 +171,10 @@ onMounted(() => {
                             <td colspan="7" class="p-8 text-center text-gray-400">Memuat data customer...</td>
                         </tr>
                         <tr v-else-if="customers.length === 0">
-                            <td colspan="7" class="p-8 text-center text-gray-400">Tidak ada customer ditemukan.</td>
+                            <td colspan="7" class="p-8 text-center text-gray-400">
+                                <span v-if="search">Tidak ditemukan customer dengan kata kunci "<strong>{{ search }}</strong>".</span>
+                                <span v-else>Tidak ada customer ditemukan.</span>
+                            </td>
                         </tr>
                         <tr v-for="c in customers" :key="c.id" class="hover:bg-blue-50/30 transition-colors">
                             <td class="py-3.5 px-4 font-semibold text-gray-900">
@@ -209,7 +205,7 @@ onMounted(() => {
                                     <button @click="emit('navigate', `/customers/${c.id}/edit`)" class="p-1.5 text-gray-400 hover:text-orange-600 rounded-lg hover:bg-orange-50 transition-colors" title="Edit">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </button>
-                                    <button @click="deleteCustomer(c.id)" class="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title="Hapus">
+                                    <button v-if="isAdmin" @click="deleteCustomer(c.id)" class="p-1.5 text-gray-400 hover:text-red-600 rounded-lg hover:bg-red-50 transition-colors" title="Hapus">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                     </button>
                                 </div>

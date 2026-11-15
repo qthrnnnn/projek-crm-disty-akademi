@@ -15,7 +15,7 @@ async function submit() {
     loading.value = true;
     error.value = '';
     try {
-        const res = await api.login(email.value, password.value);
+        const res = await api.login(email.value, password.value, remember.value);
         emit('authenticated', res.user);
     } catch (err) {
         error.value = err.message || 'Login gagal. Periksa kembali email dan password.';

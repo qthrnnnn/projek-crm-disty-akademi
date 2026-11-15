@@ -113,9 +113,12 @@ class DashboardController extends Controller
         $todayLeadsResponded = (clone $dateLeadQuery)
             ->whereIn('status', ['active', 'negotiation', 'won'])->count();
 
-        // Follow-up (Hanya lead aktif yang belum closing/won/lost)
+        // Follow-up (Hanya lead aktif yang belum closing/won/lost dan belum ambil program)
         $fuQuery = FollowUp::pending()
-            ->whereHas('lead', fn ($q) => $q->whereNotIn('status', ['won', 'lost', 'inactive']));
+            ->whereHas('lead', fn ($q) => $q->whereNotIn('status', ['won', 'lost', 'inactive'])
+                ->whereDoesntHave('payments', fn ($p) => $p->where('status', 'valid'))
+                ->whereDoesntHave('customer', fn ($c) => $c->whereHas('registrations'))
+            );
         if ($isSales && $userId) {
             $fuQuery->where('assigned_to', $userId);
         }
@@ -136,10 +139,13 @@ class DashboardController extends Controller
         $actQuery->whereDate('activity_at', $selectedDateString);
         $recentActivities = $actQuery->limit(8)->get();
 
-        // Follow-up Mendatang (Hanya lead aktif yang belum closing/won/lost)
+        // Follow-up Mendatang (Hanya lead aktif yang belum closing/won/lost dan belum ambil program)
         $upcomingFuQuery = FollowUp::with(['lead', 'assignedUser'])
             ->pending()
-            ->whereHas('lead', fn ($q) => $q->whereNotIn('status', ['won', 'lost', 'inactive']))
+            ->whereHas('lead', fn ($q) => $q->whereNotIn('status', ['won', 'lost', 'inactive'])
+                ->whereDoesntHave('payments', fn ($p) => $p->where('status', 'valid'))
+                ->whereDoesntHave('customer', fn ($c) => $c->whereHas('registrations'))
+            )
             ->whereDate('follow_up_at', $selectedDateString)
             ->orderBy('follow_up_at');
         if ($isSales && $userId) {
@@ -220,8 +226,22 @@ class DashboardController extends Controller
         $wonLeadsThisMonth = (clone $monthLeadQuery)->where('status', 'won')
             ->whereBetween('converted_at', [$thisMonthStart, $thisMonthEnd])->count();
 
+        $summary = [
+            'total_leads' => $totalLeads,
+            'new_leads' => $newLeads,
+            'won_leads' => $wonLeads,
+        ];
+        $leads_by_status = [
+            'new' => $newLeads,
+            'contacted' => $contactedLeads,
+            'negotiation' => $negotiationLeads,
+            'won' => $wonLeads,
+            'lost' => $lostLeads,
+        ];
+
         return response()->json(compact(
             'isSales',
+            'summary', 'leads_by_status',
             'totalLeads', 'newLeads', 'contactedLeads', 'activeLeads',
             'negotiationLeads', 'wonLeads', 'lostLeads', 'inactiveLeads',
             'todayLeadsIn', 'todayLeadsAnswered', 'todayLeadsUnanswered', 'todayLeadsResponded',

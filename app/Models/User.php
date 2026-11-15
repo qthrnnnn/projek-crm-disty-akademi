@@ -7,15 +7,26 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'name', 'email', 'password', 'role', 'phone', 'is_active',
+        'bank_name', 'bank_account_number', 'bank_account_name',
     ];
+
+    protected $appends = ['bank_info'];
+
+    public function getBankInfoAttribute(): string
+    {
+        if ($this->bank_name && $this->bank_account_number) {
+            return "{$this->bank_name} - {$this->bank_account_number}".($this->bank_account_name ? " (a.n {$this->bank_account_name})" : '');
+        }
+
+        return 'Belum diatur';
+    }
 
     protected $hidden = ['password', 'remember_token'];
 

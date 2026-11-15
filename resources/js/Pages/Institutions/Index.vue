@@ -35,11 +35,21 @@ async function loadInstitutions(page = 1) {
     }
 }
 
+let searchTimeout = null;
+function onSearchInput() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(() => {
+        loadInstitutions(1);
+    }, 250);
+}
+
 function handleFilter() {
+    clearTimeout(searchTimeout);
     loadInstitutions(1);
 }
 
 function resetFilter() {
+    clearTimeout(searchTimeout);
     search.value = '';
     loadInstitutions(1);
 }
@@ -79,7 +89,7 @@ onMounted(() => {
         <div class="bg-white border border-blue-100/70 p-3.5 shadow-sm">
             <form @submit.prevent="handleFilter" class="flex flex-col sm:flex-row items-center gap-2.5">
                 <div class="relative flex-1 w-full">
-                    <input v-model="search" type="text"
+                    <input v-model="search" @input="onSearchInput" type="text"
                         placeholder="Cari instansi, kota, atau jenis instansi..."
                         class="w-full text-xs border border-gray-200 px-3 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
                 </div>
@@ -110,7 +120,10 @@ onMounted(() => {
                             <td colspan="5" class="p-8 text-center text-gray-400">Memuat data instansi...</td>
                         </tr>
                         <tr v-else-if="institutions.length === 0">
-                            <td colspan="5" class="p-8 text-center text-gray-400">Belum ada mitra instansi terdaftar.</td>
+                            <td colspan="5" class="p-8 text-center text-gray-400">
+                                <span v-if="search">Tidak ditemukan instansi dengan kata kunci "<strong>{{ search }}</strong>".</span>
+                                <span v-else>Belum ada mitra instansi terdaftar.</span>
+                            </td>
                         </tr>
                         <tr v-for="inst in institutions" :key="inst.id" class="hover:bg-blue-50/30 transition-colors">
                             <td class="py-3.5 px-4">

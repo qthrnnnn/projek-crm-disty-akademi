@@ -1,5 +1,6 @@
 <script setup>
 import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { api } from '../services/api';
 
 const props = defineProps({
     user: { type: Object, default: () => ({}) },
@@ -12,6 +13,8 @@ const emit = defineEmits(['toggle-sidebar', 'toggle-mobile', 'logout', 'navigate
 
 const profileOpen = ref(false);
 const notifOpen = ref(false);
+const notifList = ref([]);
+const loadingNotifs = ref(false);
 
 const dateStr = computed(() => {
     return new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -27,6 +30,57 @@ function closeDropdowns(e) {
     }
     if (!e.target.closest('#notif-dropdown-container')) {
         notifOpen.value = false;
+    }
+}
+
+async function loadNotifications() {
+    if (props.user?.role !== 'sales') return;
+    loadingNotifs.value = true;
+    try {
+        const res = await api.list('reminders', { per_page: 5 });
+        notifList.value = res.data || [];
+    } catch (e) {
+        /* ignore */
+    } finally {
+        loadingNotifs.value = false;
+    }
+}
+
+function toggleNotif() {
+    notifOpen.value = !notifOpen.value;
+    if (notifOpen.value) {
+        loadNotifications();
+    }
+}
+
+function getWaUrl(lead) {
+    if (!lead) return null;
+    const raw = lead.whatsapp || lead.phone;
+    if (!raw) return null;
+    let digits = String(raw).replace(/\D/g, '');
+    if (digits.startsWith('0')) digits = '62' + digits.substring(1);
+    const prog = lead.product?.name || lead.product_name || lead.target_program || 'program pelatihan';
+    const text = encodeURIComponent(`Halo Kak ${lead.name}, saya dari Disty Akademi ingin menanyakan kelanjutan informasi pelatihan ${prog}. Apakah ada yang bisa kami bantu?`);
+    return `https://wa.me/${digits}?text=${text}`;
+}
+
+async function markAndNavigate(item) {
+    notifOpen.value = false;
+    try {
+        if (!item.is_read) {
+            await api.request(`/reminders/${item.id}/read`, { method: 'PATCH' });
+        }
+    } catch (e) {
+        /* ignore */
+    }
+    if (item.type === 'commission_paid') {
+        emit('navigate', '/commissions');
+    } else if (item.type === 'payment_rejected') {
+        emit('navigate', item.lead_id ? `/leads/${item.lead_id}` : '/payments');
+    } else if (item.lead_id) {
+        emit('navigate', `/leads/${item.lead_id}`);
+    } else {
+        emit('navigate', '/reminders');
     }
 }
 
@@ -73,7 +127,7 @@ onBeforeUnmount(() => {
 
             <!-- Notifications (Sales) -->
             <div v-if="user?.role === 'sales'" id="notif-dropdown-container" class="relative">
-                <button @click="notifOpen = !notifOpen"
+                <button @click="toggleNotif"
                     type="button"
                     class="relative p-2 text-gray-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl transition-colors"
                     title="Notifikasi">
@@ -87,13 +141,67 @@ onBeforeUnmount(() => {
                 </button>
 
                 <div v-if="notifOpen"
-                    class="absolute right-0 top-full mt-2 w-80 bg-white border border-gray-200 shadow-xl py-2 z-50 overflow-hidden rounded-lg">
+                    class="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-gray-200 shadow-xl py-2 z-50 overflow-hidden">
                     <div class="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
-                        <span class="font-bold text-xs text-gray-900">Notifikasi</span>
-                        <a href="/reminders" @click.prevent="emit('navigate', '/reminders'); notifOpen = false;" class="text-[10px] font-semibold text-orange-600 hover:text-orange-700">Lihat Semua</a>
+                        <span class="font-bold text-xs text-gray-900">Notifikasi Masuk ({{ unreadCount }} Baru)</span>
+                        <a href="/reminders" @click.prevent="emit('navigate', '/reminders'); notifOpen = false;" class="text-[10px] font-semibold text-orange-600 hover:text-orange-700">Lihat Semua &rarr;</a>
                     </div>
-                    <div class="p-4 text-center text-xs text-gray-400">
+
+                    <div v-if="loadingNotifs" class="p-6 text-center text-xs text-gray-400">
+                        Memuat notifikasi...
+                    </div>
+                    <div v-else-if="notifList.length === 0" class="p-6 text-center text-xs text-gray-400">
                         Tidak ada pengingat baru.
+                    </div>
+                    <div v-else class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                        <div v-for="item in notifList" :key="item.id"
+                            @click="markAndNavigate(item)"
+                            class="p-3 hover:bg-orange-50/40 cursor-pointer transition-colors text-xs flex flex-col gap-1.5"
+                            :class="!item.is_read ? 'bg-orange-50/20' : ''">
+                            <div class="flex items-center justify-between">
+                                <span class="font-bold text-gray-900 flex items-center gap-1.5">
+                                    <span v-if="!item.is_read" class="w-2 h-2 rounded-full bg-orange-500 shrink-0"></span>
+                                    <span v-if="item.type === 'payment_rejected'" class="text-red-600 font-bold">Bukti Bayar Tidak Valid</span>
+                                    <span v-else>{{ item.title || (item.type === 'commission_paid' ? 'Komisi Cair' : 'Instruksi Admin') }}</span>
+                                </span>
+                                <span class="text-[10px] text-gray-400">{{ item.created_at ? new Date(item.created_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB' : '-' }}</span>
+                            </div>
+
+                            <!-- Detail Prospek & Kontak & Program -->
+                            <div v-if="item.lead" class="bg-gray-50/80 p-2 border border-gray-100 space-y-1">
+                                <div class="flex items-center justify-between gap-1">
+                                    <span class="font-bold text-gray-900 text-[11px]">{{ item.lead.name }}</span>
+                                    <span v-if="item.type !== 'commission_paid'" class="text-[10px] font-mono text-emerald-700 font-semibold bg-emerald-50 px-1.5 py-0.5 border border-emerald-200">
+                                        WA: {{ item.lead.whatsapp || item.lead.phone || '-' }}
+                                    </span>
+                                    <span v-else class="text-[10px] font-mono text-gray-500">
+                                        {{ item.lead.whatsapp || item.lead.phone || '-' }}
+                                    </span>
+                                </div>
+                                <div v-if="item.lead.product?.name || item.lead.product_name || item.lead.target_program" class="text-[10px] text-orange-700 font-semibold">
+                                    Program: {{ item.lead.product?.name || item.lead.product_name || item.lead.target_program }}
+                                </div>
+                            </div>
+
+                            <p class="text-gray-600 text-[11px] leading-relaxed">
+                                {{ item.message }}
+                            </p>
+
+                            <!-- Quick Action Buttons -->
+                            <div class="flex items-center justify-between pt-1 border-t border-gray-50">
+                                <a v-if="item.type !== 'commission_paid' && getWaUrl(item.lead)" :href="getWaUrl(item.lead)" target="_blank" rel="noopener noreferrer"
+                                    @click.stop
+                                    class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-[10px] shadow-2xs">
+                                    Chat WA &rarr;
+                                </a>
+                                <span v-else-if="item.type === 'commission_paid'" class="text-[10px] text-emerald-700 font-semibold">
+                                    Komisi 10% Closing
+                                </span>
+                                <span class="text-[10px] text-orange-600 font-semibold hover:underline ml-auto">
+                                    {{ item.type === 'commission_paid' ? 'Lihat Komisi \u2192' : 'Buka Detail \u2192' }}
+                                </span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -113,7 +221,7 @@ onBeforeUnmount(() => {
                 </button>
 
                 <div v-if="profileOpen"
-                    class="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 shadow-lg py-1.5 z-50 rounded-lg">
+                    class="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 shadow-lg py-1.5 z-50">
                     <div class="px-3 py-2 border-b border-gray-100 mb-1">
                         <p class="text-xs font-semibold text-gray-900 truncate">{{ user?.name || 'Admin CRM' }}</p>
                         <p class="text-xs text-gray-400 truncate">{{ user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Admin' }}</p>

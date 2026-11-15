@@ -85,7 +85,7 @@ onMounted(() => {
         <!-- Filter Card -->
         <div class="bg-white border border-blue-100 p-3.5 shadow-sm">
             <form @submit.prevent="handleFilter" class="flex flex-wrap items-center gap-2.5">
-                <select v-model="activityType" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                <select v-model="activityType" @change="handleFilter" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
                     <option value="">Semua Jenis Aktivitas</option>
                     <option v-for="(lbl, val) in typeLabels" :key="val" :value="val">{{ lbl }}</option>
                 </select>
