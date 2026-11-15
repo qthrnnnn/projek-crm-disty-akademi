@@ -54,4 +54,3 @@ Route::fallback(function (Request $request) {
     return Inertia::render('Spa');
 });
 
-require __DIR__.'/settings.php';
