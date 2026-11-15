@@ -3,6 +3,7 @@
 use App\Http\Middleware\Autentikasi;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\PeranDiizinkan;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureAdmin::class,
             'jwt' => Autentikasi::class,
+            'peran' => PeranDiizinkan::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

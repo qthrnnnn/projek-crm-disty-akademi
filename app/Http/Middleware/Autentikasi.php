@@ -55,6 +55,12 @@ class Autentikasi
             Auth::setUser($user);
             $request->setUserResolver(fn () => $user);
             $request->attributes->set('jwt_payload', $payload);
+            $request->attributes->set('pengguna', [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ]);
 
             return $next($request);
         }
@@ -63,6 +69,12 @@ class Autentikasi
         if (Auth::check() && Auth::user()?->is_active) {
             $user = Auth::user();
             $request->setUserResolver(fn () => $user);
+            $request->attributes->set('pengguna', [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->role,
+            ]);
 
             return $next($request);
         }

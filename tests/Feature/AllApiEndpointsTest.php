@@ -67,15 +67,26 @@ class AllApiEndpointsTest extends TestCase
 
     public function test_01_public_endpoints(): void
     {
-        // 1. CSRF Token
+        // 1. Ping endpoint (Format Helpdesk)
+        $res = $this->getJson('/api/ping');
+        $res->assertOk()
+            ->assertJsonPath('data.status', 'ok')
+            ->assertJsonPath('data.service', 'CRM Disty Akademi API');
+
+        // 1b. Ping endpoint v1
+        $resV1 = $this->getJson('/api/v1/ping');
+        $resV1->assertOk()
+            ->assertJsonPath('data.status', 'ok');
+
+        // 2. CSRF Token
         $res = $this->getJson('/api/csrf-token');
         $res->assertOk()->assertJsonStructure(['token']);
 
-        // 2. Leads template CSV
+        // 3. Leads template CSV
         $res = $this->get('/api/leads/template');
         $res->assertOk();
 
-        // 3. Leads template Excel
+        // 4. Leads template Excel
         $res = $this->get('/api/leads/template-excel');
         $res->assertOk();
     }
@@ -88,6 +99,14 @@ class AllApiEndpointsTest extends TestCase
             'password' => 'password123',
         ]);
         $res->assertOk()
+            ->assertJsonStructure(['token', 'tokenType', 'expiresIn', 'user']);
+
+        // 1b. Login v1 format (/api/v1/auth/login)
+        $resV1 = $this->postJson('/api/v1/auth/login', [
+            'email' => 'admin@distyakademi.com',
+            'password' => 'password123',
+        ]);
+        $resV1->assertOk()
             ->assertJsonStructure(['token', 'tokenType', 'expiresIn', 'user']);
 
         // 2. Login invalid password
