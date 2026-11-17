@@ -41,6 +41,14 @@ async function loadDependencies() {
 }
 
 async function save() {
+    if (!form.value.name || !form.value.name.trim()) {
+        error.value = 'Nama Lengkap wajib diisi.';
+        return;
+    }
+    if (!form.value.phone || !form.value.phone.trim()) {
+        error.value = 'Nomor WhatsApp wajib diisi.';
+        return;
+    }
     loading.value = true;
     error.value = '';
     try {
@@ -97,11 +105,11 @@ onMounted(() => {
                 {{ error }}
             </div>
 
-            <form @submit.prevent="save" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+            <div class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
                 <!-- Nama Lengkap -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Lengkap *</label>
-                    <input v-model="form.name" type="text" required
+                    <input v-model="form.name" type="text" name="lead_full_name" required autocomplete="off"
                         class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none" placeholder="Misal: Budi Santoso" />
                 </div>
 
@@ -109,12 +117,12 @@ onMounted(() => {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Nomor NIK (KTP)</label>
-                        <input v-model="form.nik" type="text" maxlength="20" placeholder="16 digit NIK"
+                        <input v-model="form.nik" type="text" name="lead_nik_no" maxlength="20" placeholder="16 digit NIK" autocomplete="off" data-lpignore="true"
                             class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none" />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Tanggal Lahir</label>
-                        <input v-model="form.birth_date" type="date"
+                        <input v-model="form.birth_date" type="date" name="lead_birth_date" autocomplete="off"
                             class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none" />
                     </div>
                 </div>
@@ -123,12 +131,12 @@ onMounted(() => {
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Nomor WhatsApp *</label>
-                        <input v-model="form.phone" type="text" required
+                        <input v-model="form.phone" type="text" name="lead_phone_no" required autocomplete="off"
                             class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none" placeholder="08xxxxxxxxxx" />
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Email</label>
-                        <input v-model="form.email" type="email"
+                        <input v-model="form.email" type="email" name="lead_email_addr" autocomplete="off"
                             class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none" placeholder="budi@example.com" />
                     </div>
                 </div>
@@ -136,7 +144,7 @@ onMounted(() => {
                 <!-- Instansi / Kampus -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Instansi / Asal Kampus / Kantor</label>
-                    <input v-model="form.institution" type="text"
+                    <input v-model="form.institution" type="text" name="lead_institution_office" autocomplete="off"
                         class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none" placeholder="Misal: Universitas Indonesia / PT Maju Bersama" />
                 </div>
 
@@ -168,12 +176,12 @@ onMounted(() => {
 
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" @click="emit('navigate', '/leads')" class="px-4 py-2.5 rounded-xl border border-gray-200 font-semibold text-xs text-gray-600 hover:bg-gray-50">Batal</button>
-                    <button type="submit" :disabled="loading" class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm disabled:opacity-50">
+                    <button type="button" @click="save" :disabled="loading" class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm disabled:opacity-50">
                         <span v-if="loading">Menyimpan...</span>
                         <span v-else>Simpan Data Prospek</span>
                     </button>
                 </div>
-            </form>
+            </div>
         </template>
     </div>
 </template>

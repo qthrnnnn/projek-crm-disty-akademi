@@ -20,10 +20,32 @@ function formatDate(val) {
     if (!val) return '-';
     try {
         const d = new Date(val);
+        if (isNaN(d.getTime())) return val;
         return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     } catch {
         return val;
     }
+}
+
+function formatTime(val) {
+    if (!val) return '';
+    try {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+    } catch {
+        return '';
+    }
+}
+
+function getPaymentTimestamp(payment) {
+    if (!payment) return null;
+    const pd = payment.payment_date;
+    const ca = payment.created_at;
+    if (pd && !String(pd).includes('00:00:00') && !String(pd).endsWith('T00:00:00.000000Z')) {
+        return pd;
+    }
+    return ca || pd;
 }
 
 function formatCurrency(val) {
@@ -117,7 +139,7 @@ onMounted(() => {
                             <th class="py-3 px-4">Tanggal & Peserta</th>
                             <th class="py-3 px-4">Program Pelatihan</th>
                             <th class="py-3 px-4">Nominal</th>
-                            <th class="py-3 px-4">Metode / Bank</th>
+                            <th class="py-3 px-4">Bank Tujuan & Pengirim</th>
                             <th class="py-3 px-4">Status</th>
                             <th class="py-3 px-4 text-right">Aksi</th>
                         </tr>
@@ -132,7 +154,13 @@ onMounted(() => {
                         <tr v-for="p in payments" :key="p.id" class="hover:bg-blue-50/30 transition-colors">
                             <td class="py-3 px-4">
                                 <div class="font-semibold text-gray-900">{{ p.lead?.name || 'Peserta' }}</div>
-                                <div class="text-[11px] text-gray-400">{{ formatDate(p.payment_date || p.created_at) }}</div>
+                                <div class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                    <span>{{ formatDate(getPaymentTimestamp(p)) }}</span>
+                                    <template v-if="formatTime(getPaymentTimestamp(p))">
+                                        <span class="text-gray-300">&bull;</span>
+                                        <span class="font-mono text-[10.5px] text-gray-600 font-medium">{{ formatTime(getPaymentTimestamp(p)) }} WIB</span>
+                                    </template>
+                                </div>
                             </td>
                             <td class="py-3 px-4">
                                 {{ p.product?.name || (p.lead?.product?.name || '-') }}
@@ -141,8 +169,13 @@ onMounted(() => {
                                 {{ formatCurrency(p.amount) }}
                             </td>
                             <td class="py-3 px-4">
-                                <div>{{ p.bank_name || (p.payment_method ? (p.payment_method.charAt(0).toUpperCase() + p.payment_method.slice(1)) : 'Transfer') }}</div>
-                                <div v-if="p.account_name" class="text-[11px] text-gray-400">a.n {{ p.account_name }}</div>
+                                <div class="font-semibold text-gray-900 flex items-center gap-1">
+                                    <span>{{ p.bank_name || (p.payment_method ? (p.payment_method.charAt(0).toUpperCase() + p.payment_method.slice(1)) : 'Transfer') }}</span>
+                                    <span class="text-[10px] font-normal text-gray-400">(Tujuan Disty)</span>
+                                </div>
+                                <div v-if="p.account_name" class="text-[11px] text-gray-500 mt-0.5">
+                                    <span class="text-gray-400">Pengirim:</span> a.n {{ p.account_name }}
+                                </div>
                             </td>
                             <td class="py-3 px-4">
                                 <span class="px-2 py-0.5 text-[10px] font-medium border" :class="statusBadgeClass(p.status)">

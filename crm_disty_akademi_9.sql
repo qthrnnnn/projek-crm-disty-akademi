@@ -1,6 +1,6 @@
 -- MariaDB dump 10.19  Distrib 10.4.32-MariaDB, for Win64 (AMD64)
 --
--- Host: localhost    Database: crm_disty_akademi
+-- Host: localhost    Database: crm_disty_akademi_9
 -- ------------------------------------------------------
 -- Server version	10.4.32-MariaDB
 

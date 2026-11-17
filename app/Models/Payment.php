@@ -86,16 +86,22 @@ class Payment extends Model
                         'lead_id' => $lead->id,
                     ]);
 
-                    // 3. Ubah seluruh status pendaftaran peserta menjadi confirmed
-                    Registration::where('customer_id', $customer->id)
-                        ->where('status', 'registered')
-                        ->update(['status' => 'confirmed']);
+                    // 3. Ubah status pendaftaran peserta untuk produk ini menjadi confirmed
+                    $regQuery = Registration::where('customer_id', $customer->id)->where('status', 'registered');
+                    if ($this->product_id) {
+                        $regQuery->where('product_id', $this->product_id);
+                    }
+                    $regQuery->update(['status' => 'confirmed']);
                 }
 
-                // Juga pastikan pendaftaran yang terkait lead ini otomatis confirmed
-                Registration::whereHas('customer', function ($q) use ($lead) {
+                // Juga pastikan pendaftaran yang terkait lead/produk ini otomatis confirmed
+                $leadRegQuery = Registration::whereHas('customer', function ($q) use ($lead) {
                     $q->where('lead_id', $lead->id)->orWhere('phone', $lead->phone);
-                })->where('status', 'registered')->update(['status' => 'confirmed']);
+                })->where('status', 'registered');
+                if ($this->product_id) {
+                    $leadRegQuery->where('product_id', $this->product_id);
+                }
+                $leadRegQuery->update(['status' => 'confirmed']);
 
                 // 4. Pastikan Komisi 10% tercatat dan siap untuk sales penanggung jawab
                 Commission::ensureCommissionCreated(

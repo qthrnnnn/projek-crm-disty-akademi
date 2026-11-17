@@ -20,6 +20,15 @@
             margin: 0;
             padding: 0;
         }
+        @media print {
+            html, body {
+                height: auto !important;
+                min-height: auto !important;
+                max-height: none !important;
+                overflow: visible !important;
+                background: #ffffff !important;
+            }
+        }
         body { font-family: 'Inter', sans-serif; }
         .sidebar-transition { transition: width 200ms ease-in-out; }
 

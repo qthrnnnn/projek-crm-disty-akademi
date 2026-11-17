@@ -75,7 +75,7 @@ class Customer extends Model
 
     public function registrations(): HasMany
     {
-        return $this->hasMany(Registration::class);
+        return $this->hasMany(Registration::class)->orderByDesc('id');
     }
 
     public static function generateCode(): string

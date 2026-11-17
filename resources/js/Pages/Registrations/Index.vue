@@ -38,9 +38,21 @@ function formatDate(val) {
     if (!val) return '-';
     try {
         const d = new Date(val);
+        if (isNaN(d.getTime())) return val;
         return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
     } catch {
         return val;
+    }
+}
+
+function formatTime(val) {
+    if (!val) return '';
+    try {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+    } catch {
+        return '';
     }
 }
 
@@ -194,7 +206,14 @@ onMounted(() => {
                         </tr>
                         <tr v-for="r in registrations" :key="r.id" class="hover:bg-blue-50/20 transition-colors">
                             <td class="py-3.5 px-4 font-mono font-bold text-gray-900">
-                                {{ r.registration_number || ('#REG-' + r.id) }}
+                                <div>{{ r.registration_number || ('#REG-' + r.id) }}</div>
+                                <div class="text-[10px] font-sans font-normal text-gray-400 mt-0.5 flex items-center gap-1 flex-wrap">
+                                    <span>{{ formatDate(r.created_at) }}</span>
+                                    <template v-if="formatTime(r.created_at)">
+                                        <span>&bull;</span>
+                                        <span class="font-mono text-gray-500 font-medium">{{ formatTime(r.created_at) }} WIB</span>
+                                    </template>
+                                </div>
                             </td>
                             <td class="py-3.5 px-4">
                                 <button @click="emit('navigate', `/customers/${r.customer_id}`)" class="font-medium text-blue-600 hover:underline text-left block">

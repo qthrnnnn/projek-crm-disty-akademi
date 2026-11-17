@@ -78,11 +78,11 @@ function selectFeedback(type) {
         if (!form.value.result_notes || Object.values(reasonMap).some(lbl => form.value.result_notes.includes(lbl))) {
             form.value.result_notes = 'Prospek berminat dan meminta informasi penawaran lebih lanjut.';
         }
-    } else if (type === 'won') {
-        form.value.lead_status = 'won';
+    } else if (type === 'won' || type === 'closing' || type === 'negotiation') {
+        form.value.lead_status = 'negotiation';
         form.value.rejection_reason_id = null;
         if (!form.value.result_notes || Object.values(reasonMap).some(lbl => form.value.result_notes.includes(lbl))) {
-            form.value.result_notes = 'Closing berhasil! Calon peserta bersedia melakukan pembayaran / pendaftaran.';
+            form.value.result_notes = 'Prospek setuju mendaftar (Siap Bayar / Negosiasi). Menunggu proses pembayaran dan upload bukti transfer.';
         }
     }
 }
@@ -215,11 +215,11 @@ onMounted(() => {
                         <span class="block font-bold">Berminat / Lanjut</span>
                         <span class="text-[10px] opacity-80">Minta info kurikulum</span>
                     </button>
-                    <button type="button" @click="selectFeedback('won')"
-                        :class="form.feedback_type === 'won' ? 'bg-emerald-600 text-white border-emerald-600 shadow-xs' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'"
+                    <button type="button" @click="selectFeedback('closing')"
+                        :class="(form.feedback_type === 'closing' || form.feedback_type === 'won') ? 'bg-amber-600 text-white border-amber-600 shadow-xs' : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'"
                         class="p-2.5 rounded-xl border font-semibold text-left transition">
-                        <span class="block font-bold">Closing / Siap Bayar</span>
-                        <span class="text-[10px] opacity-80">Setuju mendaftar</span>
+                        <span class="block font-bold">Siap Bayar / Negosiasi</span>
+                        <span class="text-[10px] opacity-80">Setuju mendaftar (Menunggu Transfer)</span>
                     </button>
                 </div>
             </div>

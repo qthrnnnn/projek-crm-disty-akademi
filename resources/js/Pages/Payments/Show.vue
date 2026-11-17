@@ -25,13 +25,58 @@ function formatCurrency(val) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
 }
 
+function formatDate(val) {
+    if (!val) return '-';
+    try {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return val;
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch {
+        return val;
+    }
+}
+
+function formatTime(val) {
+    if (!val) return '';
+    try {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return '';
+        return d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+    } catch {
+        return '';
+    }
+}
+
+function formatDateTime(val) {
+    if (!val) return '-';
+    try {
+        const d = new Date(val);
+        if (isNaN(d.getTime())) return val;
+        const datePart = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        const timePart = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('.', ':');
+        return `${datePart}, ${timePart} WIB`;
+    } catch {
+        return val;
+    }
+}
+
 function getProofSrc(p) {
     if (!p) return '';
-    if (p.proof_url) return p.proof_url;
+    if (p.proof_url) {
+        try {
+            const urlObj = new URL(p.proof_url);
+            return urlObj.pathname;
+        } catch {
+            return p.proof_url;
+        }
+    }
     if (p.proof_file) {
         return p.proof_file.startsWith('http') ? p.proof_file : `/storage/${p.proof_file}`;
     }
-    return p.proof_image || '';
+    if (p.proof_image) {
+        return p.proof_image.startsWith('http') ? p.proof_image : `/storage/${p.proof_image}`;
+    }
+    return '';
 }
 
 async function loadPayment() {
@@ -131,10 +176,25 @@ onMounted(() => {
                         </div>
                     </div>
                     <div>
-                        <span class="text-gray-400 block text-[11px]">Metode / Bank / Rekening</span>
+                        <span class="text-gray-400 block text-[11px]">Bank Tujuan & Rekening Pengirim</span>
+                        <div class="mt-0.5 space-y-0.5 text-xs">
+                            <div>
+                                <span class="text-gray-500">Bank Tujuan (Disty):</span>
+                                <span class="font-bold text-gray-900 ml-1">{{ payment.bank_name || payment.payment_method || 'BCA' }}</span>
+                            </div>
+                            <div v-if="payment.account_name || payment.sender_name">
+                                <span class="text-gray-500">Rekening Pengirim:</span>
+                                <span class="font-semibold text-gray-800 ml-1">a.n {{ payment.account_name || payment.sender_name }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <span class="text-gray-400 block text-[11px]">Waktu Pengunggahan Bukti Bayar</span>
                         <span class="font-medium text-gray-800">
-                            {{ payment.bank_name || payment.payment_method || '-' }}
-                            <span v-if="payment.account_name || payment.sender_name"> — a.n {{ payment.account_name || payment.sender_name }}</span>
+                            {{ formatDate(payment.payment_date || payment.created_at) }}
+                            <span v-if="formatTime(payment.payment_date || payment.created_at)" class="font-mono text-gray-600 font-semibold text-[11px]">
+                                &bull; {{ formatTime(payment.payment_date || payment.created_at) }} WIB
+                            </span>
                         </span>
                     </div>
                     <div>
@@ -147,7 +207,7 @@ onMounted(() => {
                     </div>
                     <div v-if="payment.verified_by_user || payment.verifiedByUser" class="pt-2 border-t border-gray-100 text-[11px] text-gray-500">
                         Diverifikasi oleh: <strong class="text-gray-700">{{ payment.verified_by_user?.name || payment.verifiedByUser?.name }}</strong>
-                        <span v-if="payment.verified_at"> pada {{ payment.verified_at }}</span>
+                        <span v-if="payment.verified_at"> pada {{ formatDateTime(payment.verified_at) }}</span>
                     </div>
                 </div>
             </div>

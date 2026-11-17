@@ -53,11 +53,19 @@ class LeadController extends Controller
         if ($request->filled('date')) {
             $query->whereDate('created_at', $request->date);
         }
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+        } elseif ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
         if ($request->filled('assigned')) {
             $query->where('assigned_to', $request->assigned);
         }
 
-        $leads = $query->paginate(20)->withQueryString();
+        $perPage = min(max((int) $request->get('per_page', 20), 1), 500);
+        $leads = $query->paginate($perPage)->withQueryString();
         $salesUsers = User::where('role', 'sales')->where('is_active', true)->get();
         $sources = LeadSource::active()->get();
 

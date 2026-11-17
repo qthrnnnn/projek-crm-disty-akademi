@@ -87,6 +87,8 @@ class DashboardController extends Controller
                 'year' => (int) $lead->created_at->format('Y'),
                 'month' => (int) $lead->created_at->format('n'),
                 'date_iso' => $lead->created_at->format('Y-m-d'),
+                'first_contacted_at' => $lead->first_contacted_at?->toIso8601String(),
+                'is_unanswered' => ($lead->status === 'new' && is_null($lead->first_contacted_at)),
             ];
         })->values();
 
@@ -128,7 +130,7 @@ class DashboardController extends Controller
             ->where('follow_up_at', '<', now())
             ->count();
 
-        // Aktivitas Terbaru
+        // Aktivitas Terbaru (Ambil aktivitas terbaru untuk tim sales / user terkait)
         $actQuery = Activity::with(['lead', 'user'])->latest('activity_at');
         if ($isSales && $userId) {
             $actQuery->where(function ($q) use ($userId) {
@@ -136,22 +138,57 @@ class DashboardController extends Controller
                     ->orWhereHas('lead', fn ($lead) => $lead->where('assigned_to', $userId));
             });
         }
-        $actQuery->whereDate('activity_at', $selectedDateString);
-        $recentActivities = $actQuery->limit(8)->get();
+        $recentActivities = $actQuery->limit(8)->get()->map(function ($act) {
+            return [
+                'id' => $act->id,
+                'type' => $act->type,
+                'subject' => $act->subject,
+                'description' => $act->description ?: ($act->subject ?: ucfirst(str_replace('_', ' ', $act->type))),
+                'activity_at' => $act->activity_at ? $act->activity_at->toIso8601String() : null,
+                'created_at' => $act->created_at ? $act->created_at->toIso8601String() : null,
+                'formatted_time' => $act->activity_at ? $act->activity_at->translatedFormat('d M Y, H:i') : ($act->created_at ? $act->created_at->translatedFormat('d M Y, H:i') : '-'),
+                'lead' => $act->lead ? [
+                    'id' => $act->lead->id,
+                    'name' => $act->lead->name,
+                ] : null,
+                'user' => $act->user ? [
+                    'id' => $act->user->id,
+                    'name' => $act->user->name,
+                ] : null,
+            ];
+        });
 
-        // Follow-up Mendatang (Hanya lead aktif yang belum closing/won/lost dan belum ambil program)
+        // Follow-up Mendatang (Semua agenda follow-up pending terdekat)
         $upcomingFuQuery = FollowUp::with(['lead', 'assignedUser'])
             ->pending()
             ->whereHas('lead', fn ($q) => $q->whereNotIn('status', ['won', 'lost', 'inactive'])
                 ->whereDoesntHave('payments', fn ($p) => $p->where('status', 'valid'))
                 ->whereDoesntHave('customer', fn ($c) => $c->whereHas('registrations'))
             )
-            ->whereDate('follow_up_at', $selectedDateString)
-            ->orderBy('follow_up_at');
+            ->orderBy('follow_up_at', 'asc');
         if ($isSales && $userId) {
             $upcomingFuQuery->where('assigned_to', $userId);
         }
-        $upcomingFollowUps = $upcomingFuQuery->limit(6)->get();
+        $upcomingFollowUps = $upcomingFuQuery->limit(6)->get()->map(function ($fu) {
+            return [
+                'id' => $fu->id,
+                'title' => $fu->title,
+                'notes' => $fu->description ?: $fu->title,
+                'method' => $fu->method,
+                'priority' => $fu->priority,
+                'scheduled_at' => $fu->follow_up_at ? $fu->follow_up_at->translatedFormat('d M Y, H:i') : '-',
+                'follow_up_at' => $fu->follow_up_at ? $fu->follow_up_at->toIso8601String() : null,
+                'lead' => $fu->lead ? [
+                    'id' => $fu->lead->id,
+                    'name' => $fu->lead->name,
+                    'phone' => $fu->lead->phone ?: $fu->lead->whatsapp,
+                ] : null,
+                'assigned_user' => $fu->assignedUser ? [
+                    'id' => $fu->assignedUser->id,
+                    'name' => $fu->assignedUser->name,
+                ] : null,
+            ];
+        });
 
         // Alasan Penolakan
         $rejectQuery = (clone $leadQuery)->where('status', 'lost')
@@ -239,7 +276,7 @@ class DashboardController extends Controller
             'lost' => $lostLeads,
         ];
 
-        return response()->json(compact(
+        $resData = compact(
             'isSales',
             'summary', 'leads_by_status',
             'totalLeads', 'newLeads', 'contactedLeads', 'activeLeads',
@@ -254,6 +291,10 @@ class DashboardController extends Controller
             'newLeadsThisMonth', 'wonLeadsThisMonth',
             'selectedDate', 'selectedDateString', 'pipelineLeadsData',
             'todayIso', 'todayDisplay', 'currentYear', 'currentMonth'
-        ));
+        );
+        $resData['recent_activities'] = $recentActivities;
+        $resData['upcoming_followups'] = $upcomingFollowUps;
+
+        return response()->json($resData);
     }
 }

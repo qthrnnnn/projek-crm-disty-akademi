@@ -116,6 +116,9 @@
       "resources/js/app.js",
       "_api.js",
       "_Pagination.js"
+    ],
+    "css": [
+      "assets/Index2.css"
     ]
   },
   "resources/js/Pages/Customers/Show.vue": {
@@ -264,6 +267,9 @@
       "_api.js",
       "_Pagination.js",
       "_Badge.js"
+    ],
+    "css": [
+      "assets/Index2.css"
     ]
   },
   "resources/js/Pages/Leads/Show.vue": {

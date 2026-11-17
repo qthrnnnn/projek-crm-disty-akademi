@@ -13,6 +13,7 @@ const emit = defineEmits(['navigate']);
 const leads = ref([]);
 const salesUsers = ref([]);
 const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
+const perPage = ref('50');
 const search = ref('');
 const dateFilter = ref('');
 const statusFilter = ref('');
@@ -55,7 +56,7 @@ async function loadSalesUsers() {
 async function loadLeads(page = 1) {
     loading.value = true;
     try {
-        const params = { page: String(page), per_page: '20' };
+        const params = { page: String(page), per_page: String(perPage.value) };
         if (search.value) params.search = search.value;
         if (dateFilter.value) params.date = dateFilter.value;
         if (statusFilter.value) params.status = statusFilter.value;
@@ -202,6 +203,276 @@ function countLeadsOnDate(dtStr) {
     return leads.value.filter(l => getDateKey(l.created_at) === targetKey).length;
 }
 
+// ── Print Modal State & Handlers ──
+const showPrintModal = ref(false);
+const printFilterDate = ref('');
+const printFilterStatus = ref('');
+const printFilterSales = ref('');
+const printOrientation = ref('landscape');
+const allLeadsForPrint = ref([]);
+const loadingPrintData = ref(false);
+
+async function openPrintModal() {
+    printFilterDate.value = dateFilter.value || '';
+    printFilterStatus.value = statusFilter.value || '';
+    printFilterSales.value = assignedFilter.value || (isSales.value ? String(props.user?.id || '') : '');
+    showPrintModal.value = true;
+    await fetchPrintLeads();
+}
+
+function closePrintModal() {
+    showPrintModal.value = false;
+}
+
+async function fetchPrintLeads() {
+    loadingPrintData.value = true;
+    try {
+        const params = { per_page: '500' };
+        if (isSales.value && props.user?.id) {
+            params.assigned = String(props.user.id);
+        } else if (printFilterSales.value) {
+            params.assigned = printFilterSales.value;
+        }
+        if (printFilterDate.value) {
+            params.date = printFilterDate.value;
+        }
+        if (printFilterStatus.value) {
+            params.status = printFilterStatus.value;
+        }
+        const res = await api.list('leads', params);
+        allLeadsForPrint.value = res.data || [];
+    } catch (e) {
+        console.error('Gagal mengambil data cetak lead:', e);
+    } finally {
+        loadingPrintData.value = false;
+    }
+}
+
+const printLeadsList = computed(() => {
+    let list = allLeadsForPrint.value;
+    if (printFilterDate.value) {
+        list = list.filter(l => getDateKey(l.created_at) === printFilterDate.value);
+    }
+    if (printFilterStatus.value) {
+        list = list.filter(l => l.status === printFilterStatus.value);
+    }
+    if (printFilterSales.value) {
+        list = list.filter(l => String(l.assigned_to) === String(printFilterSales.value));
+    }
+    return list;
+});
+
+const printFilterDateFormatted = computed(() => {
+    if (!printFilterDate.value) return 'Semua Tanggal';
+    const parts = printFilterDate.value.split('-');
+    if (parts.length === 3) {
+        const d = new Date(printFilterDate.value);
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+    }
+    return printFilterDate.value;
+});
+
+const todayFormatted = computed(() => {
+    return new Date().toLocaleDateString('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+    });
+});
+
+const reportDocNumber = computed(() => {
+    const now = new Date();
+    const yr = now.getFullYear();
+    const mo = String(now.getMonth() + 1).padStart(2, '0');
+    return `RDL-DISTY/${yr}${mo}/001`;
+});
+
+function printDocument() {
+    const printArea = document.getElementById('print-area');
+    if (!printArea) {
+        window.print();
+        return;
+    }
+
+    // Clean up any previously created print iframe
+    const prevFrame = document.getElementById('print-iframe-isolated');
+    if (prevFrame) {
+        prevFrame.remove();
+    }
+
+    const isLandscape = printOrientation.value === 'landscape';
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'print-iframe-isolated';
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-9999px';
+    iframe.style.left = '-9999px';
+    iframe.style.width = isLandscape ? '297mm' : '210mm';
+    iframe.style.height = isLandscape ? '210mm' : '297mm';
+    iframe.style.border = 'none';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    document.body.appendChild(iframe);
+
+    // Extract all styles and links from the parent document
+    const headNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map(n => n.outerHTML).join('\n');
+
+    const pageRule = isLandscape
+        ? '@page { size: A4 landscape; size: landscape; margin: 8mm 10mm 8mm 10mm; }'
+        : '@page { size: A4 portrait; size: portrait; margin: 8mm 8mm 8mm 8mm; }';
+
+    const iframeDoc = iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(`
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="utf-8">
+            <base href="${window.location.origin}/">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Rekapitulasi Data Lead / Prospek - Disty Akademi</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+            <script src="https://cdn.tailwindcss.com"><\/script>
+            ${headNodes}
+            <style>
+                ${pageRule}
+                *, *::before, *::after {
+                    box-sizing: border-box !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                html, body {
+                    width: 100% !important;
+                    height: auto !important;
+                    min-height: auto !important;
+                    max-height: none !important;
+                    overflow: visible !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #ffffff !important;
+                    color: #111827 !important;
+                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                    font-size: 10px !important;
+                }
+                #print-sheet-root {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #ffffff !important;
+                }
+                table {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    border-collapse: collapse !important;
+                    table-layout: fixed !important;
+                }
+                thead {
+                    display: table-header-group !important;
+                }
+                tfoot {
+                    display: table-footer-group !important;
+                }
+                tr {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                }
+                th, td {
+                    box-sizing: border-box !important;
+                    vertical-align: middle !important;
+                }
+                .whitespace-nowrap,
+                th.whitespace-nowrap,
+                td.whitespace-nowrap,
+                .no-break {
+                    white-space: nowrap !important;
+                    word-break: keep-all !important;
+                    overflow-wrap: normal !important;
+                    word-wrap: normal !important;
+                }
+                .signature-section {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    margin-top: 24px !important;
+                }
+            </style>
+        </head>
+        <body class="bg-white text-gray-900 p-0 m-0">
+            <div id="print-sheet-root">
+                ${printArea.innerHTML}
+            </div>
+        </body>
+        </html>
+    `);
+    iframeDoc.close();
+
+    const triggerPrint = () => {
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        } catch (err) {
+            console.error('Iframe print failed, falling back to window.print', err);
+            window.print();
+        } finally {
+            setTimeout(() => {
+                iframe.remove();
+            }, 3000);
+        }
+    };
+
+    // Give iframe document time to settle and images to load
+    const imgs = Array.from(iframeDoc.images || []);
+    if (imgs.length > 0) {
+        let loaded = 0;
+        const total = imgs.length;
+        const checkDone = () => {
+            loaded++;
+            if (loaded >= total) {
+                setTimeout(triggerPrint, 120);
+            }
+        };
+        imgs.forEach(img => {
+            if (img.complete) {
+                checkDone();
+            } else {
+                img.onload = checkDone;
+                img.onerror = checkDone;
+            }
+        });
+        setTimeout(triggerPrint, 700);
+    } else {
+        setTimeout(triggerPrint, 250);
+    }
+}
+
+function getStatusLabel(status) {
+    const map = {
+        new: 'Baru',
+        contacted: 'Dikontak',
+        active: 'Aktif',
+        negotiation: 'Negosiasi',
+        won: 'Closing',
+        lost: 'Ditolak',
+        inactive: 'Nonaktif',
+    };
+    return map[status] || status || '-';
+}
+
+function getStatusBadgeClass(status) {
+    const map = {
+        new: 'bg-blue-50 text-blue-700 border-blue-300',
+        contacted: 'bg-purple-50 text-purple-700 border-purple-300',
+        active: 'bg-sky-50 text-sky-700 border-sky-300',
+        negotiation: 'bg-amber-50 text-amber-800 border-amber-300',
+        won: 'bg-emerald-50 text-emerald-800 border-emerald-400 font-bold',
+        lost: 'bg-red-50 text-red-700 border-red-300',
+        inactive: 'bg-gray-50 text-gray-700 border-gray-300',
+    };
+    return map[status] || 'bg-gray-50 text-gray-700 border-gray-300';
+}
+
 onMounted(() => {
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('status')) {
@@ -220,7 +491,9 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="space-y-4">
+    <div>
+        <!-- Main Page Content (Hidden during Print) -->
+        <div class="no-print space-y-4">
         <!-- Header -->
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
@@ -228,6 +501,16 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 mt-0.5">Kelola prospek dan calon peserta pelatihan (Aturan: 1 Lead = 1 Sales Eksklusif)</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
+                <!-- Tombol Cetak Rekapitulasi Data Lead (Sales & Admin) -->
+                <button type="button" @click="openPrintModal"
+                    class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-xl hover:bg-orange-600 shadow-sm transition-all"
+                    title="Cetak Rekapitulasi Data Lead / Prospek">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Cetak Daftar Lead
+                </button>
+
                 <!-- Tombol Khusus Sales: Import Excel Leads & Tambah Lead -->
                 <template v-if="isSales">
                     <button type="button" @click="emit('navigate', '/lead-imports/create')"
@@ -494,12 +777,21 @@ onMounted(() => {
                 </table>
             </div>
             <div v-if="pagination.total > 0" class="p-3 border-t border-gray-100 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <span>Tampilkan</span>
+                    <select v-model="perPage" @change="loadLeads(1)" class="border border-gray-200 px-2.5 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:border-orange-500">
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                    </select>
+                </div>
                 <Pagination :pagination="pagination" @page="loadLeads" />
             </div>
         </div>
+        </div>
 
         <!-- Modal Penugasan Sales PIC (Admin Only) -->
-        <div v-if="showAssignModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+        <div v-if="showAssignModal" class="no-print fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
             <div class="bg-white max-w-sm w-full p-5 shadow-xl border border-gray-100 space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                     <h3 class="text-sm font-bold text-gray-900">Tugaskan Prospek ke Sales PIC</h3>
@@ -539,5 +831,389 @@ onMounted(() => {
                 </form>
             </div>
         </div>
+
+        <!-- ── MODAL CETAK REKAPITULASI DATA LEAD ── -->
+        <div v-if="showPrintModal" class="print-modal-wrapper fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:static print:block print:bg-white print:overflow-visible print:inset-auto print:p-0">
+            <div class="print-modal-container bg-white w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:static print:block print:max-h-none print:h-auto print:my-0 print:border-none print:shadow-none print:overflow-visible print:max-w-none transition-all"
+                :class="printOrientation === 'landscape' ? 'max-w-6xl' : 'max-w-4xl'">
+                <!-- Header Modal (Hidden saat print) -->
+                <div class="p-3.5 sm:p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3 bg-white no-print">
+                    <div>
+                        <h3 class="text-sm font-bold text-gray-900">Cetak Rekapitulasi Data Lead / Prospek</h3>
+                        <p class="text-[11px] text-gray-500">Pratinjau lembar data resmi prospek Disty Akademi</p>
+                    </div>
+
+                    <!-- Filter Bar & Orientasi di Header Modal -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <!-- Pilihan Orientasi Cetak -->
+                        <div class="flex items-center gap-1 bg-gray-100 p-0.5 border border-gray-300">
+                            <button type="button" @click="printOrientation = 'landscape'"
+                                :class="printOrientation === 'landscape' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'"
+                                class="px-2.5 py-1 text-[11px] transition-colors">
+                                Lanskap (Rekomendasi)
+                            </button>
+                            <button type="button" @click="printOrientation = 'portrait'"
+                                :class="printOrientation === 'portrait' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'"
+                                class="px-2.5 py-1 text-[11px] transition-colors">
+                                Potret
+                            </button>
+                        </div>
+
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-xs text-gray-500 font-medium">Tanggal:</span>
+                            <input type="date" v-model="printFilterDate" @change="fetchPrintLeads"
+                                class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white" />
+                            <button v-if="printFilterDate" @click="printFilterDate = ''; fetchPrintLeads()" type="button"
+                                class="text-[10px] text-gray-500 hover:text-gray-800 underline">Semua</button>
+                        </div>
+
+                        <select v-model="printFilterStatus" @change="fetchPrintLeads"
+                            class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white">
+                            <option value="">Semua Status</option>
+                            <option value="new">Baru</option>
+                            <option value="contacted">Dikontak</option>
+                            <option value="active">Aktif</option>
+                            <option value="negotiation">Negosiasi</option>
+                            <option value="won">Berhasil (Closing)</option>
+                            <option value="lost">Ditolak</option>
+                            <option value="inactive">Tidak Aktif</option>
+                        </select>
+
+                        <select v-if="isAdmin" v-model="printFilterSales" @change="fetchPrintLeads"
+                            class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white">
+                            <option value="">Semua Sales</option>
+                            <option v-for="s in salesUsers" :key="s.id" :value="s.id">{{ s.name }}</option>
+                        </select>
+
+                        <button @click="printDocument" class="px-3.5 py-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-xs">
+                            Cetak (PDF)
+                        </button>
+
+                        <button @click="closePrintModal" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors">
+                            Tutup
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Lembar Dokumen Cetak (Print Area) -->
+                <div class="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50 print:bg-white print:p-0">
+                    <div id="print-area" class="bg-white p-6 sm:p-8 border border-gray-200 shadow-sm mx-auto text-gray-900 print:border-none print:shadow-none print:p-0 print:max-w-none"
+                        :class="printOrientation === 'landscape' ? 'w-full max-w-5xl' : 'w-full max-w-4xl'">
+                        <!-- KOP SURAT RESMI DISTY AKADEMI -->
+                        <div class="border-b-4 border-double border-gray-800 pb-4 mb-5">
+                            <div class="flex items-center justify-between gap-4">
+                                <div class="flex items-center gap-3.5">
+                                    <img src="/images/disty-logo.png" alt="Disty Akademi" class="h-12 w-auto max-w-[130px] object-contain shrink-0" onerror="this.style.display='none'; if (this.nextElementSibling) this.nextElementSibling.style.display='flex';" />
+                                    <div class="hidden w-12 h-12 bg-orange-500 text-white font-black text-2xl items-center justify-center rounded-sm shrink-0">D</div>
+                                    <div>
+                                        <h1 class="text-xl font-black tracking-wider text-gray-900 uppercase leading-none mb-1">DISTY AKADEMI</h1>
+                                        <p class="text-[11px] font-semibold text-gray-700 tracking-wide leading-tight mb-0.5">LEMBAGA PELATIHAN KERJA & PENGEMBANGAN SDM PROFESIONAL</p>
+                                        <p class="text-[10px] text-gray-500 leading-tight">Jl. Raya Rungkut Madya No. 1, Gunung Anyar, Surabaya, Jawa Timur 60294</p>
+                                    </div>
+                                </div>
+                                <div class="text-right text-[10px] text-gray-600 leading-tight border-l border-gray-300 pl-4 block shrink-0">
+                                    <p><span class="font-semibold text-gray-800">Email:</span> info@distyakademi.com</p>
+                                    <p><span class="font-semibold text-gray-800">Website:</span> www.distyakademi.com</p>
+                                    <p><span class="font-semibold text-gray-800">Telepon:</span> (031) 878-2233</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- JUDUL DOKUMEN -->
+                        <div class="text-center mb-4">
+                            <h2 class="text-base font-black uppercase tracking-wider text-gray-900 underline underline-offset-4">
+                                REKAPITULASI DATA PROSPEK & CALON PESERTA (LEADS CRM)
+                            </h2>
+                            <p class="text-[11px] text-gray-600 mt-1">
+                                Lampiran Resmi Pengelolaan Prospek dan Penugasan Tim Sales Disty Akademi
+                            </p>
+                        </div>
+
+                        <!-- METADATA DOKUMEN -->
+                        <div class="border border-gray-300 bg-gray-50/70 p-3 mb-4 text-[11px] grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <div><span class="text-gray-500 font-medium">Nomor Dokumen:</span> <span class="font-bold text-gray-900 ml-1">{{ reportDocNumber }}</span></div>
+                                <div><span class="text-gray-500 font-medium">Tanggal Cetak:</span> <span class="font-semibold text-gray-900 ml-1">{{ todayFormatted }}</span></div>
+                                <div><span class="text-gray-500 font-medium">Periode / Tanggal Masuk:</span> <span class="font-bold text-gray-900 ml-1">{{ printFilterDateFormatted }}</span></div>
+                                <div><span class="text-gray-500 font-medium">Dicetak Oleh:</span> <span class="font-semibold text-gray-900 ml-1">{{ props.user?.name || 'Administrator CRM' }} ({{ isSales ? 'Sales' : 'Admin' }})</span></div>
+                            </div>
+                            <div class="space-y-1 text-right">
+                                <div>
+                                    <span class="text-gray-500 font-medium">Status Data:</span>
+                                    <span class="font-bold uppercase ml-1 px-2 py-0.5 text-[10px] bg-gray-200 text-gray-800 border border-gray-300">
+                                        {{ printFilterStatus ? getStatusLabel(printFilterStatus) : 'SEMUA STATUS' }}
+                                    </span>
+                                </div>
+                                <div><span class="text-gray-500 font-medium">Jumlah Prospek:</span> <span class="font-bold text-gray-900 ml-1">{{ printLeadsList.length }} Prospek</span></div>
+                                <div v-if="printFilterSales"><span class="text-gray-500 font-medium">Sales PIC:</span> <span class="font-bold text-gray-900 ml-1">{{ salesUsers.find(s => String(s.id) === String(printFilterSales))?.name || '-' }}</span></div>
+                                <div><span class="text-gray-500 font-medium">Format Kertas:</span> <span class="font-bold text-gray-800 ml-1 uppercase">{{ printOrientation === 'landscape' ? 'A4 Lanskap' : 'A4 Potret' }}</span></div>
+                            </div>
+                        </div>
+
+                        <!-- TABEL DATA PROSPEK -->
+                        <div class="border border-gray-300 mb-5 overflow-hidden">
+                            <table class="w-full text-left text-xs border-collapse table-fixed">
+                                <colgroup v-if="printOrientation === 'landscape'">
+                                    <col style="width: 4%;" />
+                                    <col style="width: 10%;" />
+                                    <col style="width: 14%;" />
+                                    <col style="width: 23%;" />
+                                    <col style="width: 15%;" />
+                                    <col style="width: 16%;" />
+                                    <col style="width: 11%;" />
+                                    <col style="width: 7%;" />
+                                </colgroup>
+                                <colgroup v-else>
+                                    <col style="width: 5%;" />
+                                    <col style="width: 11%;" />
+                                    <col style="width: 16%;" />
+                                    <col style="width: 20%;" />
+                                    <col style="width: 15%;" />
+                                    <col style="width: 15%;" />
+                                    <col style="width: 10%;" />
+                                    <col style="width: 8%;" />
+                                </colgroup>
+                                <thead class="bg-gray-100 border-b-2 border-gray-400 text-gray-800 font-bold uppercase text-[9px] sm:text-[9.5px]">
+                                    <tr>
+                                        <th class="py-2.5 px-1 border-r border-gray-300 text-center whitespace-nowrap" style="white-space: nowrap !important;">No.</th>
+                                        <th class="py-2.5 px-1.5 border-r border-gray-300 text-center whitespace-nowrap" style="white-space: nowrap !important;">Tgl Masuk</th>
+                                        <th class="py-2.5 px-1.5 border-r border-gray-300 text-center whitespace-nowrap" style="white-space: nowrap !important;">Kode Lead</th>
+                                        <th class="py-2.5 px-2.5 border-r border-gray-300">Nama Prospek / Instansi</th>
+                                        <th class="py-2.5 px-2 border-r border-gray-300">Kontak</th>
+                                        <th class="py-2.5 px-2 border-r border-gray-300">Program Minat</th>
+                                        <th class="py-2.5 px-2 border-r border-gray-300 whitespace-nowrap" style="white-space: nowrap !important;">Sales PIC</th>
+                                        <th class="py-2.5 px-1 text-center whitespace-nowrap" style="white-space: nowrap !important;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="text-[10px]">
+                                    <tr v-if="loadingPrintData">
+                                        <td colspan="8" class="py-8 text-center text-gray-500 italic border-b border-gray-300">Memuat data prospek...</td>
+                                    </tr>
+                                    <tr v-else-if="printLeadsList.length === 0">
+                                        <td colspan="8" class="py-8 text-center text-gray-500 italic border-b border-gray-300">Tidak ada data lead pada kriteria filter ini.</td>
+                                    </tr>
+                                    <tr v-for="(lead, idx) in printLeadsList" :key="lead.id" class="hover:bg-gray-50/50">
+                                        <td class="py-2 px-1 text-center border-r border-b border-gray-300 font-semibold text-gray-700 whitespace-nowrap text-[10px]" style="white-space: nowrap !important;">
+                                            {{ idx + 1 }}
+                                        </td>
+                                        <td class="py-2 px-1 text-center border-r border-b border-gray-300 text-gray-800 whitespace-nowrap" style="white-space: nowrap !important;">
+                                            <span class="font-medium block leading-tight text-gray-900 text-[9.5px] whitespace-nowrap" style="white-space: nowrap !important;">{{ formatDate(lead.created_at) }}</span>
+                                            <span class="text-[8.5px] text-gray-500 font-mono block leading-tight mt-0.5 whitespace-nowrap" style="white-space: nowrap !important;">{{ formatTime(lead.created_at) }} WIB</span>
+                                        </td>
+                                        <td class="py-2 px-1.5 text-center border-r border-b border-gray-300 whitespace-nowrap" style="white-space: nowrap !important;">
+                                            <span class="font-mono text-[9px] font-bold text-gray-800 tracking-tight whitespace-nowrap block" style="white-space: nowrap !important; word-break: keep-all !important;">{{ lead.lead_code || '-' }}</span>
+                                        </td>
+                                        <td class="py-2 px-2.5 border-r border-b border-gray-300">
+                                            <p class="font-bold text-gray-900 leading-snug text-[10px] sm:text-[10.5px]">{{ lead.name }}</p>
+                                            <p class="text-[9px] text-gray-600 font-medium leading-tight mt-0.5">
+                                                {{ lead.company || lead.institution || 'Individu / Umum' }}
+                                            </p>
+                                        </td>
+                                        <td class="py-2 px-2 border-r border-b border-gray-300">
+                                            <p class="font-mono font-bold text-gray-900 whitespace-nowrap text-[9.5px] leading-tight" style="white-space: nowrap !important; word-break: keep-all !important;">
+                                                {{ lead.whatsapp || lead.phone || '-' }}
+                                            </p>
+                                            <p v-if="lead.email" class="text-[8.5px] text-gray-500 leading-tight mt-0.5 break-all font-sans">
+                                                {{ lead.email }}
+                                            </p>
+                                        </td>
+                                        <td class="py-2 px-2 border-r border-b border-gray-300">
+                                            <p class="font-semibold text-gray-800 leading-snug text-[9.5px] sm:text-[10px]">
+                                                {{ lead.product?.name || lead.product_name || 'Program Pelatihan' }}
+                                            </p>
+                                            <p v-if="lead.deal_price" class="text-[9px] text-emerald-700 font-bold leading-tight mt-0.5 whitespace-nowrap">
+                                                Rp {{ formatRupiah(lead.deal_price) }}
+                                            </p>
+                                            <p v-else-if="lead.product?.price" class="text-[9px] text-gray-500 leading-tight mt-0.5 whitespace-nowrap">
+                                                Rp {{ formatRupiah(lead.product.price) }}
+                                            </p>
+                                        </td>
+                                        <td class="py-2 px-2 border-r border-b border-gray-300 text-gray-800 whitespace-nowrap font-medium text-[9.5px]" style="white-space: nowrap !important;">
+                                            <span class="whitespace-nowrap block" style="white-space: nowrap !important;">{{ lead.assigned_user?.name || lead.sales?.name || 'Belum ada PIC' }}</span>
+                                        </td>
+                                        <td class="py-2 px-1 border-b border-gray-300 text-center whitespace-nowrap" style="white-space: nowrap !important;">
+                                            <span class="inline-block px-1.5 py-0.5 text-[8.5px] font-bold uppercase rounded border whitespace-nowrap"
+                                                :class="getStatusBadgeClass(lead.status)" style="white-space: nowrap !important;">
+                                                {{ getStatusLabel(lead.status) }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- RINGKASAN DATA -->
+                        <div class="border border-gray-300 p-2.5 mb-5 bg-gray-50 flex items-center justify-between text-[11px]">
+                            <span class="font-bold text-gray-800">Total Prospek Tercatat: {{ printLeadsList.length }} Orang</span>
+                            <div class="flex items-center gap-3 text-gray-600 text-[10px]">
+                                <span>Baru: <strong>{{ printLeadsList.filter(l => l.status === 'new').length }}</strong></span>
+                                <span>Negosiasi: <strong>{{ printLeadsList.filter(l => l.status === 'negotiation').length }}</strong></span>
+                                <span>Closing (Berhasil): <strong class="text-emerald-700 font-bold">{{ printLeadsList.filter(l => l.status === 'won').length }}</strong></span>
+                            </div>
+                        </div>
+
+                        <!-- TANDA TANGAN / LEGALITAS -->
+                        <div class="signature-section pt-4 text-xs">
+                            <div class="text-right text-gray-600 text-[11px] mb-4">
+                                Surabaya, {{ todayFormatted }}
+                            </div>
+                            <div class="grid grid-cols-3 gap-6 text-center text-[11px]">
+                                <div class="space-y-12">
+                                    <p class="font-medium text-gray-600">Dibuat Oleh (Petugas/Sales),</p>
+                                    <div>
+                                        <p class="font-bold text-gray-900 underline">{{ props.user?.name || 'Tim Sales' }}</p>
+                                        <p class="text-[10px] text-gray-500">{{ isSales ? 'Sales Officer' : 'Staff CRM & Administrasi' }}</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-12">
+                                    <p class="font-medium text-gray-600">Diverifikasi (Supervisor),</p>
+                                    <div>
+                                        <p class="font-bold text-gray-900 underline">Supervisor Sales & Marketing</p>
+                                        <p class="text-[10px] text-gray-500">Disty Akademi</p>
+                                    </div>
+                                </div>
+                                <div class="space-y-12">
+                                    <p class="font-medium text-gray-600">Mengetahui & Menyetujui,</p>
+                                    <div>
+                                        <p class="font-bold text-gray-900 underline">Direktur Operasional</p>
+                                        <p class="text-[10px] text-gray-500">PT Sentra Vidya Utama</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Modal (Hidden saat print) -->
+                <div class="p-3.5 sm:p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50/80 no-print">
+                    <span class="text-xs text-gray-500">
+                        Format cetak dioptimalkan untuk kertas A4 potret atau landscape saat dicetak ke PDF/Printer.
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <button @click="closePrintModal" class="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors">
+                            Tutup
+                        </button>
+                        <button @click="printDocument" class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-xs">
+                            Cetak Laporan Sekarang
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
+
+<style>
+@media print {
+    @page {
+        size: A4 landscape;
+        margin: 8mm 10mm 8mm 10mm;
+    }
+
+    html,
+    body,
+    #app,
+    [class*="h-screen"],
+    [class*="max-h-"],
+    [class*="overflow-"],
+    #main-content,
+    main {
+        width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        position: static !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+        box-shadow: none !important;
+        border: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    aside,
+    header,
+    nav,
+    .no-print,
+    .no-print * {
+        display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .print-modal-wrapper,
+    .print-modal-container {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    #print-area {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+        box-sizing: border-box !important;
+    }
+
+    table {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+        page-break-inside: auto !important;
+    }
+
+    thead {
+        display: table-header-group !important;
+    }
+
+    tfoot {
+        display: table-footer-group !important;
+    }
+
+    tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    th, td {
+        box-sizing: border-box !important;
+        vertical-align: middle !important;
+    }
+
+    .whitespace-nowrap,
+    th.whitespace-nowrap,
+    td.whitespace-nowrap,
+    .no-break {
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
+    }
+
+    .signature-section {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-top: 1.5rem !important;
+    }
+}
+</style>

@@ -84,7 +84,9 @@ class Commission extends Model
     public static function ensureCommissionCreated(Lead $lead, ?float $amount = null, ?int $paymentId = null): ?Commission
     {
         $salesUserId = $lead->assigned_to ?: (auth()->id() ?: 1);
-        $baseKatalog = (float) ($lead->product?->price ?: 0);
+        $payment = $paymentId ? Payment::find($paymentId) : null;
+        $product = $payment?->product ?: $lead->product;
+        $baseKatalog = (float) ($product?->price ?: 0);
 
         if ($baseKatalog > 0) {
             $commissionAmount = round($baseKatalog * 0.10, 2);
@@ -97,12 +99,14 @@ class Commission extends Model
 
         $rate = 10.00;
 
-        // Pastikan deal_price pada lead konsisten dengan total transfer customer
-        if ($dealAmount > 0 && (! $lead->deal_price || (float) $lead->deal_price <= 0 || (float) $lead->deal_price !== (float) $dealAmount)) {
-            $lead->update(['deal_price' => $dealAmount]);
+        $commission = null;
+        if ($paymentId) {
+            $commission = self::where('payment_id', $paymentId)->first();
+        }
+        if (! $commission) {
+            $commission = self::where('lead_id', $lead->id)->whereNull('payment_id')->first();
         }
 
-        $commission = self::where('lead_id', $lead->id)->first();
         $salesUser = User::find($salesUserId);
         $bankName = $salesUser?->bank_name;
         $bankAccountNumber = $salesUser?->bank_account_number;

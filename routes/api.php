@@ -43,8 +43,8 @@ $registerRoutes = function () {
         Route::post('/leads/{lead}/claim', [ApiActionController::class, 'claim'])->middleware('peran:Sales');
         Route::patch('/leads/{lead}/status', [ApiActionController::class, 'status'])->name('api.leads.update-status');
         Route::post('/leads/{lead}/activities', [ApiActionController::class, 'activity']);
-        Route::post('/leads/import', [ApiActionController::class, 'importLeads'])->middleware('peran:Admin');
-        Route::post('/lead-imports', [ApiActionController::class, 'importLeads'])->middleware('peran:Admin');
+        Route::post('/leads/import', [ApiActionController::class, 'importLeads'])->middleware('peran:Admin,Sales');
+        Route::post('/lead-imports', [ApiActionController::class, 'importLeads'])->middleware('peran:Admin,Sales');
         Route::post('/leads/{lead}/remind-sales', [ApiActionController::class, 'createReminder'])
             ->middleware('peran:Admin')
             ->name('leads.remind-sales');

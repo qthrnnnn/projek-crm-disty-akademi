@@ -135,9 +135,8 @@ function selectLead(lead) {
         form.value.training_schedule_id = '';
     }
 
-    // Jika lead sudah pernah valid bayar atau won, status otomatis Confirmed
-    const hasValidPayment = (lead.payments && lead.payments.some(p => p.status === 'valid'))
-        || lead.status === 'won';
+    // Jika lead sudah pernah valid bayar, status otomatis Confirmed
+    const hasValidPayment = Boolean(lead.payments && lead.payments.some(p => p.status === 'valid'));
     if (hasValidPayment) {
         form.value.status = 'confirmed';
     } else {
@@ -152,8 +151,9 @@ function selectCustomer(cust) {
     searchQuery.value = cust.name;
     isDropdownOpen.value = false;
 
-    // Customer terdaftar otomatis Confirmed
-    form.value.status = 'confirmed';
+    // Pembelian baru / repeat order oleh customer terdaftar berstatus registered (Menunggu Pembayaran)
+    // agar bukti transfer dapat diinput oleh sales di menu Kirim Bukti Bayar
+    form.value.status = 'registered';
 }
 
 function clearSelection() {
@@ -460,6 +460,9 @@ onBeforeUnmount(() => {
                         <span class="font-semibold text-emerald-700 uppercase">{{ selectedCustomerDetail.status || 'Active' }}</span>
                     </div>
                 </div>
+                <p class="text-[10.5px] text-emerald-700 pt-1 border-t border-emerald-100">
+                    Pendaftaran repeat order berstatus <strong>Registered (Menunggu Pembayaran)</strong>. Data peserta akan otomatis terhubung ke menu <strong>Kirim Bukti Bayar</strong> agar sales dapat mengunggah bukti transfer.
+                </p>
             </div>
 
             <!-- 1. PILIH PROGRAM MINAT (KATALOG RESMI DISTY AKADEMI) -->

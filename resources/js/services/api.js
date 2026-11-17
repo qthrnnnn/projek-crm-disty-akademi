@@ -7,7 +7,16 @@ const TOKEN_KEY = 'crm_jwt_token';
 
 class ApiService {
     constructor() {
-        this.user = null;
+        this.user = this.getUserFromStorage();
+    }
+
+    getUserFromStorage() {
+        try {
+            const raw = localStorage.getItem('crm_user');
+            return raw ? JSON.parse(raw) : null;
+        } catch {
+            return null;
+        }
     }
 
     getToken() {
@@ -24,6 +33,11 @@ class ApiService {
 
     setUser(user) {
         this.user = user;
+        if (user) {
+            localStorage.setItem('crm_user', JSON.stringify(user));
+        } else {
+            localStorage.removeItem('crm_user');
+        }
     }
 
     isAuthenticated() {

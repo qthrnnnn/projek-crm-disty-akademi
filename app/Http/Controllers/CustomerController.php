@@ -39,11 +39,23 @@ class CustomerController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->filled('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        if ($request->filled('start_date') && $request->filled('end_date')) {
+            $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+        } elseif ($request->filled('start_date')) {
+            $query->whereDate('created_at', '>=', $request->start_date);
+        } elseif ($request->filled('end_date')) {
+            $query->whereDate('created_at', '<=', $request->end_date);
+        }
+
         if ($request->filled('institution_id')) {
             $query->where('institution_id', $request->institution_id);
         }
 
-        $perPage = (int) $request->get('per_page', 20);
+        $perPage = min(max((int) $request->get('per_page', 20), 1), 500);
         $customers = $query->paginate($perPage)->withQueryString();
         $institutions = Institution::orderBy('name')->get();
 

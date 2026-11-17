@@ -181,11 +181,31 @@ class ApiController extends Controller
                 break;
 
             case 'registrations':
-                // Auto-sync: HANYA pendaftaran yang pembayarannya SUDAH VALID di-ACC admin yang berstatus confirmed
-                Registration::where('status', 'registered')
-                    ->whereHas('customer.lead.payments', function ($pq) {
-                        $pq->where('status', 'valid');
-                    })->update(['status' => 'confirmed']);
+                // Auto-sync: HANYA pendaftaran yang pembayarannya SUDAH VALID di-ACC admin untuk produk tersebut yang berstatus confirmed
+                $unconfirmedRegs = Registration::where('status', 'registered')->get();
+                foreach ($unconfirmedRegs as $reg) {
+                    if (! $reg->customer_id) {
+                        continue;
+                    }
+                    $hasValid = Payment::where('status', 'valid')
+                        ->where(function ($pq) use ($reg) {
+                            if ($reg->product_id) {
+                                $pq->where('product_id', $reg->product_id);
+                            }
+                        })
+                        ->where(function ($lq) use ($reg) {
+                            $cust = $reg->customer;
+                            if ($cust) {
+                                $lq->where('lead_id', $cust->lead_id)
+                                    ->orWhereHas('lead', fn ($leadQ) => $leadQ->where('phone', $cust->phone));
+                            }
+                        })
+                        ->exists();
+
+                    if ($hasValid) {
+                        $reg->update(['status' => 'confirmed']);
+                    }
+                }
 
                 $query->with(['customer.lead.assignedUser', 'user', 'product', 'schedule.product', 'schedule.trainer'])->latest();
 
@@ -284,6 +304,13 @@ class ApiController extends Controller
                 if ($request->filled('date')) {
                     $query->whereDate('created_at', $request->date);
                 }
+                if ($request->filled('start_date') && $request->filled('end_date')) {
+                    $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+                } elseif ($request->filled('start_date')) {
+                    $query->whereDate('created_at', '>=', $request->start_date);
+                } elseif ($request->filled('end_date')) {
+                    $query->whereDate('created_at', '<=', $request->end_date);
+                }
                 if ($request->boolean('unfollowed')) {
                     // Calon customer yang sudah berhasil (won) atau sudah ambil program (memiliki registrasi) TIDAK dimasukkan
                     $query->whereNotIn('status', ['won', 'inactive'])
@@ -350,6 +377,14 @@ class ApiController extends Controller
                 if ($request->filled('status')) {
                     $query->where('status', $request->status);
                 }
+                if ($request->filled('date')) {
+                    $d = $request->date;
+                    $query->where(function ($sub) use ($d) {
+                        $sub->whereDate('paid_at', $d)
+                            ->orWhereDate('approved_at', $d)
+                            ->orWhereDate('created_at', $d);
+                    });
+                }
                 if ($request->filled('search')) {
                     $q = trim((string) $request->search);
                     $query->where(function ($s) use ($q) {
@@ -406,6 +441,16 @@ class ApiController extends Controller
                 }
                 if ($request->filled('status')) {
                     $query->where('status', $request->status);
+                }
+                if ($request->filled('date')) {
+                    $query->whereDate('created_at', $request->date);
+                }
+                if ($request->filled('start_date') && $request->filled('end_date')) {
+                    $query->whereBetween('created_at', [$request->start_date . ' 00:00:00', $request->end_date . ' 23:59:59']);
+                } elseif ($request->filled('start_date')) {
+                    $query->whereDate('created_at', '>=', $request->start_date);
+                } elseif ($request->filled('end_date')) {
+                    $query->whereDate('created_at', '<=', $request->end_date);
                 }
                 if ($request->filled('search')) {
                     $q = $request->search;
@@ -485,7 +530,7 @@ class ApiController extends Controller
                 break;
         }
 
-        $perPage = min(max($request->integer('per_page', 20), 1), 100);
+        $perPage = min(max($request->integer('per_page', 20), 1), 500);
 
         if ($resource === 'commissions') {
             $baseQuery = Commission::query();
@@ -571,7 +616,15 @@ class ApiController extends Controller
                 $query->with(['lead.product', 'assignedUser']);
                 break;
             case 'customers':
-                $query->with(['institution', 'lead.product', 'registrations.product']);
+                $query->with([
+                    'institution',
+                    'lead.product',
+                    'lead.assignedUser',
+                    'registrations.product',
+                    'registrations.trainingSchedule.trainer',
+                    'registrations.trainingSchedule.product',
+                    'registrations.user',
+                ]);
                 break;
             case 'institutions':
                 $query->with(['customers'])->withCount('customers');
@@ -582,6 +635,23 @@ class ApiController extends Controller
         }
 
         $record = $query->findOrFail($id);
+
+        if ($resource === 'customers') {
+            $leadIds = Lead::where('phone', $record->phone)->orWhere('id', $record->lead_id)->pluck('id');
+            $allPayments = Payment::with(['verifiedByUser', 'commission'])->whereIn('lead_id', $leadIds)->get();
+
+            foreach ($record->registrations as $reg) {
+                // Prioritize matching payment with same product_id
+                $matchedPayment = $allPayments->filter(fn ($p) => (int) $p->product_id === (int) $reg->product_id)->sortByDesc('id')->first();
+                if (! $matchedPayment) {
+                    $matchedPayment = $allPayments->filter(fn ($p) => abs((float) $p->amount - (float) $reg->amount) < 1.0)->first();
+                }
+                if (! $matchedPayment && $allPayments->isNotEmpty()) {
+                    $matchedPayment = $allPayments->first();
+                }
+                $reg->setAttribute('payment', $matchedPayment);
+            }
+        }
 
         return response()->json([
             'success' => true,
@@ -791,53 +861,15 @@ class ApiController extends Controller
                     }
                 }
             }
-            // Jika pendaftaran berasal dari Customer Terdaftar
+            // Jika pendaftaran berasal dari Customer Terdaftar (Repeat Order / Pembelian Program Baru)
             elseif (! empty($custId = $request->input('customer_id') ?? ($data['customer_id'] ?? null))) {
                 $customer = Customer::find($custId);
                 if ($customer) {
-                    $lead = $customer->lead;
-                    if ($lead && ! empty($lead->assigned_to)) {
-                        $data['user_id'] = $lead->assigned_to;
-                    }
-                    $hasValidPayment = $lead && ($lead->payments()->where('status', 'valid')->exists() || Payment::where('lead_id', $lead->id)->where('status', 'valid')->exists());
-
-                    if ($hasValidPayment) {
-                        $customer->update(['status' => 'active']);
-                        if ($lead) {
-                            $lead->update([
-                                'product_id' => $data['product_id'] ?? $lead->product_id,
-                                'deal_price' => $data['amount'] ?? $lead->deal_price,
-                                'status' => 'won',
-                            ]);
-                        }
-                        if (! isset($data['status']) || $data['status'] === 'registered') {
-                            $data['status'] = 'confirmed';
-                        }
-                    } else {
-                        $customer->update(['status' => 'prospect']);
-                        $data['status'] = 'registered';
-                        if (! $lead) {
-                            $lead = Lead::create([
-                                'lead_code' => Lead::generateCode(),
-                                'name' => $customer->name,
-                                'phone' => $customer->phone,
-                                'whatsapp' => $customer->phone,
-                                'company' => $customer->company,
-                                'nik' => $customer->nik,
-                                'product_id' => $data['product_id'] ?? null,
-                                'deal_price' => $data['amount'] ?? null,
-                                'status' => 'negotiation',
-                                'assigned_to' => auth()->id() ?: 1,
-                            ]);
-                            $customer->update(['lead_id' => $lead->id]);
-                        } else {
-                            $lead->update([
-                                'product_id' => $data['product_id'] ?? $lead->product_id,
-                                'deal_price' => $data['amount'] ?? $lead->deal_price,
-                                'status' => 'negotiation',
-                            ]);
-                        }
-                    }
+                    $salesId = ($request->user() && $request->user()->isSales())
+                        ? $request->user()->id
+                        : ($customer->lead?->assigned_to ?? ($data['user_id'] ?? (auth()->id() ?: 1)));
+                    $data['user_id'] = $salesId;
+                    $data['status'] = 'registered';
                 }
             }
 

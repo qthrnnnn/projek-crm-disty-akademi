@@ -33,13 +33,11 @@ $spaNamedRoutes = [
     'users.index' => '/users',
 ];
 
-Route::middleware('auth')->group(function () use ($spaNamedRoutes) {
-    Route::inertia('/', 'Spa')->name('home');
+Route::inertia('/', 'Spa')->name('home');
 
-    foreach ($spaNamedRoutes as $name => $uri) {
-        Route::inertia($uri, 'Spa')->name($name);
-    }
-});
+foreach ($spaNamedRoutes as $name => $uri) {
+    Route::inertia($uri, 'Spa')->name($name);
+}
 
 Route::get('/leads/template', [\App\Http\Controllers\LeadController::class, 'downloadTemplate']);
 Route::get('/leads/template-excel', [\App\Http\Controllers\LeadController::class, 'downloadTemplateExcel']);

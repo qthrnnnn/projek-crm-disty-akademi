@@ -60,16 +60,29 @@ onMounted(async () => {
         checkReminders();
     });
 
-    if (!user.value && currentPath.value !== '/login') {
+    if (user.value && currentPath.value === '/login') {
+        navigate('/');
+    } else if (!user.value && currentPath.value !== '/login') {
+        navigate('/login');
+    }
+
+    // Validasi sesi token di latar belakang
+    if (api.getToken()) {
         try {
             const response = await api.getUser();
-            user.value = response.data || response.user;
-            api.setUser(user.value);
+            const u = response.data || response.user;
+            if (u) {
+                user.value = u;
+                api.setUser(u);
+            }
         } catch {
-            navigate('/login');
+            api.setUser(null);
+            api.setToken(null);
+            user.value = null;
+            if (currentPath.value !== '/login') {
+                navigate('/login');
+            }
         }
-    } else if (user.value && currentPath.value === '/login') {
-        navigate('/');
     }
 
     if (isAuthenticated.value) {

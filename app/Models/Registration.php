@@ -39,22 +39,29 @@ class Registration extends Model
                 $registration->registration_number = static::generateNumber();
             }
 
-            // HANYA berstatus confirmed jika customer/lead benar-benar memiliki pembayaran valid yang di-ACC admin
+            // HANYA berstatus confirmed jika customer/lead benar-benar memiliki pembayaran valid yang di-ACC admin untuk produk ini
             if ($registration->customer_id) {
                 $customer = Customer::find($registration->customer_id);
                 if ($customer) {
-                    $hasValidPayment = Payment::where('lead_id', $customer->lead_id)->where('status', 'valid')->exists()
-                        || Payment::whereHas('lead', fn ($q) => $q->where('phone', $customer->phone))->where('status', 'valid')->exists();
+                    $hasValidPayment = Payment::where('status', 'valid')
+                        ->where(function ($pq) use ($registration) {
+                            if ($registration->product_id) {
+                                $pq->where('product_id', $registration->product_id);
+                            }
+                        })
+                        ->where(function ($lq) use ($customer) {
+                            $lq->where('lead_id', $customer->lead_id)
+                                ->orWhereHas('lead', fn ($leadQ) => $leadQ->where('phone', $customer->phone));
+                        })
+                        ->exists();
 
                     if ($hasValidPayment) {
                         if (! $registration->status || $registration->status === 'registered') {
                             $registration->status = 'confirmed';
                         }
                     } else {
-                        // Jangan biarkan status confirmed jika pembayaran belum di-ACC admin
-                        if (empty($registration->status) || $registration->status === 'confirmed') {
-                            $registration->status = 'registered';
-                        }
+                        // Jangan biarkan status confirmed jika pembayaran belum di-ACC admin untuk produk ini
+                        $registration->status = 'registered';
                     }
                 }
             }

@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { api } from '../../services/api';
 import Pagination from '../../Components/Pagination.vue';
 
@@ -14,6 +14,7 @@ const salesUsers = ref([]);
 const pagination = ref({ current_page: 1, last_page: 1, total: 0 });
 const statusFilter = ref('');
 const userFilter = ref('');
+const dateFilter = ref('');
 const search = ref('');
 const loading = ref(true);
 const processingId = ref(null);
@@ -21,10 +22,16 @@ const feedbackMessage = ref(null);
 
 // Print Modal state
 const showPrintModal = ref(false);
-const printFilterStatus = ref('approved'); // default to approved (ready to payout/transfer)
+const printFilterStatus = ref(''); // default ke Semua Status agar data historis langsung tampil
 const printFilterSales = ref('');
+const printFilterDate = ref(''); // Filter tanggal transfer / komisi (YYYY-MM-DD)
 const allCommissionsForPrint = ref([]);
 const loadingPrintData = ref(false);
+
+// Searchable Sales Filter in Print Modal (Bisa diketik & dicari)
+const salesSearchQuery = ref('');
+const isSalesDropdownOpen = ref(false);
+const salesDropdownRef = ref(null);
 
 // Bank Account Modal state (for sales to add/edit their payout account)
 const showBankModal = ref(false);
@@ -169,6 +176,7 @@ async function loadCommissions(page = 1) {
         const params = { page: String(page), per_page: '20' };
         if (statusFilter.value) params.status = statusFilter.value;
         if (userFilter.value) params.user_id = userFilter.value;
+        if (dateFilter.value) params.date = dateFilter.value;
 
         const res = await api.list('commissions', params);
         let items = res.data || [];
@@ -334,12 +342,45 @@ function resetFilter() {
     clearTimeout(searchTimeout);
     statusFilter.value = '';
     userFilter.value = '';
+    dateFilter.value = '';
     search.value = '';
     loadCommissions(1);
 }
 
+function getDateKey(dtStr) {
+    if (!dtStr) return '';
+    try {
+        const d = new Date(dtStr);
+        if (!isNaN(d.getTime())) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+        }
+    } catch (e) {}
+    const match = String(dtStr).match(/^(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : '';
+}
+
 // ── Print Report Logic ──
 async function openPrintModal() {
+    if (dateFilter.value) {
+        printFilterDate.value = dateFilter.value;
+    }
+    if (statusFilter.value) {
+        printFilterStatus.value = statusFilter.value;
+    }
+    if (userFilter.value) {
+        printFilterSales.value = userFilter.value;
+        const found = (salesUsers.value || []).find(s => String(s.id) === String(userFilter.value));
+        salesSearchQuery.value = found ? found.name : '';
+    } else if (printFilterSales.value) {
+        const found = (salesUsers.value || []).find(s => String(s.id) === String(printFilterSales.value));
+        salesSearchQuery.value = found ? found.name : '';
+    } else {
+        salesSearchQuery.value = '';
+    }
+    isSalesDropdownOpen.value = false;
     showPrintModal.value = true;
     loadingPrintData.value = true;
     try {
@@ -360,7 +401,102 @@ async function openPrintModal() {
 
 function closePrintModal() {
     showPrintModal.value = false;
+    isSalesDropdownOpen.value = false;
 }
+
+// ── Searchable Sales Dropdown Logic ──
+const filteredModalSalesList = computed(() => {
+    const list = salesUsers.value || [];
+    if (!salesSearchQuery.value || !salesSearchQuery.value.trim()) {
+        return list;
+    }
+    const q = salesSearchQuery.value.toLowerCase().trim();
+    return list.filter(s =>
+        (s.name || '').toLowerCase().includes(q) ||
+        (s.email || '').toLowerCase().includes(q)
+    );
+});
+
+const selectedSalesObj = computed(() => {
+    if (!printFilterSales.value) return null;
+    return (salesUsers.value || []).find(s => String(s.id) === String(printFilterSales.value)) || null;
+});
+
+function openSalesDropdown() {
+    isSalesDropdownOpen.value = true;
+}
+
+function closeSalesDropdown() {
+    isSalesDropdownOpen.value = false;
+    if (!printFilterSales.value) {
+        salesSearchQuery.value = '';
+    } else if (selectedSalesObj.value) {
+        salesSearchQuery.value = selectedSalesObj.value.name;
+    }
+}
+
+function toggleSalesDropdown() {
+    if (isSalesDropdownOpen.value) {
+        closeSalesDropdown();
+    } else {
+        openSalesDropdown();
+    }
+}
+
+function selectSales(s) {
+    if (!s) {
+        printFilterSales.value = '';
+        salesSearchQuery.value = '';
+    } else {
+        printFilterSales.value = s.id;
+        salesSearchQuery.value = s.name;
+    }
+    isSalesDropdownOpen.value = false;
+}
+
+function selectFirstMatchingSales() {
+    if (filteredModalSalesList.value.length > 0) {
+        selectSales(filteredModalSalesList.value[0]);
+    } else if (!salesSearchQuery.value) {
+        selectSales(null);
+    }
+}
+
+function clearSalesSelection() {
+    printFilterSales.value = '';
+    salesSearchQuery.value = '';
+    isSalesDropdownOpen.value = false;
+}
+
+function handleClickOutsideSales(e) {
+    if (salesDropdownRef.value && !salesDropdownRef.value.contains(e.target)) {
+        closeSalesDropdown();
+    }
+}
+
+const printFilterDateFormatted = computed(() => {
+    if (!printFilterDate.value) return 'Semua Tanggal';
+    try {
+        const parts = printFilterDate.value.split('-');
+        if (parts.length === 3) {
+            const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+            if (!isNaN(d.getTime())) {
+                return d.toLocaleDateString('id-ID', {
+                    day: 'numeric',
+                    month: 'long',
+                    year: 'numeric',
+                });
+            }
+        }
+    } catch (e) {}
+    return printFilterDate.value;
+});
+
+const selectedSalesName = computed(() => {
+    if (!printFilterSales.value) return 'Semua Sales';
+    const s = salesUsers.value.find(u => String(u.id) === String(printFilterSales.value));
+    return s?.name || 'Sales';
+});
 
 const printFilteredItems = computed(() => {
     let items = allCommissionsForPrint.value;
@@ -369,6 +505,22 @@ const printFilteredItems = computed(() => {
     }
     if (printFilterSales.value) {
         items = items.filter(c => String(c.user_id) === String(printFilterSales.value));
+    }
+    if (printFilterDate.value) {
+        const target = printFilterDate.value;
+        items = items.filter(c => {
+            const paidKey = c.paid_at ? getDateKey(c.paid_at) : '';
+            const approvedKey = c.approved_at ? getDateKey(c.approved_at) : '';
+            const createdKey = c.created_at ? getDateKey(c.created_at) : '';
+
+            if (printFilterStatus.value === 'paid') {
+                return paidKey === target || (!paidKey && (approvedKey === target || createdKey === target));
+            }
+            if (printFilterStatus.value === 'approved') {
+                return approvedKey === target || (!approvedKey && createdKey === target);
+            }
+            return paidKey === target || approvedKey === target || createdKey === target;
+        });
     }
     return items;
 });
@@ -382,7 +534,136 @@ const printTotalDeal = computed(() => {
 });
 
 function printDocument() {
-    window.print();
+    const printArea = document.getElementById('print-area');
+    if (!printArea) {
+        window.print();
+        return;
+    }
+
+    // Clean up any previously created print iframe
+    const prevFrame = document.getElementById('print-iframe-isolated');
+    if (prevFrame) {
+        prevFrame.remove();
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.id = 'print-iframe-isolated';
+    iframe.style.position = 'fixed';
+    iframe.style.top = '-9999px';
+    iframe.style.left = '-9999px';
+    iframe.style.width = '210mm';
+    iframe.style.height = '297mm';
+    iframe.style.border = 'none';
+    iframe.style.opacity = '0';
+    iframe.style.pointerEvents = 'none';
+    document.body.appendChild(iframe);
+
+    // Extract all styles and links from the parent document
+    const headNodes = Array.from(document.querySelectorAll('link[rel="stylesheet"], style')).map(n => n.outerHTML).join('\n');
+
+    const iframeDoc = iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(`
+        <!DOCTYPE html>
+        <html lang="id">
+        <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Rekapitulasi Transfer Komisi Sales - Disty Akademi</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+            <script src="https://cdn.tailwindcss.com"><\/script>
+            ${headNodes}
+            <style>
+                @page {
+                    size: A4 portrait;
+                    margin: 8mm 10mm 10mm 10mm;
+                }
+                *, *::before, *::after {
+                    box-sizing: border-box !important;
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
+                html, body {
+                    width: 100% !important;
+                    height: auto !important;
+                    min-height: auto !important;
+                    max-height: none !important;
+                    overflow: visible !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #ffffff !important;
+                    color: #111827 !important;
+                    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+                    font-size: 11px !important;
+                }
+                #print-sheet-root {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
+                    background: #ffffff !important;
+                }
+                table {
+                    width: 100% !important;
+                    max-width: 100% !important;
+                    border-collapse: collapse !important;
+                    table-layout: fixed !important;
+                }
+                thead {
+                    display: table-header-group !important;
+                }
+                tfoot {
+                    display: table-footer-group !important;
+                }
+                tr {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                }
+                th, td {
+                    box-sizing: border-box !important;
+                    vertical-align: middle !important;
+                }
+                .whitespace-nowrap,
+                th.whitespace-nowrap,
+                td.whitespace-nowrap,
+                .no-break {
+                    white-space: nowrap !important;
+                    word-break: keep-all !important;
+                    overflow-wrap: normal !important;
+                    word-wrap: normal !important;
+                }
+                .signature-section {
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    margin-top: 20px !important;
+                }
+            </style>
+        </head>
+        <body class="bg-white text-gray-900 p-0 m-0">
+            <div id="print-sheet-root">
+                ${printArea.innerHTML}
+            </div>
+        </body>
+        </html>
+    `);
+    iframeDoc.close();
+
+    // Trigger print dialog once loaded
+    setTimeout(() => {
+        try {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+        } catch (err) {
+            console.error('Iframe print failed, falling back to window.print', err);
+            window.print();
+        } finally {
+            setTimeout(() => {
+                iframe.remove();
+            }, 3000);
+        }
+    }, 450);
 }
 
 const todayFormatted = computed(() => {
@@ -404,11 +685,18 @@ onMounted(() => {
     loadCurrentUser();
     loadSalesUsers();
     loadCommissions();
+    window.addEventListener('click', handleClickOutsideSales);
+});
+
+onUnmounted(() => {
+    window.removeEventListener('click', handleClickOutsideSales);
 });
 </script>
 
 <template>
-    <div class="space-y-4">
+    <div>
+        <!-- Main Page Content (Hidden during Print) -->
+        <div class="no-print space-y-4">
         <!-- Feedback Banner -->
         <div v-if="feedbackMessage"
             class="p-3.5 flex items-center justify-between text-xs transition-all shadow-sm"
@@ -561,11 +849,15 @@ onMounted(() => {
                     <option v-for="s in salesUsers" :key="s.id" :value="s.id">{{ s.name }}</option>
                 </select>
 
+                <input type="date" v-model="dateFilter" @change="loadCommissions(1)"
+                    class="text-xs border border-gray-200 px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-orange-500 cursor-pointer"
+                    title="Filter Tanggal Transaksi / Transfer" />
+
                 <button type="submit" class="text-xs bg-orange-500 text-white font-medium py-2 px-3.5 rounded-lg hover:bg-orange-600 transition-colors shadow-xs">
                     Terapkan Filter
                 </button>
 
-                <button v-if="statusFilter || userFilter || search" @click="resetFilter" type="button"
+                <button v-if="statusFilter || userFilter || dateFilter || search" @click="resetFilter" type="button"
                     class="text-xs text-gray-500 hover:text-gray-800 px-2 py-1 font-medium transition-colors">
                     Reset
                 </button>
@@ -756,9 +1048,10 @@ onMounted(() => {
                 <Pagination :pagination="pagination" @page="loadCommissions" />
             </div>
         </div>
+        </div>
 
         <!-- ── MODAL TRANSFER KOMISI (INPUT JAM MUTASI BANK) ── -->
-        <div v-if="showTransferModal && selectedCommissionForPay" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div v-if="showTransferModal && selectedCommissionForPay" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div class="bg-white max-w-lg w-full shadow-2xl border border-gray-100 overflow-hidden transform transition-all animate-in fade-in zoom-in-95">
                 <!-- Header -->
                 <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-emerald-50/50">
@@ -857,7 +1150,7 @@ onMounted(() => {
         </div>
 
         <!-- ── MODAL BUKTI TF TRANSAKSI CUSTOMER ── -->
-        <div v-if="showProofModal && selectedProofCommission" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div v-if="showProofModal && selectedProofCommission" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div class="bg-white max-w-lg w-full shadow-2xl border border-gray-100 overflow-hidden transform transition-all animate-in fade-in zoom-in-95">
                 <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
                     <div>
@@ -897,8 +1190,8 @@ onMounted(() => {
         </div>
 
         <!-- ── MODAL CETAK LAPORAN TRANSFER ── -->
-        <div v-if="showPrintModal" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:p-0">
-            <div class="bg-white max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:border-none print:shadow-none print:max-w-none">
+        <div v-if="showPrintModal" class="print-modal-wrapper fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:static print:block print:bg-white print:overflow-visible print:inset-auto print:p-0">
+            <div class="print-modal-container bg-white max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:static print:block print:max-h-none print:h-auto print:my-0 print:border-none print:shadow-none print:overflow-visible print:max-w-none">
                 <!-- Modal Controls Header (Hidden during Print) -->
                 <div class="p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3 bg-gray-50/80 no-print">
                     <div>
@@ -907,7 +1200,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Filter Controls inside Modal -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center flex-wrap gap-2">
                         <select v-model="printFilterStatus" class="text-xs border border-gray-300 px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-orange-500">
                             <option value="">Semua Status</option>
                             <option value="approved">Hanya Siap Dicairkan (Approved)</option>
@@ -915,10 +1208,93 @@ onMounted(() => {
                             <option value="pending">Hanya Pending</option>
                         </select>
 
-                        <select v-if="isAdmin" v-model="printFilterSales" class="text-xs border border-gray-300 px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-orange-500">
-                            <option value="">Semua Sales</option>
-                            <option v-for="s in salesUsers" :key="s.id" :value="s.id">{{ s.name }}</option>
-                        </select>
+                        <!-- Filter Sales (Searchable Combobox: Bisa Dicari & Diketik Langsung) -->
+                        <div v-if="isAdmin" class="relative" ref="salesDropdownRef">
+                            <div class="flex items-center border border-gray-300 bg-white px-2 py-1 text-xs focus-within:border-orange-500 transition-colors min-w-[150px] max-w-[190px]">
+                                <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                                <input
+                                    type="text"
+                                    v-model="salesSearchQuery"
+                                    @focus="openSalesDropdown"
+                                    @click="openSalesDropdown"
+                                    @keydown.enter.prevent="selectFirstMatchingSales"
+                                    @keydown.esc="closeSalesDropdown"
+                                    :placeholder="selectedSalesObj ? selectedSalesObj.name : 'Semua Sales (Ketik)...'"
+                                    class="w-full text-xs text-gray-800 placeholder-gray-500 bg-transparent focus:outline-none"
+                                />
+                                <button
+                                    v-if="printFilterSales || salesSearchQuery"
+                                    @click.stop="clearSalesSelection"
+                                    type="button"
+                                    class="text-xs text-gray-400 hover:text-rose-600 px-1 font-bold shrink-0 transition-colors"
+                                    title="Reset pilihan sales">
+                                    &times;
+                                </button>
+                                <button
+                                    @click.stop="toggleSalesDropdown"
+                                    type="button"
+                                    class="text-gray-400 hover:text-gray-600 pl-0.5 shrink-0"
+                                    title="Tampilkan daftar sales">
+                                    <svg class="w-3.5 h-3.5 transition-transform" :class="{ 'rotate-180': isSalesDropdownOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <!-- Dropdown Menu List Floating -->
+                            <div
+                                v-if="isSalesDropdownOpen"
+                                class="absolute left-0 mt-1 w-56 max-h-60 overflow-y-auto bg-white border border-gray-200 shadow-xl z-50 py-1 divide-y divide-gray-100">
+                                <!-- Opsi Semua Sales -->
+                                <div
+                                    @click="selectSales(null)"
+                                    class="px-3 py-2 text-xs cursor-pointer flex items-center justify-between hover:bg-orange-50 transition-colors"
+                                    :class="{ 'bg-orange-50/80 font-bold text-orange-600': !printFilterSales }">
+                                    <span class="font-medium text-gray-800">Semua Sales</span>
+                                    <svg v-if="!printFilterSales" class="w-3.5 h-3.5 text-orange-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                    </svg>
+                                </div>
+
+                                <!-- Opsi Sales Hasil Pencarian -->
+                                <div class="py-0.5">
+                                    <div
+                                        v-if="filteredModalSalesList.length === 0"
+                                        class="px-3 py-3 text-[11px] text-gray-400 text-center italic">
+                                        Sales "{{ salesSearchQuery }}" tidak ditemukan
+                                    </div>
+                                    <div
+                                        v-for="s in filteredModalSalesList"
+                                        :key="s.id"
+                                        @click="selectSales(s)"
+                                        class="px-3 py-2 text-xs cursor-pointer flex items-center justify-between hover:bg-orange-50 transition-colors"
+                                        :class="{ 'bg-orange-50/80 font-bold text-orange-600': String(printFilterSales) === String(s.id) }">
+                                        <div>
+                                            <div class="font-semibold text-gray-900 leading-tight">{{ s.name }}</div>
+                                            <div v-if="s.email" class="text-[10px] text-gray-400">{{ s.email }}</div>
+                                        </div>
+                                        <svg v-if="String(printFilterSales) === String(s.id)" class="w-3.5 h-3.5 text-orange-600 shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Filter Tanggal Cetak Transfer -->
+                        <div class="flex items-center border border-gray-300 bg-white px-2.5 py-1 gap-1.5">
+                            <label class="text-[11px] font-semibold text-gray-500 whitespace-nowrap">Tanggal:</label>
+                            <input type="date" v-model="printFilterDate"
+                                class="text-xs text-gray-700 bg-transparent focus:outline-none cursor-pointer"
+                                title="Pilih tanggal transfer / komisi yang ingin dicetak" />
+                            <button v-if="printFilterDate" @click="printFilterDate = ''" type="button"
+                                class="text-xs text-gray-400 hover:text-rose-600 px-1 font-bold transition-colors"
+                                title="Reset filter tanggal (tampilkan semua tanggal)">
+                                &times;
+                            </button>
+                        </div>
 
                         <button @click="printDocument" class="px-3 py-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors shadow-xs">
                             Cetak (PDF)
@@ -933,19 +1309,19 @@ onMounted(() => {
                 <!-- ── PRINTABLE SHEET AREA ── -->
                 <div id="print-area" class="p-8 sm:p-10 bg-white text-gray-900 print:p-0">
                     <!-- KOP SURAT RESMI -->
-                    <div class="border-b-4 border-double border-gray-800 pb-4 mb-6">
+                    <div class="border-b-4 border-double border-gray-800 pb-4 mb-5">
                         <div class="flex items-center justify-between gap-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-12 h-12 bg-orange-500 text-white flex items-center justify-center font-black text-2xl shadow-sm">
+                                <div class="w-12 h-12 bg-orange-500 text-white flex items-center justify-center font-black text-2xl shadow-sm shrink-0">
                                     D
                                 </div>
                                 <div>
-                                    <h1 class="text-xl font-black tracking-wider text-gray-900 uppercase">DISTY AKADEMI</h1>
-                                    <p class="text-[11px] font-semibold text-gray-700 tracking-wide">LEMBAGA PELATIHAN KERJA & PENGEMBANGAN SDM PROFESIONAL</p>
-                                    <p class="text-[10px] text-gray-500">Jl. Raya Rungkut Madya No. 1, Gunung Anyar, Surabaya, Jawa Timur 60294</p>
+                                    <h1 class="text-xl font-black tracking-wider text-gray-900 uppercase leading-none mb-1">DISTY AKADEMI</h1>
+                                    <p class="text-[11px] font-semibold text-gray-700 tracking-wide leading-tight mb-0.5">LEMBAGA PELATIHAN KERJA & PENGEMBANGAN SDM PROFESIONAL</p>
+                                    <p class="text-[10px] text-gray-500 leading-tight">Jl. Raya Rungkut Madya No. 1, Gunung Anyar, Surabaya, Jawa Timur 60294</p>
                                 </div>
                             </div>
-                            <div class="text-right text-[10px] text-gray-600 leading-tight border-l border-gray-300 pl-4 hidden sm:block">
+                            <div class="text-right text-[10px] text-gray-600 leading-tight border-l border-gray-300 pl-4 block shrink-0">
                                 <p><span class="font-semibold text-gray-800">Email:</span> info@distyakademi.com</p>
                                 <p><span class="font-semibold text-gray-800">Website:</span> www.distyakademi.com</p>
                                 <p><span class="font-semibold text-gray-800">Telepon:</span> (031) 878-2233</p>
@@ -954,8 +1330,8 @@ onMounted(() => {
                     </div>
 
                     <!-- JUDUL LAPORAN & METADATA -->
-                    <div class="text-center mb-6">
-                        <h2 class="text-base sm:text-lg font-black tracking-wide uppercase text-gray-900 underline underline-offset-4">
+                    <div class="text-center mb-5">
+                        <h2 class="text-base font-black tracking-wide uppercase text-gray-900 underline underline-offset-4">
                             REKAPITULASI PEMBAYARAN KOMISI SALES (TRANSFER BANK)
                         </h2>
                         <p class="text-[11px] text-gray-600 mt-1">
@@ -963,10 +1339,11 @@ onMounted(() => {
                         </p>
                     </div>
 
-                    <div class="grid grid-cols-2 gap-4 text-xs mb-5 bg-gray-50/70 p-3.5 border border-gray-200">
+                    <div class="grid grid-cols-2 gap-4 text-xs mb-5 bg-gray-50 p-3.5 border border-gray-200">
                         <div class="space-y-1">
                             <div><span class="text-gray-500 font-medium">Nomor Dokumen:</span> <span class="font-bold text-gray-900">{{ reportDocNumber }}</span></div>
                             <div><span class="text-gray-500 font-medium">Tanggal Cetak:</span> <span class="font-semibold text-gray-900">{{ todayFormatted }}</span></div>
+                            <div><span class="text-gray-500 font-medium">Periode / Tanggal Transfer:</span> <span class="font-bold text-gray-900">{{ printFilterDateFormatted }}</span></div>
                             <div><span class="text-gray-500 font-medium">Dicetak Oleh:</span> <span class="font-semibold text-gray-900">{{ props.user?.name || 'Administrator CRM' }}</span></div>
                         </div>
                         <div class="space-y-1 text-right">
@@ -976,24 +1353,25 @@ onMounted(() => {
                                     {{ printFilterStatus === 'approved' ? 'Siap Dicairkan (Approved)' : (printFilterStatus === 'paid' ? 'Lunas Ditransfer (Paid)' : 'Semua Status') }}
                                 </span>
                             </div>
+                            <div v-if="printFilterSales"><span class="text-gray-500 font-medium">Sales PIC:</span> <span class="font-bold text-gray-900 ml-1">{{ selectedSalesName }}</span></div>
                             <div><span class="text-gray-500 font-medium">Jumlah Transaksi:</span> <span class="font-bold text-gray-900">{{ printFilteredItems.length }} Transaksi</span></div>
                             <div><span class="text-gray-500 font-medium">Total Nilai Deal:</span> <span class="font-bold text-gray-900">{{ formatCurrency(printTotalDeal) }}</span></div>
                         </div>
                     </div>
 
                     <!-- TABEL DATA REKAP -->
-                    <div class="border border-gray-300 overflow-hidden mb-6">
-                        <table class="w-full text-left text-xs border-collapse">
+                    <div class="border border-gray-300 mb-6 print:border print:border-gray-300 print:mb-4 print:overflow-visible">
+                        <table class="w-full text-left text-xs border-collapse table-fixed">
                             <thead class="bg-gray-100 text-gray-700 font-bold border-b border-gray-300 text-[11px]">
                                 <tr>
-                                    <th class="py-2.5 px-3 border-r border-gray-300 text-center w-8">No</th>
-                                    <th class="py-2.5 px-3 border-r border-gray-300">Nama Sales Penerima</th>
-                                    <th class="py-2.5 px-3 border-r border-gray-300">Rekening Tujuan Transfer</th>
-                                    <th class="py-2.5 px-3 border-r border-gray-300">Peserta (Customer)</th>
-                                    <th class="py-2.5 px-3 border-r border-gray-300">Program Pelatihan</th>
-                                    <th class="py-2.5 px-3 border-r border-gray-300 text-right">Nilai Deal</th>
-                                    <th class="py-2.5 px-3 border-r border-gray-300 text-right">Komisi 10%</th>
-                                    <th class="py-2.5 px-3 text-center">Status</th>
+                                    <th class="py-2 px-1.5 border-r border-gray-300 text-center w-[4%]">No</th>
+                                    <th class="py-2 px-2 border-r border-gray-300 w-[13%]">Nama Sales</th>
+                                    <th class="py-2 px-2 border-r border-gray-300 w-[16%]">Rekening Transfer</th>
+                                    <th class="py-2 px-2 border-r border-gray-300 w-[14%]">Peserta (Customer)</th>
+                                    <th class="py-2 px-2 border-r border-gray-300 w-[17%]">Program Pelatihan</th>
+                                    <th class="py-2 px-2 border-r border-gray-300 text-right w-[14%]">Nilai Deal</th>
+                                    <th class="py-2 px-2 border-r border-gray-300 text-right w-[13%]">Komisi 10%</th>
+                                    <th class="py-2 px-1.5 border-r-0 text-center w-[9%]">Status</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-200 text-[11px]">
@@ -1003,33 +1381,39 @@ onMounted(() => {
                                     </td>
                                 </tr>
                                 <tr v-for="(item, idx) in printFilteredItems" :key="item.id" class="hover:bg-gray-50/50">
-                                    <td class="py-2.5 px-3 border-r border-gray-200 text-center font-medium">{{ idx + 1 }}</td>
-                                    <td class="py-2.5 px-3 border-r border-gray-200 font-bold text-gray-900">{{ item.user?.name || '-' }}</td>
-                                    <td class="py-2.5 px-3 border-r border-gray-200 font-mono text-[10.5px] text-gray-800">{{ item.bank_info || 'BCA 883019281 a.n ' + (item.user?.name || 'Sales') }}</td>
-                                    <td class="py-2.5 px-3 border-r border-gray-200 font-medium text-gray-800">{{ item.lead?.name || 'Peserta' }}</td>
-                                    <td class="py-2.5 px-3 border-r border-gray-200 text-gray-700">{{ item.lead?.product?.name || 'Pelatihan Disty Akademi' }}</td>
-                                    <td class="py-2.5 px-3 border-r border-gray-200 text-right text-gray-700">{{ formatCurrency(item.deal_amount || item.lead?.deal_price) }}</td>
-                                    <td class="py-2.5 px-3 border-r border-gray-200 text-right font-bold text-gray-900">{{ formatCurrency(item.commission_amount || item.amount) }}</td>
-                                    <td class="py-2.5 px-3 text-center">
-                                        <span class="text-[10px] font-bold uppercase"
+                                    <td class="py-2 px-1.5 border-r border-gray-200 text-center font-medium">{{ idx + 1 }}</td>
+                                    <td class="py-2 px-2 border-r border-gray-200 font-bold text-gray-900 break-words">{{ item.user?.name || '-' }}</td>
+                                    <td class="py-2 px-2 border-r border-gray-200 font-mono text-[10px] text-gray-800 break-words">{{ item.bank_info || 'BCA 883019281 a.n ' + (item.user?.name || 'Sales') }}</td>
+                                    <td class="py-2 px-2 border-r border-gray-200 font-medium text-gray-800 break-words">{{ item.lead?.name || 'Peserta' }}</td>
+                                    <td class="py-2 px-2 border-r border-gray-200 text-gray-700 break-words">{{ item.lead?.product?.name || 'Pelatihan Disty Akademi' }}</td>
+                                    <td class="py-2 px-2 border-r border-gray-200 text-right text-gray-700 font-medium whitespace-nowrap">{{ formatCurrency(item.deal_amount || item.lead?.deal_price) }}</td>
+                                    <td class="py-2 px-2 border-r border-gray-200 text-right font-bold text-gray-900 whitespace-nowrap">{{ formatCurrency(item.commission_amount || item.amount) }}</td>
+                                    <td class="py-2 px-1.5 text-center">
+                                        <span class="text-[10px] font-bold uppercase block"
                                             :class="item.status === 'paid' ? 'text-emerald-700' : (item.status === 'approved' ? 'text-blue-700' : 'text-amber-700')">
                                             {{ item.status === 'paid' ? 'LUNAS' : (item.status === 'approved' ? 'APPROVED' : 'PENDING') }}
                                         </span>
+                                        <div v-if="item.paid_at" class="text-[9px] text-gray-500 font-medium mt-0.5 whitespace-nowrap">
+                                            {{ formatDate(item.paid_at) }}
+                                        </div>
+                                        <div v-else-if="item.approved_at" class="text-[9px] text-gray-400 mt-0.5 whitespace-nowrap">
+                                            {{ formatDate(item.approved_at) }}
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
                             <tfoot class="bg-gray-50 font-bold border-t-2 border-gray-300 text-xs text-gray-900">
                                 <tr>
-                                    <td colspan="5" class="py-2.5 px-3 border-r border-gray-300 text-right uppercase tracking-wider">
+                                    <td colspan="5" class="py-2.5 px-3 border-r border-gray-300 text-right uppercase tracking-wider text-[11px]">
                                         TOTAL NOMINAL TRANSFER KOMISI:
                                     </td>
-                                    <td class="py-2.5 px-3 border-r border-gray-300 text-right">
+                                    <td class="py-2.5 px-2 border-r border-gray-300 text-right font-bold text-gray-900 text-[11px] whitespace-nowrap">
                                         {{ formatCurrency(printTotalDeal) }}
                                     </td>
-                                    <td class="py-2.5 px-3 border-r border-gray-300 text-right font-black text-emerald-700 text-sm">
+                                    <td class="py-2.5 px-2 border-r border-gray-300 text-right font-black text-emerald-700 text-[11.5px] whitespace-nowrap">
                                         {{ formatCurrency(printGrandTotal) }}
                                     </td>
-                                    <td class="py-2.5 px-3 text-center text-[10px] text-gray-500 font-normal">
+                                    <td class="py-2.5 px-1.5 text-center text-[10px] text-gray-600 font-semibold whitespace-nowrap">
                                         10% Net
                                     </td>
                                 </tr>
@@ -1038,13 +1422,13 @@ onMounted(() => {
                     </div>
 
                     <!-- LEMBAR TANDA TANGAN / PENGESAHAN RESMI -->
-                    <div class="mt-8 pt-4">
-                        <p class="text-right text-xs text-gray-600 mb-6">
+                    <div class="mt-6 pt-2 signature-section">
+                        <p class="text-right text-xs text-gray-600 mb-5">
                             Surabaya, {{ todayFormatted }}
                         </p>
                         <div class="grid grid-cols-3 gap-6 text-center text-xs">
                             <!-- Kolom 1 -->
-                            <div class="flex flex-col justify-between h-28">
+                            <div class="flex flex-col justify-between h-24">
                                 <p class="font-medium text-gray-600">Dibuat Oleh (Sales/Admin),</p>
                                 <div>
                                     <p class="font-bold text-gray-900 underline">{{ props.user?.name || 'Staf Operasional' }}</p>
@@ -1053,7 +1437,7 @@ onMounted(() => {
                             </div>
 
                             <!-- Kolom 2 -->
-                            <div class="flex flex-col justify-between h-28">
+                            <div class="flex flex-col justify-between h-24">
                                 <p class="font-medium text-gray-600">Diverifikasi (Finance & Accounting),</p>
                                 <div>
                                     <p class="font-bold text-gray-900 underline">Finance & Tax Division</p>
@@ -1062,7 +1446,7 @@ onMounted(() => {
                             </div>
 
                             <!-- Kolom 3 -->
-                            <div class="flex flex-col justify-between h-28">
+                            <div class="flex flex-col justify-between h-24">
                                 <p class="font-medium text-gray-600">Mengetahui & Menyetujui,</p>
                                 <div>
                                     <p class="font-bold text-gray-900 underline">Direktur Operasional</p>
@@ -1091,7 +1475,7 @@ onMounted(() => {
         </div>
 
         <!-- ── MODAL PENGATURAN REKENING BANK SALES ── -->
-        <div v-if="showBankModal" class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
+        <div v-if="showBankModal" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
             <div class="bg-white max-w-md w-full shadow-2xl border border-gray-100 overflow-hidden transform transition-all animate-in fade-in zoom-in-95">
                 <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-orange-50/70">
                     <div>
@@ -1147,26 +1531,121 @@ onMounted(() => {
 
 <style>
 @media print {
-    /* Hide everything except the print-area element */
-    body * {
-        visibility: hidden !important;
+    @page {
+        size: A4 portrait;
+        margin: 8mm 10mm 10mm 10mm;
     }
-    #print-area, #print-area * {
-        visibility: visible !important;
-    }
-    #print-area {
-        position: fixed !important;
-        left: 0 !important;
-        top: 0 !important;
+
+    /* 1. Reset root layout containers so they never clip or scroll */
+    html,
+    body,
+    #app,
+    [class*="h-screen"],
+    [class*="max-h-"],
+    [class*="overflow-"],
+    #main-content,
+    main {
         width: 100% !important;
+        height: auto !important;
+        min-height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        position: static !important;
         margin: 0 !important;
-        padding: 20mm !important;
+        padding: 0 !important;
         background: #ffffff !important;
-        color: #000000 !important;
-        z-index: 999999 !important;
+        color: #111827 !important;
+        box-shadow: none !important;
+        border: none !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
     }
-    .no-print {
+
+    /* 2. Hide all sidebar, header, nav, and .no-print elements */
+    aside,
+    header,
+    nav,
+    .no-print,
+    .no-print * {
         display: none !important;
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    /* 3. Modal wrapper becomes a clean static block without clipping */
+    .print-modal-wrapper,
+    .print-modal-container {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* 4. Document sheet in normal flow at document top */
+    #print-area {
+        display: block !important;
+        position: static !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+        box-sizing: border-box !important;
+    }
+
+    /* 5. Table rules for perfect A4 fit */
+    table {
+        width: 100% !important;
+        max-width: 100% !important;
+        border-collapse: collapse !important;
+        table-layout: fixed !important;
+        page-break-inside: auto !important;
+    }
+
+    thead {
+        display: table-header-group !important;
+    }
+
+    tfoot {
+        display: table-footer-group !important;
+    }
+
+    tr {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+    }
+
+    th, td {
+        box-sizing: border-box !important;
+        vertical-align: middle !important;
+    }
+
+    .whitespace-nowrap,
+    th.whitespace-nowrap,
+    td.whitespace-nowrap,
+    .no-break {
+        white-space: nowrap !important;
+        word-break: keep-all !important;
+        overflow-wrap: normal !important;
+        word-wrap: normal !important;
+    }
+
+    /* 6. Signature section stays intact */
+    .signature-section {
+        page-break-inside: avoid !important;
+        break-inside: avoid !important;
+        margin-top: 1.5rem !important;
     }
 }
 </style>

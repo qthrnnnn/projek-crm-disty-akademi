@@ -78,6 +78,7 @@ function changeCalendarMonth(offset) {
 async function selectCalendarDay(day) {
     if (!day) return;
     selectedDate.value = day.iso;
+    filterMode.value = 'today';
     await loadDashboard();
 }
 
@@ -96,6 +97,66 @@ const periodLeads = computed(() => {
 const periodTotal = computed(() => periodLeads.value.length);
 const periodWon = computed(() => periodLeads.value.filter(l => l.status === 'won').length);
 const periodConvRate = computed(() => periodTotal.value > 0 ? ((periodWon.value / periodTotal.value) * 100).toFixed(1) : '0.0');
+
+// ── KPI Cards Metrics (Reaktif Mengikuti Pilihan Periode: Hari Ini / Pilih Bulan / Semua Data) ──
+const kpiLeadsIn = computed(() => {
+    return periodLeads.value.length;
+});
+
+const kpiLeadsUnanswered = computed(() => {
+    return periodLeads.value.filter(l => {
+        if (l.is_unanswered !== undefined) {
+            return Boolean(l.is_unanswered);
+        }
+        return l.status === 'new';
+    }).length;
+});
+
+const kpiLeadsAnswered = computed(() => {
+    return Math.max(0, kpiLeadsIn.value - kpiLeadsUnanswered.value);
+});
+
+const kpiLeadsResponded = computed(() => {
+    return periodLeads.value.filter(l => ['active', 'negotiation', 'won'].includes(l.status)).length;
+});
+
+const kpiSubtextLeadIn = computed(() => {
+    if (filterMode.value === 'today') {
+        const parts = selectedDate.value.split('-');
+        const day = parseInt(parts[2] || '1', 10);
+        const mon = MONTH_NAMES_SHORT[parseInt(parts[1] || '1', 10) - 1];
+        return `Total masuk ${day} ${mon} ${parts[0]}`;
+    } else if (filterMode.value === 'month') {
+        return `Total masuk ${MONTH_NAMES[selectedFilterMonth.value - 1]} ${selectedFilterYear.value}`;
+    }
+    return 'Total sepanjang waktu';
+});
+
+const kpiSubtextAnswered = computed(() => {
+    if (filterMode.value === 'today') return 'Sudah dikontak sales';
+    if (filterMode.value === 'month') return 'Sudah dikontak bulan ini';
+    return 'Sudah dikontak (total)';
+});
+
+const kpiSubtextUnanswered = computed(() => {
+    if (filterMode.value === 'today') return 'Perlu segera dikontak';
+    if (filterMode.value === 'month') return 'Belum dikontak bulan ini';
+    return 'Belum dikontak (total)';
+});
+
+const kpiSubtextResponded = computed(() => {
+    if (filterMode.value === 'today') return 'Aktif / negosiasi';
+    if (filterMode.value === 'month') return 'Aktif / negosiasi bulan ini';
+    return 'Aktif / negosiasi (total)';
+});
+
+const recentActivities = computed(() => {
+    return data.value?.recent_activities || data.value?.recentActivities || [];
+});
+
+const upcomingFollowUps = computed(() => {
+    return data.value?.upcoming_followups || data.value?.upcomingFollowUps || [];
+});
 
 // Counts per stage on the whole period (always accurate, never wiped out by clicking)
 const stageCounts = computed(() => {
@@ -264,10 +325,10 @@ onMounted(() => {
             <!-- KPI Cards & Calendar -->
             <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_280px] gap-3 sm:gap-4 items-stretch">
                 <div class="grid grid-cols-2 gap-2.5 sm:gap-3 auto-rows-fr">
-                    <StatCard title="Lead Masuk" :value="data.todayLeadsIn ?? data.leads_today ?? 0" subtext="Total masuk tanggal ini" />
-                    <StatCard title="Sudah Dijawab" :value="data.todayLeadsAnswered ?? data.answered_today ?? 0" subtext="Sudah dikontak sales" subtext-color="text-emerald-600" />
-                    <StatCard title="Belum Dijawab" :value="data.todayLeadsUnanswered ?? data.unanswered_today ?? 0" subtext="Perlu segera dikontak" :subtext-color="(data.todayLeadsUnanswered ?? data.unanswered_today ?? 0) > 0 ? 'text-amber-600' : 'text-gray-400'" />
-                    <StatCard title="Sudah Merespon" :value="data.todayLeadsResponded ?? data.responded_today ?? 0" subtext="Aktif / negosiasi" subtext-color="text-blue-600" />
+                    <StatCard title="Lead Masuk" :value="kpiLeadsIn" :subtext="kpiSubtextLeadIn" />
+                    <StatCard title="Sudah Dijawab" :value="kpiLeadsAnswered" :subtext="kpiSubtextAnswered" subtext-color="text-emerald-600" />
+                    <StatCard title="Belum Dijawab" :value="kpiLeadsUnanswered" :subtext="kpiSubtextUnanswered" :subtext-color="kpiLeadsUnanswered > 0 ? 'text-amber-600' : 'text-gray-400'" />
+                    <StatCard title="Sudah Merespon" :value="kpiLeadsResponded" :subtext="kpiSubtextResponded" subtext-color="text-blue-600" />
                 </div>
 
                 <div class="bg-white border border-gray-100 p-3 sm:p-4 shadow-2xs">
@@ -277,7 +338,7 @@ onMounted(() => {
                         </button>
                         <div class="flex items-center gap-1.5">
                             <p class="text-xs sm:text-sm font-semibold text-gray-900">{{ calendarTitle }}</p>
-                            <button v-if="selectedDate !== todayIso" @click="selectedDate = todayIso; loadDashboard()" type="button" class="text-[10px] text-orange-600 font-bold hover:underline bg-orange-50 px-1.5 py-0.5 rounded">
+                            <button v-if="selectedDate !== todayIso || filterMode !== 'today'" @click="selectedDate = todayIso; filterMode = 'today'; loadDashboard()" type="button" class="text-[10px] text-orange-600 font-bold hover:underline bg-orange-50 px-1.5 py-0.5 rounded">
                                 Hari Ini
                             </button>
                         </div>
@@ -675,33 +736,66 @@ onMounted(() => {
             <!-- Aktivitas Terbaru & Follow-up Mendatang -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
                 <div class="bg-white p-5 border border-gray-100 shadow-xs">
-                    <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Aktivitas Terbaru</h2>
-                    <div v-if="!data.recent_activities?.length" class="text-center py-8 text-xs text-gray-400">
-                        Belum ada aktivitas tercatat hari ini.
+                    <div class="flex items-center justify-between pb-2.5 border-b border-gray-100 mb-3">
+                        <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Aktivitas Terbaru</h2>
+                        <button @click="emit('navigate', '/activities')" class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1">
+                            <span>Lihat Semua</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
                     </div>
-                    <div v-else class="divide-y divide-gray-50">
-                        <div v-for="act in data.recent_activities" :key="act.id" class="py-2.5 flex items-center justify-between text-xs">
-                            <div>
-                                <p class="font-bold text-gray-800">{{ act.lead?.name || 'Lead' }}</p>
-                                <p class="text-[11px] text-gray-400">{{ act.description || act.type }}</p>
+                    <div v-if="!recentActivities.length" class="text-center py-8 text-xs text-gray-400">
+                        Belum ada aktivitas tercatat.
+                    </div>
+                    <div v-else>
+                        <div class="divide-y divide-gray-100">
+                            <div v-for="act in recentActivities.slice(0, 3)" :key="act.id" class="py-2.5 flex items-center justify-between text-xs">
+                                <div class="min-w-0 pr-2">
+                                    <p class="font-bold text-gray-800 truncate">{{ act.lead?.name || 'Prospek' }}</p>
+                                    <p class="text-[11px] text-gray-500 truncate">{{ act.description || act.subject || act.type }}</p>
+                                </div>
+                                <span class="text-[10px] text-gray-400 whitespace-nowrap shrink-0">{{ act.formatted_time || (act.created_at ? new Date(act.created_at).toLocaleDateString('id-ID') : '-') }}</span>
                             </div>
-                            <span class="text-[10px] text-gray-400">{{ act.created_at ? new Date(act.created_at).toLocaleDateString('id-ID') : '-' }}</span>
+                        </div>
+                        <div v-if="recentActivities.length > 3" class="mt-2.5 pt-2 text-center border-t border-gray-50">
+                            <button @click="emit('navigate', '/activities')" class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold inline-flex items-center gap-1">
+                                <span>Lihat selengkapnya di menu aktivitas</span>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white p-5 border border-gray-100 shadow-xs">
-                    <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Follow-up Mendatang</h2>
-                    <div v-if="!data.upcoming_followups?.length" class="text-center py-8 text-xs text-gray-400">
+                    <div class="flex items-center justify-between pb-2.5 border-b border-gray-100 mb-3">
+                        <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Follow-up Mendatang</h2>
+                        <button @click="emit('navigate', '/follow-ups')" class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1">
+                            <span>Lihat Agenda</span>
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                        </button>
+                    </div>
+                    <div v-if="!upcomingFollowUps.length" class="text-center py-8 text-xs text-gray-400">
                         Tidak ada follow-up mendatang.
                     </div>
-                    <div v-else class="divide-y divide-gray-50">
-                        <div v-for="fu in data.upcoming_followups" :key="fu.id" class="py-2.5 flex items-center justify-between text-xs">
-                            <div>
-                                <p class="font-bold text-gray-800">{{ fu.lead?.name || 'Lead' }}</p>
-                                <p class="text-[11px] text-gray-400">{{ fu.notes || 'Rencana kontak' }}</p>
+                    <div v-else>
+                        <div class="divide-y divide-gray-100">
+                            <div v-for="fu in upcomingFollowUps.slice(0, 3)" :key="fu.id" class="py-2.5 flex items-center justify-between text-xs">
+                                <div class="min-w-0 pr-2">
+                                    <p class="font-bold text-gray-800 truncate">{{ fu.lead?.name || fu.title || 'Prospek' }}</p>
+                                    <p class="text-[11px] text-gray-500 truncate">{{ fu.notes || fu.description || fu.title || 'Rencana kontak' }}</p>
+                                </div>
+                                <div class="text-right shrink-0">
+                                    <span class="text-[10px] text-orange-600 font-bold block">{{ fu.scheduled_at || fu.follow_up_at || '-' }}</span>
+                                    <span v-if="fu.method" class="text-[9px] uppercase px-1.5 py-0.5 rounded font-semibold bg-gray-100 text-gray-600">
+                                        {{ fu.method }}
+                                    </span>
+                                </div>
                             </div>
-                            <span class="text-[10px] text-orange-600 font-semibold">{{ fu.scheduled_at || '-' }}</span>
+                        </div>
+                        <div v-if="upcomingFollowUps.length > 3" class="mt-2.5 pt-2 text-center border-t border-gray-50">
+                            <button @click="emit('navigate', '/follow-ups')" class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold inline-flex items-center gap-1">
+                                <span>Lihat selengkapnya di agenda follow-up</span>
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                            </button>
                         </div>
                     </div>
                 </div>

@@ -284,11 +284,11 @@ function selectFeedback(type) {
         if (!completeForm.value.result_notes || Object.values(reasonMap).some(lbl => completeForm.value.result_notes.includes(lbl))) {
             completeForm.value.result_notes = 'Prospek berminat dan meminta informasi kurikulum/jadwal lebih lanjut.';
         }
-    } else if (type === 'won') {
-        completeForm.value.lead_status = 'won';
+    } else if (type === 'won' || type === 'closing' || type === 'negotiation') {
+        completeForm.value.lead_status = 'negotiation';
         completeForm.value.rejection_reason_id = null;
         if (!completeForm.value.result_notes || Object.values(reasonMap).some(lbl => completeForm.value.result_notes.includes(lbl))) {
-            completeForm.value.result_notes = 'Closing berhasil! Calon peserta bersedia mendaftar.';
+            completeForm.value.result_notes = 'Prospek setuju mendaftar (Siap Bayar / Negosiasi). Menunggu proses pembayaran dan upload bukti transfer.';
         }
     }
 }
@@ -780,10 +780,10 @@ onMounted(() => {
                                 :class="completeForm.feedback_type === 'not_interested' ? 'bg-red-50 border-red-500 text-red-800 font-bold' : 'border-gray-200 hover:bg-gray-50'">
                                 Tidak Tertarik
                             </button>
-                            <button type="button" @click="selectFeedback('won')"
+                            <button type="button" @click="selectFeedback('closing')"
                                 class="p-2 rounded-lg border text-left transition-colors"
-                                :class="completeForm.feedback_type === 'won' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'border-gray-200 hover:bg-gray-50'">
-                                Closing / Siap Bayar
+                                :class="(completeForm.feedback_type === 'closing' || completeForm.feedback_type === 'won') ? 'bg-amber-50 border-amber-500 text-amber-800 font-bold' : 'border-gray-200 hover:bg-gray-50'">
+                                Siap Bayar / Negosiasi
                             </button>
                         </div>
                     </div>

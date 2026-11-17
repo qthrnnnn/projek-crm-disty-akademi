@@ -146,18 +146,8 @@ onMounted(() => {
             </button>
         </div>
 
-        <!-- Banner Informasi Eksklusif Sales -->
-        <div v-if="isSales" class="p-3.5 bg-blue-50 border border-blue-200 text-blue-900 text-xs flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs shrink-0">
-                {{ ((user?.name || 'S').charAt(0)).toUpperCase() }}
-            </div>
-            <div>
-                <span class="font-bold">Otomatisasi Sales PIC:</span> Seluruh data prospek yang ada di file Excel ini akan otomatis ditetapkan ke akun Anda (<strong>{{ user?.name }}</strong>) sebagai Sales PIC penanggung jawab.
-            </div>
-        </div>
-
         <!-- Banner Informasi Admin -->
-        <div v-else-if="isAdmin" class="p-3.5 bg-orange-50 border border-orange-200 text-orange-900 text-xs">
+        <div v-if="isAdmin" class="p-3.5 bg-orange-50 border border-orange-200 text-orange-900 text-xs">
             <span class="font-bold">Mode Administrator:</span> Pilih akun Sales PIC yang akan ditugaskan untuk seluruh calon customer / lead yang diimpor dari file Excel.
         </div>
 
