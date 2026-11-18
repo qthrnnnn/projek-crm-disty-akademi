@@ -1,0 +1,25 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+/* Judul modul operasional responsif: 2 baris default, 1 baris saat maximize (>= 1440px / 2xl) */
+.card-title-br {
+    display: block;
+}
+.card-title-space {
+    display: none;
+}
+@media (min-width: 1440px) {
+    .card-title-br {
+        display: none !important;
+    }
+    .card-title-space {
+        display: inline !important;
+    }
+}
