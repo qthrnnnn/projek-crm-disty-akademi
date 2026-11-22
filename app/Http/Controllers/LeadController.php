@@ -160,6 +160,15 @@ class LeadController extends Controller
 
         $lead = Lead::create($data);
 
+        Activity::create([
+            'lead_id' => $lead->id,
+            'user_id' => auth()->id(),
+            'type' => 'note',
+            'subject' => 'Lead baru ditambahkan',
+            'description' => 'Lead ditambahkan secara manual oleh '.(auth()->user()?->name ?? 'pengguna').'.',
+            'activity_at' => now(),
+        ]);
+
         // Otomatis sinkron instansi jika bukan pribadi
         $inst = $this->syncInstitutionFromCompany($data['company'] ?? null, $data['city'] ?? null, $data['province'] ?? null);
 
