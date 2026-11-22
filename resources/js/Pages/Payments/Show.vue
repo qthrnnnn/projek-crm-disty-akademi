@@ -14,12 +14,18 @@ const payment = ref(null);
 const loading = ref(true);
 const saving = ref(false);
 const error = ref('');
+const proofAttachment = ref(null);
+const proofError = ref('');
+const uploadingProof = ref(false);
+const proofPreviewFailed = ref(false);
 const statusForm = ref({
     status: 'valid',
     verification_notes: '',
 });
 
 const isAdmin = computed(() => props.user?.role === 'admin');
+const proofSrc = computed(() => getProofSrc(payment.value));
+const showProof = computed(() => Boolean(proofSrc.value) && !proofPreviewFailed.value);
 
 function formatCurrency(val) {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(val || 0);
@@ -86,12 +92,33 @@ async function loadPayment() {
         const res = await api.get('payments', props.id);
         const data = res.data || res;
         payment.value = data;
+        proofPreviewFailed.value = false;
         statusForm.value.status = data.status || 'valid';
         statusForm.value.verification_notes = data.verification_notes || '';
     } catch (err) {
         error.value = err.message || 'Gagal memuat detail pembayaran.';
     } finally {
         loading.value = false;
+    }
+}
+
+async function attachProof() {
+    if (!proofAttachment.value || uploadingProof.value) return;
+
+    uploadingProof.value = true;
+    proofError.value = '';
+    try {
+        const data = new FormData();
+        data.append('proof_file', proofAttachment.value);
+        const res = await api.create(`payments/${props.id}/proof`, data);
+        payment.value.proof_file = res.data.proof_file;
+        payment.value.proof_url = res.data.proof_url;
+        proofAttachment.value = null;
+        proofPreviewFailed.value = false;
+    } catch (err) {
+        proofError.value = err.message || 'Gagal melampirkan struk.';
+    } finally {
+        uploadingProof.value = false;
     }
 }
 
@@ -217,19 +244,31 @@ onMounted(() => {
                 <div class="bg-white border border-blue-100 p-5 shadow-xs space-y-3 text-xs">
                     <div class="flex items-center justify-between border-b border-gray-100 pb-2">
                         <h3 class="font-semibold text-gray-900 text-sm">Bukti Struk Transfer</h3>
-                        <a v-if="getProofSrc(payment)" :href="getProofSrc(payment)" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-orange-600 hover:text-orange-700 hover:underline">
+                        <a v-if="showProof" :href="proofSrc" target="_blank" rel="noopener noreferrer" class="text-xs font-semibold text-orange-600 hover:text-orange-700 hover:underline">
                             Buka Gambar Penuh
                         </a>
                     </div>
-                    <div v-if="getProofSrc(payment)" class="border border-gray-200 overflow-hidden bg-gray-50 p-2 flex flex-col items-center">
-                        <a :href="getProofSrc(payment)" target="_blank" rel="noopener noreferrer" class="block w-full text-center group cursor-zoom-in">
-                            <img :src="getProofSrc(payment)" alt="Bukti Transfer" class="w-full max-h-72 object-contain mx-auto transition-transform group-hover:scale-[1.01]">
+                    <div v-if="showProof" class="border border-gray-200 overflow-hidden bg-gray-50 p-2 flex flex-col items-center">
+                        <a :href="proofSrc" target="_blank" rel="noopener noreferrer" class="block w-full text-center group cursor-zoom-in">
+                            <img :src="proofSrc" alt="Bukti Transfer" @error="proofPreviewFailed = true"
+                                class="w-full max-h-72 object-contain mx-auto transition-transform group-hover:scale-[1.01]">
                         </a>
                         <p class="text-[11px] text-gray-400 mt-2">Klik gambar untuk melihat dalam ukuran penuh di tab baru</p>
                     </div>
                     <div v-else class="h-32 bg-gray-50 flex items-center justify-center text-gray-400 text-xs border border-dashed border-gray-200">
-                        Tidak ada lampiran file struk
+                        {{ proofPreviewFailed ? 'File struk tidak dapat dibuka' : 'Belum ada struk untuk transaksi ini' }}
                     </div>
+                    <form v-if="isAdmin && !showProof" @submit.prevent="attachProof" class="space-y-2">
+                        <label for="payment-proof" class="block font-semibold text-gray-700">Unggah struk asli transaksi ini</label>
+                        <input id="payment-proof" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/bmp"
+                            required :disabled="uploadingProof" @change="proofAttachment = $event.target.files[0] || null"
+                            class="w-full border border-gray-200 px-3 py-2">
+                        <p v-if="proofError" role="alert" class="text-red-600">{{ proofError }}</p>
+                        <button type="submit" :disabled="uploadingProof || !proofAttachment"
+                            class="px-3 py-2 bg-orange-50 text-orange-700 font-semibold rounded-lg disabled:opacity-50">
+                            {{ uploadingProof ? 'Mengunggah…' : 'Lampirkan Struk' }}
+                        </button>
+                    </form>
                 </div>
 
                 <!-- Form Verifikasi -->

@@ -18,15 +18,21 @@ use App\Models\SalesReminder;
 use App\Models\Trainer;
 use App\Models\TrainingSchedule;
 use App\Models\User;
+use App\Support\CrmResourceRules;
 use App\Support\Jwt;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
+    private const ADMIN_WRITE_RESOURCES = ['users', 'products', 'trainers', 'payments', 'commissions'];
+
     private const RESOURCES = [
         'activities' => Activity::class,
         'commissions' => Commission::class,
@@ -154,8 +160,9 @@ class ApiController extends Controller
 
     public function index(Request $request, string $resource): JsonResponse
     {
-        $model = $this->modelFor($resource);
-        $query = $model::query();
+        $user = $request->user();
+        $salesId = $user?->isSales() ? (int) $user->id : null;
+        $query = $this->resourceQuery($resource, $user);
 
         // Eager loading & specialized query per resource
         switch ($resource) {
@@ -181,48 +188,19 @@ class ApiController extends Controller
                 break;
 
             case 'registrations':
-                // Auto-sync: HANYA pendaftaran yang pembayarannya SUDAH VALID di-ACC admin untuk produk tersebut yang berstatus confirmed
-                $unconfirmedRegs = Registration::where('status', 'registered')->get();
-                foreach ($unconfirmedRegs as $reg) {
-                    if (! $reg->customer_id) {
-                        continue;
-                    }
-                    $hasValid = Payment::where('status', 'valid')
-                        ->where(function ($pq) use ($reg) {
-                            if ($reg->product_id) {
-                                $pq->where('product_id', $reg->product_id);
-                            }
-                        })
-                        ->where(function ($lq) use ($reg) {
-                            $cust = $reg->customer;
-                            if ($cust) {
-                                $lq->where('lead_id', $cust->lead_id)
-                                    ->orWhereHas('lead', fn ($leadQ) => $leadQ->where('phone', $cust->phone));
-                            }
-                        })
-                        ->exists();
+                if ($salesId === null && $request->filled('sales_id')) {
+                    $query->handledBy($request->integer('sales_id'));
+                }
 
-                    if ($hasValid) {
-                        $reg->update(['status' => 'confirmed']);
-                    }
+                if ($request->boolean('for_payment')) {
+                    $query->awaitingPaymentSubmission();
+                    $query->withExists([
+                        'customer as is_repeat_order' => fn (Builder $customer) => $customer
+                            ->whereHas('lead.payments', fn (Builder $payments) => $payments->where('status', 'valid')),
+                    ]);
                 }
 
                 $query->with(['customer.lead.assignedUser', 'user', 'product', 'schedule.product', 'schedule.trainer'])->latest();
-
-                // Pembatasan akses: Akun Sales hanya melihat pendaftaran peserta yang ditanganinya / didaftarkannya
-                if ($request->user() && $request->user()->isSales()) {
-                    $userId = $request->user()->id;
-                    $query->where(function ($sub) use ($userId) {
-                        $sub->where('user_id', $userId)
-                            ->orWhereHas('customer.lead', fn ($l) => $l->where('assigned_to', $userId));
-                    });
-                } elseif ($request->filled('sales_id')) {
-                    $salesId = $request->sales_id;
-                    $query->where(function ($sub) use ($salesId) {
-                        $sub->where('user_id', $salesId)
-                            ->orWhereHas('customer.lead', fn ($l) => $l->where('assigned_to', $salesId));
-                    });
-                }
 
                 if ($request->filled('status')) {
                     $query->where('status', $request->status);
@@ -275,12 +253,7 @@ class ApiController extends Controller
                     $query->where('assigned_to', $request->assigned);
                 }
                 if ($request->boolean('for_payment')) {
-                    // Hanya calon peserta yang sudah didaftarkan ke produk & belum memiliki pembayaran valid
-                    $query->whereNotNull('product_id')
-                        ->whereNotIn('status', ['lost', 'inactive'])
-                        ->whereDoesntHave('payments', function ($p) {
-                            $p->where('status', 'valid');
-                        });
+                    $query->awaitingPaymentSubmission();
                 }
                 if ($request->boolean('for_followup')) {
                     // Hanya prospek yang siap difollow-up: bukan yang sudah won dan bukan yang sudah ambil program
@@ -413,15 +386,6 @@ class ApiController extends Controller
             case 'customers':
                 $query->with(['institution'])->latest();
 
-                // Pembatasan akses: Akun Sales hanya melihat customer dari lead yang ditugaskan kepadanya atau pendaftaran miliknya
-                if ($request->user() && $request->user()->isSales()) {
-                    $userId = $request->user()->id;
-                    $query->where(function ($sub) use ($userId) {
-                        $sub->whereHas('lead', fn ($l) => $l->where('assigned_to', $userId))
-                            ->orWhereHas('registrations', fn ($r) => $r->where('user_id', $userId));
-                    });
-                }
-
                 if ($request->filled('institution_id')) {
                     $query->where('institution_id', $request->institution_id);
                 } else {
@@ -466,7 +430,8 @@ class ApiController extends Controller
                 break;
 
             case 'institutions':
-                $query->withCount('customers')->latest();
+                $query->withCount(['customers' => fn (Builder $customers) => $customers
+                    ->when($salesId, fn (Builder $handled) => $handled->handledBy($salesId))])->latest();
                 if ($request->filled('type')) {
                     $query->where('type', $request->type);
                 }
@@ -588,14 +553,21 @@ class ApiController extends Controller
         return response()->json($query->paginate(25)->withQueryString());
     }
 
-    public function show(string $resource, int $id): JsonResponse
+    public function show(Request $request, string $resource, int $id): JsonResponse
     {
-        $model = $this->modelFor($resource);
-        $query = $model::query();
+        $user = $request->user();
+        $salesId = $user?->isSales() ? (int) $user->id : null;
+        $query = $this->resourceQuery($resource, $user);
 
         switch ($resource) {
             case 'training-schedules':
-                $query->with(['product', 'trainer', 'registrations.customer']);
+                $query->with([
+                    'product',
+                    'trainer',
+                    'registrations' => fn ($registrations) => $registrations
+                        ->when($salesId, fn (Builder $handled) => $handled->handledBy($salesId))
+                        ->with('customer'),
+                ]);
                 break;
             case 'registrations':
                 $query->with(['customer.lead.assignedUser', 'user', 'product', 'schedule.product', 'schedule.trainer']);
@@ -620,14 +592,15 @@ class ApiController extends Controller
                     'institution',
                     'lead.product',
                     'lead.assignedUser',
-                    'registrations.product',
-                    'registrations.trainingSchedule.trainer',
-                    'registrations.trainingSchedule.product',
-                    'registrations.user',
+                    'registrations' => fn ($registrations) => $registrations
+                        ->when($salesId, fn (Builder $handled) => $handled->handledBy($salesId))
+                        ->with(['product', 'trainingSchedule.trainer', 'trainingSchedule.product', 'user']),
                 ]);
                 break;
             case 'institutions':
-                $query->with(['customers'])->withCount('customers');
+                $customers = fn ($customers) => $customers
+                    ->when($salesId, fn (Builder $handled) => $handled->handledBy($salesId));
+                $query->with(['customers' => $customers])->withCount(['customers' => $customers]);
                 break;
             case 'reminders':
                 $query->with(['lead.product', 'admin', 'sales']);
@@ -637,7 +610,11 @@ class ApiController extends Controller
         $record = $query->findOrFail($id);
 
         if ($resource === 'customers') {
-            $leadIds = Lead::where('phone', $record->phone)->orWhere('id', $record->lead_id)->pluck('id');
+            $leadIds = Lead::where(fn (Builder $lead) => $lead
+                ->whereKey($record->lead_id)
+                ->when($record->phone, fn (Builder $samePhone) => $samePhone->orWhere('phone', $record->phone)))
+                ->when($salesId, fn (Builder $assignedLead) => $assignedLead->where('assigned_to', $salesId))
+                ->pluck('id');
             $allPayments = Payment::with(['verifiedByUser', 'commission'])->whereIn('lead_id', $leadIds)->get();
 
             foreach ($record->registrations as $reg) {
@@ -662,20 +639,20 @@ class ApiController extends Controller
     public function store(Request $request, string $resource): JsonResponse
     {
         $model = $this->modelFor($resource);
-        $data = $this->validatedAttributes($request, $model);
+        $this->authorizeWrite($request, $resource);
+        $data = $this->validatedAttributes($request, $resource);
 
         if ($resource === 'follow-ups') {
-            $leadId = $request->input('lead_id') ?? ($data['lead_id'] ?? null);
-            $lead = $leadId ? Lead::find($leadId) : null;
+            $lead = Lead::find($data['lead_id']);
 
-            if ($request->filled('type') && empty($data['method'])) {
-                $data['method'] = $request->input('type');
+            if (isset($data['type']) && empty($data['method'])) {
+                $data['method'] = $data['type'];
             }
-            if ($request->filled('scheduled_at') && empty($data['follow_up_at'])) {
-                $data['follow_up_at'] = $request->input('scheduled_at');
+            if (isset($data['scheduled_at']) && empty($data['follow_up_at'])) {
+                $data['follow_up_at'] = $data['scheduled_at'];
             }
-            if ($request->filled('notes') && empty($data['description'])) {
-                $data['description'] = $request->input('notes');
+            if (isset($data['notes']) && empty($data['description'])) {
+                $data['description'] = $data['notes'];
             }
 
             if (empty($data['title'])) {
@@ -714,13 +691,13 @@ class ApiController extends Controller
             if (! isset($data['lead_code'])) {
                 $data['lead_code'] = Lead::generateCode();
             }
-            if ($request->filled('institution') && empty($data['company'])) {
-                $data['company'] = $request->institution;
+            if (isset($data['institution']) && empty($data['company'])) {
+                $data['company'] = $data['institution'];
             }
-            if ($request->filled('phone') && empty($data['whatsapp'])) {
-                $data['whatsapp'] = $request->phone;
-            } elseif ($request->filled('whatsapp') && empty($data['phone'])) {
-                $data['phone'] = $request->whatsapp;
+            if (isset($data['phone']) && empty($data['whatsapp'])) {
+                $data['whatsapp'] = $data['phone'];
+            } elseif (isset($data['whatsapp']) && empty($data['phone'])) {
+                $data['phone'] = $data['whatsapp'];
             }
             if (empty($data['assigned_to']) && $request->user()) {
                 $data['assigned_to'] = $request->user()->id;
@@ -734,8 +711,8 @@ class ApiController extends Controller
             if (! isset($data['customer_code'])) {
                 $data['customer_code'] = Customer::generateCode();
             }
-            if ($request->filled('company') && ! isset($data['institution_id'])) {
-                $inst = Institution::firstOrCreate(['name' => trim($request->company)]);
+            if (isset($data['company']) && ! isset($data['institution_id'])) {
+                $inst = Institution::firstOrCreate(['name' => trim($data['company'])]);
                 $data['institution_id'] = $inst->id;
             }
         }
@@ -749,14 +726,14 @@ class ApiController extends Controller
             }
 
             // Jika peserta diinput manual secara langsung di form pendaftaran
-            if ($request->input('participant_mode') === 'manual' || $request->filled('participant_name')) {
+            if (isset($data['participant_name'])) {
                 $operatorId = $request->user()?->id ?: (auth()->id() ?: 1);
                 $data['user_id'] = $operatorId;
-                $name = $request->input('participant_name');
-                $phone = $request->input('participant_phone') ?: '-';
-                $nik = $request->input('participant_nik');
-                $birthDate = $request->input('participant_birth_date');
-                $company = $request->input('participant_company');
+                $name = $data['participant_name'];
+                $phone = $data['participant_phone'] ?? '-';
+                $nik = $data['participant_nik'] ?? null;
+                $birthDate = $data['participant_birth_date'] ?? null;
+                $company = $data['participant_company'] ?? null;
 
                 $institutionId = null;
                 if (! empty($company)) {
@@ -772,7 +749,7 @@ class ApiController extends Controller
                     'document_number' => $nik,
                     'birth_date' => $birthDate,
                     'institution_id' => $institutionId,
-                    'status' => 'active',
+                    'status' => 'prospect',
                     'source' => 'direct_registration',
                     'notes' => 'Didaftarkan langsung dari Form Pendaftaran Peserta',
                 ]);
@@ -780,8 +757,8 @@ class ApiController extends Controller
                 $data['customer_id'] = $customer->id;
             }
             // Jika pendaftaran berasal dari calon peserta (Lead / Prospek)
-            elseif (! empty($leadId = $request->input('lead_id') ?? ($data['lead_id'] ?? null))) {
-                $lead = Lead::find($leadId);
+            elseif (isset($data['lead_id'])) {
+                $lead = Lead::find($data['lead_id']);
                 if ($lead) {
                     if (! empty($lead->assigned_to)) {
                         $data['user_id'] = $lead->assigned_to;
@@ -789,50 +766,12 @@ class ApiController extends Controller
                     $customer = app(LeadController::class)->ensureCustomerCreated($lead);
                     $data['customer_id'] = $customer->id;
 
-                    // Status pendaftaran HANYA boleh confirmed dan lead HANYA boleh won jika pembayaran SUDAH VALID diverifikasi / di-ACC admin
-                    $hasValidPayment = Payment::where('lead_id', $lead->id)->where('status', 'valid')->exists()
-                        || $lead->payments()->where('status', 'valid')->exists();
+                    $hasValidPayment = $lead->payments()->where('status', 'valid')->exists();
 
-                    if ($hasValidPayment) {
-                        $data['status'] = in_array($data['status'] ?? '', ['attended', 'completed']) ? $data['status'] : 'confirmed';
-                        $customer->update(['status' => 'active']);
-                        $leadUpdate = [
-                            'status' => 'won',
-                            'converted_at' => $lead->converted_at ?: now(),
-                        ];
-                        if (! empty($data['product_id'])) {
-                            $leadUpdate['product_id'] = $data['product_id'];
-                        }
-                        $lead->update($leadUpdate);
-
-                        // Otomatis selesaikan follow-up & pengingat pending untuk lead ini
-                        $lead->followUps()->where('status', 'pending')->update([
-                            'status' => 'completed',
-                            'completed_at' => now(),
-                            'result_notes' => 'Otomatis selesai: Pendaftaran terkonfirmasi',
-                        ]);
-
-                        SalesReminder::where('lead_id', $lead->id)
-                            ->where('type', 'follow_up')
-                            ->where('is_completed', false)
-                            ->update([
-                                'is_completed' => true,
-                                'completed_at' => now(),
-                                'sales_reply' => 'Selesai: Pendaftaran terkonfirmasi',
-                            ]);
-
-                        Activity::create([
-                            'lead_id' => $lead->id,
-                            'user_id' => auth()->id() ?? $lead->assigned_to,
-                            'type' => 'status_change',
-                            'subject' => 'Pendaftaran Terkonfirmasi - Resmi Menjadi Customer',
-                            'description' => 'Peserta didaftarkan dengan status terkonfirmasi dan resmi masuk ke Daftar Customer (Kode: '.$customer->customer_code.').',
-                            'activity_at' => now(),
-                        ]);
-                    } elseif (($data['status'] ?? '') === 'cancelled') {
+                    if (! $hasValidPayment && ($data['status'] ?? '') === 'cancelled') {
                         $customer->update(['status' => 'inactive']);
                         $lead->update(['status' => 'lost']);
-                    } else {
+                    } elseif (! $hasValidPayment) {
                         // Belum ada pembayaran valid yang di-ACC admin:
                         // Pendaftaran berstatus 'registered' (terdaftar, menunggu pembayaran/verifikasi)
                         // Customer berstatus 'prospect' (belum resmi closing)
@@ -845,8 +784,8 @@ class ApiController extends Controller
                         if (! empty($data['product_id'])) {
                             $leadUpdate['product_id'] = $data['product_id'];
                         }
-                        if ($request->filled('amount') && (float) $request->amount > 0) {
-                            $leadUpdate['deal_price'] = (float) $request->amount;
+                        if (($data['amount'] ?? 0) > 0) {
+                            $leadUpdate['deal_price'] = (float) $data['amount'];
                         }
                         $lead->update($leadUpdate);
 
@@ -862,14 +801,13 @@ class ApiController extends Controller
                 }
             }
             // Jika pendaftaran berasal dari Customer Terdaftar (Repeat Order / Pembelian Program Baru)
-            elseif (! empty($custId = $request->input('customer_id') ?? ($data['customer_id'] ?? null))) {
-                $customer = Customer::find($custId);
+            elseif (isset($data['customer_id'])) {
+                $customer = Customer::find($data['customer_id']);
                 if ($customer) {
                     $salesId = ($request->user() && $request->user()->isSales())
                         ? $request->user()->id
                         : ($customer->lead?->assigned_to ?? ($data['user_id'] ?? (auth()->id() ?: 1)));
                     $data['user_id'] = $salesId;
-                    $data['status'] = 'registered';
                 }
             }
 
@@ -898,8 +836,8 @@ class ApiController extends Controller
             } elseif ($request->hasFile('proof_file')) {
                 $data['proof_file'] = $request->file('proof_file')->store('payments', 'public');
             }
-            if ($request->filled('sender_name') && empty($data['account_name'])) {
-                $data['account_name'] = $request->sender_name;
+            if (isset($data['sender_name']) && empty($data['account_name'])) {
+                $data['account_name'] = $data['sender_name'];
             }
             if (empty($data['payment_date'])) {
                 $data['payment_date'] = now();
@@ -920,8 +858,8 @@ class ApiController extends Controller
                 }
             }
             // Jika pembayaran dibuat untuk Customer Terdaftar
-            elseif (! empty($custId = $request->input('customer_id') ?? ($data['customer_id'] ?? null))) {
-                $customer = Customer::find($custId);
+            elseif (isset($data['customer_id'])) {
+                $customer = Customer::find($data['customer_id']);
                 if ($customer) {
                     $lead = $customer->lead;
                     if (! $lead) {
@@ -951,7 +889,7 @@ class ApiController extends Controller
             }
         }
 
-        $record = $model::create($data);
+        $record = $model::create(Arr::only($data, (new $model)->getFillable()));
 
         if ($resource === 'payments' && $record->lead) {
             Commission::ensureCommissionCreated($record->lead, (float) $record->amount, $record->id);
@@ -969,9 +907,9 @@ class ApiController extends Controller
 
     public function update(Request $request, string $resource, int $id): JsonResponse
     {
-        $model = $this->modelFor($resource);
-        $record = $model::query()->findOrFail($id);
-        $data = $this->validatedAttributes($request, $model);
+        $this->authorizeWrite($request, $resource);
+        $record = $this->resourceQuery($resource, $request->user())->findOrFail($id);
+        $data = $this->validatedAttributes($request, $resource, $record);
 
         if ($resource === 'registrations') {
             if (! empty($data['training_schedule_id'])) {
@@ -990,17 +928,17 @@ class ApiController extends Controller
         }
 
         if ($resource === 'follow-ups') {
-            $leadId = $request->input('lead_id') ?? ($data['lead_id'] ?? $record->lead_id);
+            $leadId = $data['lead_id'] ?? $record->lead_id;
             $lead = $leadId ? Lead::find($leadId) : null;
 
-            if ($request->filled('type') && empty($data['method'])) {
-                $data['method'] = $request->input('type');
+            if (isset($data['type']) && empty($data['method'])) {
+                $data['method'] = $data['type'];
             }
-            if ($request->filled('scheduled_at') && empty($data['follow_up_at'])) {
-                $data['follow_up_at'] = $request->input('scheduled_at');
+            if (isset($data['scheduled_at']) && empty($data['follow_up_at'])) {
+                $data['follow_up_at'] = $data['scheduled_at'];
             }
-            if ($request->filled('notes') && empty($data['description'])) {
-                $data['description'] = $request->input('notes');
+            if (isset($data['notes']) && empty($data['description'])) {
+                $data['description'] = $data['notes'];
             }
 
             if (isset($data['status']) && $data['status'] === 'completed' && empty($record->completed_at)) {
@@ -1016,10 +954,10 @@ class ApiController extends Controller
                     $leadUpdates['first_contacted_at'] = now();
                 }
 
-                $rejectionReasonId = $request->input('rejection_reason_id');
-                $leadStatus = $request->input('lead_status');
-                $feedbackType = $request->input('feedback_type');
-                $resultNotes = $request->input('result_notes') ?? ($data['result_notes'] ?? null);
+                $rejectionReasonId = $data['rejection_reason_id'] ?? null;
+                $leadStatus = $data['lead_status'] ?? null;
+                $feedbackType = $data['feedback_type'] ?? null;
+                $resultNotes = $data['result_notes'] ?? null;
 
                 if ($rejectionReasonId) {
                     $leadUpdates['status'] = 'lost';
@@ -1094,25 +1032,19 @@ class ApiController extends Controller
         }
 
         if ($resource === 'leads') {
-            if ($request->has('institution') && empty($data['company'])) {
-                $data['company'] = $request->institution;
+            if (array_key_exists('institution', $data) && empty($data['company'])) {
+                $data['company'] = $data['institution'];
             }
-            if ($request->filled('phone') && empty($data['whatsapp'])) {
-                $data['whatsapp'] = $request->phone;
-            } elseif ($request->filled('whatsapp') && empty($data['phone'])) {
-                $data['phone'] = $request->whatsapp;
+            if (isset($data['phone']) && empty($data['whatsapp'])) {
+                $data['whatsapp'] = $data['phone'];
+            } elseif (isset($data['whatsapp']) && empty($data['phone'])) {
+                $data['phone'] = $data['whatsapp'];
             }
 
             // Penanganan konsistensi status pipeline prospek
             if (isset($data['status']) && $data['status'] !== $record->status) {
                 if ($data['status'] === 'lost') {
                     $data['lost_at'] = now();
-                    if ($request->filled('rejection_reason_id')) {
-                        $data['rejection_reason_id'] = $request->input('rejection_reason_id');
-                    }
-                    if ($request->filled('rejection_notes')) {
-                        $data['rejection_notes'] = $request->input('rejection_notes');
-                    }
                 } else {
                     $data['lost_at'] = null;
                     $data['rejection_reason_id'] = null;
@@ -1148,8 +1080,8 @@ class ApiController extends Controller
             }
         }
 
-        if ($resource === 'customers' && $request->filled('company')) {
-            $inst = Institution::firstOrCreate(['name' => trim($request->company)]);
+        if ($resource === 'customers' && isset($data['company'])) {
+            $inst = Institution::firstOrCreate(['name' => trim($data['company'])]);
             $data['institution_id'] = $inst->id;
         }
 
@@ -1195,24 +1127,32 @@ class ApiController extends Controller
             }
         }
 
-        $record->update($data);
+        $record->update(Arr::only($data, $record->getFillable()));
 
         return response()->json(['data' => $record->refresh()]);
     }
 
-    public function destroy(string $resource, int $id): JsonResponse
+    public function destroy(Request $request, string $resource, int $id): JsonResponse
     {
-        $model = $this->modelFor($resource);
-        $record = $model::query()->findOrFail($id);
+        $this->authorizeWrite($request, $resource);
+        $record = $this->resourceQuery($resource, $request->user())->findOrFail($id);
         $record->delete();
 
         return response()->json([], 204);
     }
 
-    private function validatedAttributes(Request $request, string $model): array
+    private function authorizeWrite(Request $request, string $resource): void
     {
-        $fillable = (new $model)->getFillable();
-        $data = $request->only($fillable);
+        abort_if(
+            in_array($resource, self::ADMIN_WRITE_RESOURCES, true) && ! $request->user()?->isAdmin(),
+            403,
+            'Akses ditolak. Hanya Admin yang dapat mengubah resource ini.',
+        );
+    }
+
+    private function validatedAttributes(Request $request, string $resource, ?Model $record = null): array
+    {
+        $data = $request->validate(CrmResourceRules::for($resource, $record));
 
         if ($data === []) {
             throw ValidationException::withMessages([
@@ -1228,5 +1168,17 @@ class ApiController extends Controller
         abort_unless(isset(self::RESOURCES[$resource]), 404, 'Resource API tidak ditemukan.');
 
         return self::RESOURCES[$resource];
+    }
+
+    private function resourceQuery(string $resource, ?User $user): Builder
+    {
+        $model = $this->modelFor($resource);
+        $query = $model::query();
+
+        if ($user?->isSales() && in_array($resource, ['customers', 'registrations'], true)) {
+            $query->handledBy((int) $user->id);
+        }
+
+        return $query;
     }
 }

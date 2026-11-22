@@ -4,6 +4,7 @@ use App\Http\Controllers\ApiActionController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\LeadController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -39,7 +40,7 @@ $registerRoutes = function () {
 
         // Leads actions
         Route::post('/leads', fn (Request $request) => app(ApiController::class)->store($request, 'leads'))->name('api.leads.store');
-        Route::get('/leads/{id}', fn ($id) => app(ApiController::class)->show('leads', (int) $id))->name('api.leads.show');
+        Route::get('/leads/{id}', fn (Request $request, $id) => app(ApiController::class)->show($request, 'leads', (int) $id))->name('api.leads.show');
         Route::post('/leads/{lead}/claim', [ApiActionController::class, 'claim'])->middleware('peran:Sales');
         Route::patch('/leads/{lead}/status', [ApiActionController::class, 'status'])->name('api.leads.update-status');
         Route::post('/leads/{lead}/activities', [ApiActionController::class, 'activity']);
@@ -70,6 +71,8 @@ $registerRoutes = function () {
 
         // Payments & Commissions
         Route::post('/payments', [ApiActionController::class, 'storePayment']);
+        Route::post('/payments/{payment}/proof', [PaymentController::class, 'attachProof'])
+            ->middleware('peran:Admin');
         Route::patch('/payments/{payment}/verify', [ApiActionController::class, 'verifyPayment'])
             ->middleware('peran:Admin');
         Route::patch('/commissions/{commission}/approve', [ApiActionController::class, 'approveCommission'])

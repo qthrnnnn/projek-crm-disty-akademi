@@ -77,6 +77,23 @@ class Commission extends Model
         return $query->where('status', 'paid');
     }
 
+    /** @return array{deal_amount: float, commission_amount: float} */
+    public static function calculateAmounts(float $catalogPrice, ?float $paymentAmount, ?float $negotiatedPrice): array
+    {
+        $dealAmount = $paymentAmount ?: $negotiatedPrice;
+        if ($catalogPrice > 0) {
+            $dealAmount = $dealAmount ?: round($catalogPrice * 1.10, 2);
+        } else {
+            $dealAmount = $dealAmount ?: 1831500.0;
+            $catalogPrice = round($dealAmount / 1.10, 2);
+        }
+
+        return [
+            'deal_amount' => $dealAmount,
+            'commission_amount' => round($catalogPrice * 0.10, 2),
+        ];
+    }
+
     /**
      * Otomatis membuat atau menyinkronkan data komisi 10% untuk Sales saat Lead Won/Closing.
      * Rumus: Customer mentransfer harga katalog + 10% komisi sales.
@@ -86,16 +103,11 @@ class Commission extends Model
         $salesUserId = $lead->assigned_to ?: (auth()->id() ?: 1);
         $payment = $paymentId ? Payment::find($paymentId) : null;
         $product = $payment?->product ?: $lead->product;
-        $baseKatalog = (float) ($product?->price ?: 0);
-
-        if ($baseKatalog > 0) {
-            $commissionAmount = round($baseKatalog * 0.10, 2);
-            $dealAmount = $amount ?: ($lead->deal_price ?: round($baseKatalog * 1.10, 2));
-        } else {
-            $dealAmount = (float) ($amount ?: ($lead->deal_price ?: 1831500));
-            $baseKatalog = round($dealAmount / 1.10, 2);
-            $commissionAmount = round($baseKatalog * 0.10, 2);
-        }
+        ['deal_amount' => $dealAmount, 'commission_amount' => $commissionAmount] = self::calculateAmounts(
+            (float) $product?->price,
+            $amount,
+            (float) $lead->deal_price,
+        );
 
         $rate = 10.00;
 

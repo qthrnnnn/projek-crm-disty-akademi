@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\SequentialCode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -78,14 +80,31 @@ class Customer extends Model
         return $this->hasMany(Registration::class)->orderByDesc('id');
     }
 
+    public function scopeWithLeadAssignedTo(Builder $query, int $salesId): Builder
+    {
+        return $query->whereHas('lead', fn (Builder $lead) => $lead->where('assigned_to', $salesId));
+    }
+
+    public function scopeWithoutAssignedLead(Builder $query): Builder
+    {
+        return $query->whereDoesntHave('lead', fn (Builder $lead) => $lead->whereNotNull('assigned_to'));
+    }
+
+    public function scopeHandledBy(Builder $query, int $salesId): Builder
+    {
+        return $query->where(fn (Builder $customer) => $customer
+            ->withLeadAssignedTo($salesId)
+            ->orWhere(fn (Builder $fallback) => $fallback
+                ->withoutAssignedLead()
+                ->whereHas('registrations', fn (Builder $registration) => $registration->where('user_id', $salesId))));
+    }
+
     public static function generateCode(): string
     {
         $prefix = 'CUST-'.now()->format('Ym');
         $last = static::withTrashed()
             ->where('customer_code', 'like', $prefix.'%')
             ->orderByDesc('customer_code')->first();
-        $next = $last ? ((int) substr($last->customer_code, -4)) + 1 : 1;
-
-        return $prefix.'-'.str_pad($next, 4, '0', STR_PAD_LEFT);
+        return SequentialCode::next($prefix, $last?->customer_code);
     }
 }

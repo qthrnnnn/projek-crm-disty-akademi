@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Support\SequentialCode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -135,6 +137,17 @@ class Lead extends Model
         return $this->hasMany(Payment::class);
     }
 
+    public function scopeAwaitingPaymentSubmission(Builder $query): Builder
+    {
+        return $query->whereNotNull('leads.product_id')
+            ->whereNotIn('leads.status', ['lost', 'inactive'])
+            ->whereDoesntHave('payments', fn (Builder $payment) => $payment->submitted()
+                ->where(fn (Builder $matching) => $matching
+                    ->where('payments.status', 'valid')
+                    ->orWhereColumn('payments.product_id', 'leads.product_id')
+                    ->orWhereNull('payments.product_id')));
+    }
+
     public function commissions(): HasMany
     {
         return $this->hasMany(Commission::class);
@@ -264,8 +277,6 @@ class Lead extends Model
         $last = static::withTrashed()
             ->where('lead_code', 'like', $prefix.'%')
             ->orderByDesc('lead_code')->first();
-        $next = $last ? ((int) substr($last->lead_code, -4)) + 1 : 1;
-
-        return $prefix.'-'.str_pad($next, 4, '0', STR_PAD_LEFT);
+        return SequentialCode::next($prefix, $last?->lead_code);
     }
 }

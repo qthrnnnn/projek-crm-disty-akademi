@@ -20,6 +20,8 @@ use App\Models\TrainingSchedule;
 use App\Models\User;
 use App\Support\Jwt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class AllApiEndpointsTest extends TestCase
@@ -297,16 +299,19 @@ class AllApiEndpointsTest extends TestCase
         ]);
 
         // 1. Sales records payment
+        Storage::fake('public');
         $res = $this->withHeader('Authorization', 'Bearer '.$this->salesToken)
             ->postJson('/api/payments', [
                 'lead_id' => $lead->id,
                 'amount' => 2000000,
                 'payment_method' => 'bank_transfer',
                 'payment_date' => now()->toDateString(),
+                'proof_file' => UploadedFile::fake()->create('struk.png', 1, 'image/png'),
             ]);
         $this->assertTrue(in_array($res->status(), [200, 201]));
         $payment = Payment::where('lead_id', $lead->id)->first();
         $this->assertNotNull($payment);
+        Storage::disk('public')->assertExists($payment->proof_file);
 
         // 2. Admin verifies payment as VALID
         $res = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
@@ -340,6 +345,12 @@ class AllApiEndpointsTest extends TestCase
 
     public function test_07_customers_and_export(): void
     {
+        $lead = Lead::create([
+            'lead_code' => 'LDA-ALUMNI-01',
+            'name' => 'Alumni Hebat',
+            'assigned_to' => $this->sales->id,
+        ]);
+
         // 1. Create customer
         $res = $this->withHeader('Authorization', 'Bearer '.$this->adminToken)
             ->postJson('/api/customers', [
@@ -347,6 +358,7 @@ class AllApiEndpointsTest extends TestCase
                 'email' => 'alumni@example.com',
                 'phone' => '0833333333',
                 'status' => 'active',
+                'lead_id' => $lead->id,
             ]);
         $res->assertStatus(201);
         $custId = $res->json('data.id');

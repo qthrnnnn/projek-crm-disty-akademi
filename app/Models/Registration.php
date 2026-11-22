@@ -2,9 +2,12 @@
 
 namespace App\Models;
 
+use App\Support\SequentialCode;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Registration extends Model
 {
@@ -39,31 +42,34 @@ class Registration extends Model
                 $registration->registration_number = static::generateNumber();
             }
 
-            // HANYA berstatus confirmed jika customer/lead benar-benar memiliki pembayaran valid yang di-ACC admin untuk produk ini
-            if ($registration->customer_id) {
-                $customer = Customer::find($registration->customer_id);
-                if ($customer) {
-                    $hasValidPayment = Payment::where('status', 'valid')
-                        ->where(function ($pq) use ($registration) {
-                            if ($registration->product_id) {
-                                $pq->where('product_id', $registration->product_id);
-                            }
-                        })
-                        ->where(function ($lq) use ($customer) {
-                            $lq->where('lead_id', $customer->lead_id)
-                                ->orWhereHas('lead', fn ($leadQ) => $leadQ->where('phone', $customer->phone));
-                        })
-                        ->exists();
+            if ($registration->status !== 'cancelled') {
+                $registration->status = 'registered';
+            }
+        });
 
-                    if ($hasValidPayment) {
-                        if (! $registration->status || $registration->status === 'registered') {
-                            $registration->status = 'confirmed';
-                        }
-                    } else {
-                        // Jangan biarkan status confirmed jika pembayaran belum di-ACC admin untuk produk ini
-                        $registration->status = 'registered';
-                    }
-                }
+        static::created(function (Registration $registration) {
+            if ($registration->status !== 'registered' || ! $registration->customer?->lead_id) {
+                return;
+            }
+
+            $hasPreviousRegistration = static::where('customer_id', $registration->customer_id)
+                ->where('product_id', $registration->product_id)
+                ->whereKeyNot($registration->id)
+                ->where('status', '!=', 'cancelled')
+                ->exists();
+            if ($hasPreviousRegistration) {
+                return;
+            }
+
+            // Pembayaran sebelum pendaftaran pertama hanya dapat digunakan untuk satu pendaftaran.
+            $prepayment = Payment::where('lead_id', $registration->customer->lead_id)
+                ->where('product_id', $registration->product_id)
+                ->where('status', 'valid')
+                ->whereNull('registration_id')
+                ->latest('id')
+                ->first();
+            if ($prepayment && Payment::whereKey($prepayment->id)->whereNull('registration_id')->update(['registration_id' => $registration->id])) {
+                $registration->update(['status' => 'confirmed']);
             }
         });
     }
@@ -71,6 +77,28 @@ class Registration extends Model
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function scopeAwaitingPaymentSubmission(Builder $query): Builder
+    {
+        return $query->where('registrations.status', 'registered')
+            ->whereHas('customer')
+            ->whereDoesntHave('payments', fn (Builder $payment) => $payment->submitted())
+            ->whereDoesntHave('customer.lead.payments', fn (Builder $payment) => $payment->submitted()->matchingLegacyRegistration());
+    }
+
+    public function scopeHandledBy(Builder $query, int $salesId): Builder
+    {
+        return $query->where(fn (Builder $registration) => $registration
+            ->whereHas('customer', fn (Builder $customer) => $customer->withLeadAssignedTo($salesId))
+            ->orWhere(fn (Builder $fallback) => $fallback
+                ->where('user_id', $salesId)
+                ->whereHas('customer', fn (Builder $customer) => $customer->withoutAssignedLead())));
     }
 
     public function user(): BelongsTo
@@ -130,8 +158,6 @@ class Registration extends Model
         $prefix = 'REG-'.now()->format('Ymd');
         $last = static::where('registration_number', 'like', $prefix.'%')
             ->orderByDesc('registration_number')->first();
-        $next = $last ? ((int) substr($last->registration_number, -4)) + 1 : 1;
-
-        return $prefix.'-'.str_pad($next, 4, '0', STR_PAD_LEFT);
+        return SequentialCode::next($prefix, $last?->registration_number);
     }
 }

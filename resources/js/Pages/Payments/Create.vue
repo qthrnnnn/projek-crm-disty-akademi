@@ -24,8 +24,7 @@ const registrations = ref([]);
 const loading = ref(false);
 const error = ref('');
 
-// Kandidat dari Customer Terdaftar yang memiliki pendaftaran pending (Repeat Order)
-const customerCandidates = computed(() => {
+const registrationCandidates = computed(() => {
     return registrations.value
         .filter(r => r.status === 'registered' && r.customer_id)
         .map(r => {
@@ -46,18 +45,21 @@ const customerCandidates = computed(() => {
                 product_price: price,
                 amount: amount,
                 commission: Math.round(price * 0.10),
-                is_customer: true,
+                is_repeat_order: r.is_repeat_order === true,
             };
         });
 });
 
-// Kandidat dari Calon Peserta Baru (Leads & Prospek) yang belum pernah closing
+const customerCandidates = computed(() => registrationCandidates.value.filter(candidate => candidate.is_repeat_order));
+
 const leadCandidates = computed(() => {
-    return leads.value
+    const registeredPrograms = new Set(registrationCandidates.value.map(candidate => `${candidate.lead_id}:${candidate.product_id}`));
+    const unregisteredLeads = leads.value
         .filter(l => {
             const hasProduct = Boolean(l.product_id && (l.product || l.product_name));
             const hasValidPayment = l.payments && l.payments.some(p => p.status === 'valid');
-            return hasProduct && !hasValidPayment && l.status !== 'lost' && l.status !== 'inactive';
+            const alreadyRegistered = registeredPrograms.has(`${l.id}:${l.product_id}`);
+            return hasProduct && !hasValidPayment && !alreadyRegistered && l.status !== 'lost' && l.status !== 'inactive';
         })
         .map(l => {
             const price = Number(l.product?.price || l.deal_price || 0);
@@ -76,9 +78,14 @@ const leadCandidates = computed(() => {
                 product_price: price,
                 amount: amount,
                 commission: Math.round(price * 0.10),
-                is_customer: false,
+                is_repeat_order: false,
             };
         });
+
+    return [
+        ...registrationCandidates.value.filter(candidate => !candidate.is_repeat_order),
+        ...unregisteredLeads,
+    ];
 });
 
 const allCandidates = computed(() => {
@@ -120,25 +127,24 @@ async function loadData() {
     try {
         const [lRes, rRes] = await Promise.all([
             api.list('leads', { per_page: 100, for_payment: 1 }),
-            api.list('registrations', { per_page: 100, status: 'registered' }),
+            api.list('registrations', { per_page: 100, status: 'registered', for_payment: 1 }),
         ]);
 
         leads.value = lRes.data || [];
         registrations.value = rRes.data || [];
 
-        // Deteksi default selection dari parameter URL
+        let found;
         if (qRegId) {
-            const found = customerCandidates.value.find(c => String(c.registration_id) === String(qRegId));
-            if (found) {
-                selectedKey.value = found.key;
-                onCandidateChange();
-            }
+            found = registrationCandidates.value.find(candidate => String(candidate.registration_id) === qRegId);
         } else if (qLeadId) {
-            const found = leadCandidates.value.find(c => String(c.lead_id) === String(qLeadId));
-            if (found) {
-                selectedKey.value = found.key;
-                onCandidateChange();
-            }
+            const productId = leads.value.find(lead => String(lead.id) === qLeadId)?.product_id;
+            const matchingCandidates = leadCandidates.value.filter(candidate => String(candidate.lead_id) === qLeadId);
+            found = matchingCandidates.find(candidate => candidate.product_id === productId) ?? matchingCandidates[0];
+        }
+
+        if (found) {
+            selectedKey.value = found.key;
+            onCandidateChange();
         }
     } catch (e) {
         console.error(e);
@@ -153,6 +159,10 @@ async function submit() {
     const item = selectedCandidate.value;
     if (!item) {
         error.value = 'Silakan pilih peserta / customer yang menunggu pembayaran.';
+        return;
+    }
+    if (!form.value.proof) {
+        error.value = 'Silakan pilih gambar struk sebelum mengirim bukti pembayaran.';
         return;
     }
 
@@ -173,10 +183,7 @@ async function submit() {
         fd.append('bank_name', form.value.bank_name);
         fd.append('sender_name', form.value.sender_name);
         fd.append('account_name', form.value.sender_name);
-        if (form.value.proof) {
-            fd.append('proof_file', form.value.proof);
-            fd.append('proof', form.value.proof);
-        }
+        fd.append('proof_file', form.value.proof);
 
         await api.create('payments', fd);
         emit('navigate', '/payments');
@@ -235,11 +242,11 @@ onMounted(() => {
             <div v-if="selectedCandidate" class="p-4 bg-orange-50/70 border border-orange-200/90 text-xs space-y-2.5">
                 <div class="flex items-center justify-between">
                     <span class="font-bold text-gray-900 flex items-center gap-1.5">
-                        <span class="w-2 h-2 rounded-full" :class="selectedCandidate.is_customer ? 'bg-emerald-500' : 'bg-blue-500'"></span>
+                        <span class="w-2 h-2 rounded-full" :class="selectedCandidate.is_repeat_order ? 'bg-emerald-500' : 'bg-blue-500'"></span>
                         Rincian Transaksi: {{ selectedCandidate.name }}
                         <span class="text-[10px] px-1.5 py-0.2 rounded font-medium"
-                            :class="selectedCandidate.is_customer ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'">
-                            {{ selectedCandidate.is_customer ? 'Customer Terdaftar' : 'Calon Peserta (Lead)' }}
+                            :class="selectedCandidate.is_repeat_order ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'">
+                            {{ selectedCandidate.is_repeat_order ? 'Customer Terdaftar' : 'Calon Peserta (Lead)' }}
                         </span>
                     </span>
                     <span class="text-[11px] font-mono px-2 py-0.5 bg-orange-100 text-orange-800 font-semibold">
@@ -305,8 +312,8 @@ onMounted(() => {
             </div>
 
             <div>
-                <label class="block text-xs font-semibold text-gray-700 mb-1">Unggah Struk / Bukti Transfer</label>
-                <input type="file" accept="image/*" @change="handleFile"
+                <label class="block text-xs font-semibold text-gray-700 mb-1">Unggah Struk / Bukti Transfer *</label>
+                <input type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,image/bmp" required @change="handleFile"
                     class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white" />
             </div>
 
