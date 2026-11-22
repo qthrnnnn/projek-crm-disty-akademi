@@ -891,6 +891,17 @@ class ApiController extends Controller
 
         $record = $model::create(Arr::only($data, (new $model)->getFillable()));
 
+        if ($resource === 'leads') {
+            Activity::create([
+                'lead_id' => $record->id,
+                'user_id' => $request->user()?->id ?: auth()->id(),
+                'type' => 'note',
+                'subject' => 'Lead baru ditambahkan',
+                'description' => 'Lead ditambahkan secara manual oleh '.($request->user()?->name ?? auth()->user()?->name ?? 'pengguna').'.',
+                'activity_at' => now(),
+            ]);
+        }
+
         if ($resource === 'payments' && $record->lead) {
             Commission::ensureCommissionCreated($record->lead, (float) $record->amount, $record->id);
             if ($record->status === 'valid') {
