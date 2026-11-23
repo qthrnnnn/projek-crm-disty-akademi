@@ -26,12 +26,23 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
 class ApiController extends Controller
 {
-    private const ADMIN_WRITE_RESOURCES = ['users', 'products', 'trainers', 'payments', 'commissions'];
+    private const ADMIN_WRITE_RESOURCES = [
+        'users',
+        'products',
+        'trainers',
+        'payments',
+        'commissions',
+        'training-schedules',
+        'lead-sources',
+        'rejection-reasons',
+        'import-batches',
+    ];
 
     private const RESOURCES = [
         'activities' => Activity::class,
@@ -146,7 +157,7 @@ class ApiController extends Controller
         // Komisi yang SUDAH LUNAS DITRANSFER (status: paid) tetap menjaga snapshot historis rekening lama.
         Commission::where('user_id', $user->id)
             ->whereIn('status', ['pending', 'approved'])
-            ->update([
+            ->updateWithHistory([
                 'bank_name' => trim($data['bank_name']),
                 'bank_account_number' => trim($data['bank_account_number']),
                 'bank_account_name' => trim($data['bank_account_name']),
@@ -351,11 +362,14 @@ class ApiController extends Controller
                     $query->where('status', $request->status);
                 }
                 if ($request->filled('date')) {
-                    $d = $request->date;
-                    $query->where(function ($sub) use ($d) {
-                        $sub->whereDate('paid_at', $d)
-                            ->orWhereDate('approved_at', $d)
-                            ->orWhereDate('created_at', $d);
+                    $request->validate(['date' => ['date_format:Y-m-d']]);
+                    $day = \Carbon\CarbonImmutable::parse($request->input('date'), 'Asia/Jakarta')->startOfDay();
+                    $start = $day->setTimezone(config('app.timezone'));
+                    $end = $day->addDay()->setTimezone(config('app.timezone'));
+                    $query->where(function ($sub) use ($start, $end) {
+                        foreach (['paid_at', 'approved_at', 'created_at'] as $column) {
+                            $sub->orWhere(fn ($date) => $date->where($column, '>=', $start)->where($column, '<', $end));
+                        }
                     });
                 }
                 if ($request->filled('search')) {
@@ -530,27 +544,20 @@ class ApiController extends Controller
 
     public function activities(Request $request): JsonResponse
     {
-        $query = Activity::query()
-            ->select(['id', 'lead_id', 'user_id', 'type', 'subject', 'description', 'activity_at'])
+        $query = Activity::query()->visibleTo($request->user())
+            ->select(['id', 'lead_id', 'user_id', 'type', 'subject', 'description', 'activity_at',
+                'entity_type', 'entity_id', 'entity_name', 'actor_name', 'lead_name', 'changes'])
             ->with([
-                'lead:id,name',
+                'lead:id,name,deleted_at',
                 'user:id,name',
             ])
-            ->latest('activity_at');
-
-        if ($request->user()->isSales()) {
-            $userId = $request->user()->id;
-            $query->where(function ($builder) use ($userId): void {
-                $builder->where('user_id', $userId)
-                    ->orWhereHas('lead', fn ($lead) => $lead->where('assigned_to', $userId));
-            });
-        }
+            ->latest('activity_at')->latest('id');
 
         if ($request->filled('type')) {
             $query->where('type', $request->string('type')->toString());
         }
 
-        return response()->json($query->paginate(25)->withQueryString());
+        return response()->json($query->paginate(min(max($request->integer('per_page', 25), 1), 100))->withQueryString());
     }
 
     public function show(Request $request, string $resource, int $id): JsonResponse
@@ -579,7 +586,7 @@ class ApiController extends Controller
                 $query->with(['product', 'source', 'assignedUser', 'rejectionReason', 'activities', 'followUps']);
                 break;
             case 'payments':
-                $query->with(['product', 'lead.product', 'verifiedByUser']);
+                $query->with(['product', 'lead.product', 'lead.assignedUser', 'verifiedByUser']);
                 break;
             case 'commissions':
                 $query->with(['user', 'lead.product', 'payment', 'lead.payments']);
@@ -889,18 +896,15 @@ class ApiController extends Controller
             }
         }
 
-        $record = $model::create(Arr::only($data, (new $model)->getFillable()));
+        $record = DB::transaction(function () use ($model, $data, $resource, $request) {
+            $record = $model::create(Arr::only($data, (new $model)->getFillable()));
 
-        if ($resource === 'leads') {
-            Activity::create([
-                'lead_id' => $record->id,
-                'user_id' => $request->user()?->id ?: auth()->id(),
-                'type' => 'note',
-                'subject' => 'Lead baru ditambahkan',
-                'description' => 'Lead ditambahkan secara manual oleh '.($request->user()?->name ?? auth()->user()?->name ?? 'pengguna').'.',
-                'activity_at' => now(),
-            ]);
-        }
+            if ($resource === 'leads') {
+                app(LeadController::class)->syncInstitutionFromCompany($record->company, $record->city, $record->province);
+            }
+
+            return $record;
+        });
 
         if ($resource === 'payments' && $record->lead) {
             Commission::ensureCommissionCreated($record->lead, (float) $record->amount, $record->id);
@@ -1138,7 +1142,13 @@ class ApiController extends Controller
             }
         }
 
-        $record->update(Arr::only($data, $record->getFillable()));
+        DB::transaction(function () use ($record, $data, $resource) {
+            $record->update(Arr::only($data, $record->getFillable()));
+
+            if ($resource === 'leads') {
+                app(LeadController::class)->syncInstitutionFromCompany($record->company, $record->city, $record->province);
+            }
+        });
 
         return response()->json(['data' => $record->refresh()]);
     }
@@ -1154,6 +1164,7 @@ class ApiController extends Controller
 
     private function authorizeWrite(Request $request, string $resource): void
     {
+        abort_if($resource === 'activities', 403, 'Riwayat aktivitas tidak dapat diubah atau dihapus. Tambahkan catatan melalui detail lead.');
         abort_if(
             in_array($resource, self::ADMIN_WRITE_RESOURCES, true) && ! $request->user()?->isAdmin(),
             403,
@@ -1186,8 +1197,21 @@ class ApiController extends Controller
         $model = $this->modelFor($resource);
         $query = $model::query();
 
-        if ($user?->isSales() && in_array($resource, ['customers', 'registrations'], true)) {
-            $query->handledBy((int) $user->id);
+        if ($resource === 'activities') {
+            $query->visibleTo($user);
+        }
+
+        if ($user?->isSales()) {
+            match ($resource) {
+                'users' => abort(403, 'Akses ditolak. Hanya Admin yang dapat mengakses data pengguna.'),
+                'customers', 'registrations' => $query->handledBy((int) $user->id),
+                'leads' => $query->where('assigned_to', (int) $user->id),
+                'payments' => $query->whereHas('lead', fn (Builder $lead) => $lead->where('assigned_to', (int) $user->id)),
+                'commissions' => $query->where('user_id', (int) $user->id),
+                'follow-ups' => $query->where('assigned_to', (int) $user->id),
+                'reminders' => $query->where('sales_id', (int) $user->id),
+                default => null,
+            };
         }
 
         return $query;
