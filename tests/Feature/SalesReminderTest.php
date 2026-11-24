@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Activity;
+use App\Models\Commission;
 use App\Models\Lead;
 use App\Models\SalesReminder;
 use App\Models\User;
@@ -15,8 +15,8 @@ class SalesReminderTest extends TestCase
 
     public function test_admin_can_send_reminder_to_sales(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $sales = User::factory()->create(['role' => 'sales']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
         $lead = Lead::create([
             'lead_code' => 'LEAD-TEST-001',
             'name' => 'Budi Santoso',
@@ -26,13 +26,13 @@ class SalesReminderTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
-        $response = $this->actingAs($admin)->post(route('leads.remind-sales', $lead), [
+        $response = $this->actingAs($admin)->postJson(route('leads.remind-sales', $lead), [
             'sales_id' => $sales->id,
             'message' => 'Tolong segera chat customer via WA ya!',
             'priority' => 'urgent',
         ]);
 
-        $response->assertRedirect()->assertSessionHas('success', 'Pengingat follow-up berhasil dikirim ke '.$sales->name.'! Sales akan menerima badge notifikasi lonceng & instruksi chat.');
+        $response->assertOk()->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('sales_reminders', [
             'lead_id' => $lead->id,
@@ -54,20 +54,20 @@ class SalesReminderTest extends TestCase
 
     public function test_sales_cannot_send_reminder(): void
     {
-        $sales1 = User::factory()->create(['role' => 'sales']);
-        $sales2 = User::factory()->create(['role' => 'sales']);
+        $sales1 = User::factory()->create(['role' => 'sales', 'is_active' => true]);
+        $sales2 = User::factory()->create(['role' => 'sales', 'is_active' => true]);
         $lead = Lead::create([
             'lead_code' => 'LEAD-TEST-002',
             'name' => 'Ahmad Dani',
             'status' => 'new',
         ]);
 
-        $response = $this->actingAs($sales1)->post(route('leads.remind-sales', $lead), [
+        $response = $this->actingAs($sales1)->postJson(route('leads.remind-sales', $lead), [
             'sales_id' => $sales2->id,
             'message' => 'Chat prospek ini dong',
         ]);
 
-        $response->assertRedirect(route('dashboard'));
+        $response->assertForbidden();
         $this->assertDatabaseMissing('sales_reminders', [
             'lead_id' => $lead->id,
         ]);
@@ -75,8 +75,8 @@ class SalesReminderTest extends TestCase
 
     public function test_sales_can_mark_reminder_completed(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $sales = User::factory()->create(['role' => 'sales']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
         $lead = Lead::create([
             'lead_code' => 'LEAD-TEST-003',
             'name' => 'Siti Nurhaliza',
@@ -95,11 +95,11 @@ class SalesReminderTest extends TestCase
             'is_completed' => false,
         ]);
 
-        $response = $this->actingAs($sales)->patch(route('reminders.complete', $reminder), [
+        $response = $this->actingAs($sales)->patchJson(route('reminders.complete', $reminder), [
             'sales_reply' => 'Sudah di-chat, prospek minta silabus materi.',
         ]);
 
-        $response->assertRedirect();
+        $response->assertOk()->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('sales_reminders', [
             'id' => $reminder->id,
@@ -117,8 +117,8 @@ class SalesReminderTest extends TestCase
 
     public function test_admin_creating_followup_schedule_automatically_notifies_sales(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $sales = User::factory()->create(['role' => 'sales']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
         $lead = Lead::create([
             'lead_code' => 'LEAD-TEST-004',
             'name' => 'Jongu UPN',
@@ -128,7 +128,7 @@ class SalesReminderTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
-        $response = $this->actingAs($admin)->post(route('follow-ups.store'), [
+        $response = $this->actingAs($admin)->postJson(route('follow-ups.store'), [
             'lead_id' => $lead->id,
             'title' => 'konfirmasi bukti tf',
             'description' => 'Tolong tanyakan bukti transfer ke customer',
@@ -138,7 +138,7 @@ class SalesReminderTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
-        $response->assertRedirect(route('follow-ups.index'));
+        $response->assertCreated()->assertJsonPath('success', true);
 
         // Verify reminder created automatically for Sales
         $this->assertDatabaseHas('sales_reminders', [
@@ -151,8 +151,8 @@ class SalesReminderTest extends TestCase
 
     public function test_sales_can_mark_reminder_completed_without_reply(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $sales = User::factory()->create(['role' => 'sales']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
         $lead = Lead::create([
             'lead_code' => 'LEAD-TEST-005',
             'name' => 'Doni',
@@ -171,9 +171,9 @@ class SalesReminderTest extends TestCase
             'is_completed' => false,
         ]);
 
-        $response = $this->actingAs($sales)->patch(route('reminders.complete', $reminder), []);
+        $response = $this->actingAs($sales)->patchJson(route('reminders.complete', $reminder), []);
 
-        $response->assertRedirect();
+        $response->assertOk()->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('sales_reminders', [
             'id' => $reminder->id,
@@ -183,8 +183,8 @@ class SalesReminderTest extends TestCase
 
     public function test_marking_commission_paid_creates_notification_for_sales(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $sales = User::factory()->create(['role' => 'sales']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
         $lead = Lead::create([
             'lead_code' => 'LEAD-TEST-006',
             'name' => 'Dimas Pratama',
@@ -193,7 +193,7 @@ class SalesReminderTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
-        $commission = \App\Models\Commission::create([
+        $commission = Commission::create([
             'user_id' => $sales->id,
             'lead_id' => $lead->id,
             'deal_amount' => 1500000,
@@ -202,8 +202,8 @@ class SalesReminderTest extends TestCase
             'status' => 'approved',
         ]);
 
-        $response = $this->actingAs($admin)->patch(route('commissions.pay', $commission));
-        $response->assertRedirect();
+        $response = $this->actingAs($admin)->patchJson(route('commissions.pay', $commission));
+        $response->assertOk()->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('sales_reminders', [
             'type' => 'commission_paid',
@@ -215,8 +215,8 @@ class SalesReminderTest extends TestCase
 
     public function test_sales_opening_reminders_or_calling_mark_all_read_marks_notifications_read(): void
     {
-        $sales = User::factory()->create(['role' => 'sales']);
-        $admin = User::factory()->create(['role' => 'admin']);
+        $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
         $lead = Lead::create([
             'lead_code' => 'LEAD-TEST-007',
             'name' => 'Rina',
@@ -244,8 +244,8 @@ class SalesReminderTest extends TestCase
 
     public function test_commission_notification_displays_proper_commission_badge_and_not_follow_up_badge(): void
     {
-        $admin = User::factory()->create(['role' => 'admin']);
-        $sales = User::factory()->create(['role' => 'sales']);
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
         $lead = Lead::create([
             'lead_code' => 'LEAD-TEST-008',
             'name' => 'Dimas Pratama',
@@ -253,7 +253,7 @@ class SalesReminderTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
-        $commission = \App\Models\Commission::create([
+        $commission = Commission::create([
             'user_id' => $sales->id,
             'lead_id' => $lead->id,
             'deal_amount' => 1500000,
@@ -273,11 +273,13 @@ class SalesReminderTest extends TestCase
             'is_read' => false,
         ]);
 
-        $response = $this->actingAs($sales)->get(route('reminders.index'));
-        $response->assertOk();
-        $response->assertSee('Komisi Masuk');
-        $response->assertSee('Rp 150.000');
-        $response->assertSee('Lihat Komisi');
-        $response->assertDontSee('Selesai Dihubungi');
+        $response = $this->actingAs($sales)->getJson(route('reminders.index'));
+        $response->assertOk()
+            ->assertJsonFragment([
+                'type' => 'commission_paid',
+                'commission_id' => $commission->id,
+                'is_completed' => true,
+            ]);
+        $this->assertStringContainsString('Rp 150.000', json_encode($response->json('data')));
     }
 }

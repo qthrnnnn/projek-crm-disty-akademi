@@ -25,7 +25,7 @@ class SalesReminderController extends Controller
             // Karena sales sudah membuka halaman pengingat, tandai semua unread sebagai sudah dibaca
             SalesReminder::where('sales_id', $user->id)
                 ->where('is_read', false)
-                ->update([
+                ->updateWithHistory([
                     'is_read' => true,
                     'read_at' => now(),
                 ]);
@@ -172,7 +172,7 @@ class SalesReminderController extends Controller
         FollowUp::where('lead_id', $reminder->lead_id)
             ->where('assigned_to', $reminder->sales_id)
             ->where('status', 'pending')
-            ->update([
+            ->updateWithHistory([
                 'status' => 'completed',
                 'result_notes' => $salesReply,
                 'completed_at' => now(),
@@ -195,7 +195,7 @@ class SalesReminderController extends Controller
         $user = auth()->user();
         SalesReminder::where('sales_id', $user->id)
             ->where('is_read', false)
-            ->update([
+            ->updateWithHistory([
                 'is_read' => true,
                 'read_at' => now(),
             ]);

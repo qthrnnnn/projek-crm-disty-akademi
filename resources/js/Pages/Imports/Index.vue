@@ -62,20 +62,20 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 mt-0.5">Daftar batch upload prospek masal dari CSV atau Excel</p>
             </div>
             <button v-if="isSales" @click="emit('navigate', '/lead-imports/create')"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition-colors shadow-sm">
+                class="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-xl hover:bg-orange-600 transition-colors shadow-sm shrink-0">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
                 Upload File Baru (Sales)
             </button>
             <div v-else-if="isAdmin" class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 border border-gray-200">
-                <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
-                Mode Pemantauan Admin (Hanya Sales yang Unggah File)
+                <svg class="w-3.5 h-3.5 text-gray-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                <span>Mode Pemantauan Admin (Hanya Sales yang Unggah File)</span>
             </div>
         </div>
 
         <!-- Table Card -->
         <div class="bg-white border border-blue-100 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-gray-600">
+                <table class="w-full min-w-[680px] text-left text-xs text-gray-600">
                     <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-medium uppercase tracking-wider text-[11px]">
                         <tr>
                             <th class="py-3 px-4">Waktu & File</th>
@@ -103,8 +103,8 @@ onMounted(() => {
                             <td class="py-3 px-4 font-medium">{{ b.total_rows || 0 }}</td>
                             <td class="py-3 px-4 text-emerald-600 font-bold">{{ b.success_rows ?? b.successful_rows ?? 0 }}</td>
                             <td class="py-3 px-4 text-red-600 font-medium">{{ b.failed_rows || 0 }}</td>
-                            <td class="py-3 px-4">
-                                <span class="px-2 py-0.5 text-[10px] font-medium border bg-blue-50 text-blue-700 border-blue-200">
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10px] font-medium border bg-blue-50 text-blue-700 border-blue-200">
                                     {{ b.status ? (b.status.charAt(0).toUpperCase() + b.status.slice(1)) : 'Completed' }}
                                 </span>
                             </td>

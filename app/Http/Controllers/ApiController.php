@@ -647,6 +647,11 @@ class ApiController extends Controller
     {
         $model = $this->modelFor($resource);
         $this->authorizeWrite($request, $resource);
+        abort_if(
+            $resource === 'registrations' && ! $request->user()?->isSales(),
+            403,
+            'Akses ditolak. Hanya Sales yang dapat mendaftarkan peserta.',
+        );
         $data = $this->validatedAttributes($request, $resource);
 
         if ($resource === 'follow-ups') {
@@ -901,6 +906,21 @@ class ApiController extends Controller
 
             if ($resource === 'leads') {
                 app(LeadController::class)->syncInstitutionFromCompany($record->company, $record->city, $record->province);
+            }
+
+            if ($resource === 'follow-ups' && $request->user()?->isAdmin() && ! empty($record->assigned_to)) {
+                $salesTarget = User::find($record->assigned_to);
+                if ($salesTarget && $salesTarget->isSales()) {
+                    SalesReminder::create([
+                        'lead_id' => $record->lead_id,
+                        'admin_id' => $request->user()->id,
+                        'sales_id' => $salesTarget->id,
+                        'message' => $record->title.($record->description ? ' — '.$record->description : ''),
+                        'priority' => in_array($record->priority ?? 'normal', ['high', 'urgent']) ? 'urgent' : 'normal',
+                        'is_read' => false,
+                        'is_completed' => false,
+                    ]);
+                }
             }
 
             return $record;

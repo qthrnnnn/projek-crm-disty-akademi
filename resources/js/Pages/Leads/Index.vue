@@ -45,6 +45,7 @@ async function loadCounts() {
 }
 
 async function loadSalesUsers() {
+    if (!isAdmin.value) return;
     try {
         const res = await api.list('users', { per_page: '100' });
         salesUsers.value = (res.data || []).filter(u => u.role === 'sales');
@@ -534,9 +535,9 @@ onMounted(() => {
         </div>
 
         <!-- Tabs Kepemilikan Lead -->
-        <div class="flex items-center gap-2 overflow-x-auto pb-1 border-b border-gray-200 text-xs">
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 sm:overflow-x-auto pb-2 sm:pb-1 border-b border-gray-200 text-[11px] sm:text-xs">
             <button v-if="isSales" @click="setScope('my_leads')"
-                class="px-3.5 py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+                class="px-2.5 sm:px-3.5 py-1.5 sm:py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
                 :class="scopeTab === 'my_leads' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'">
                 <span>Lead Saya</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px]"
@@ -546,7 +547,7 @@ onMounted(() => {
             </button>
 
             <button @click="setScope('unassigned')"
-                class="px-3.5 py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+                class="px-2.5 sm:px-3.5 py-1.5 sm:py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
                 :class="scopeTab === 'unassigned' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'">
                 <span>Belum Ditugaskan (Pool Lead)</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px]"
@@ -556,7 +557,7 @@ onMounted(() => {
             </button>
 
             <button @click="setScope('lost_pool')"
-                class="px-3.5 py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+                class="px-2.5 sm:px-3.5 py-1.5 sm:py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
                 :class="scopeTab === 'lost_pool' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'">
                 <span>Lost / Siap Follow-up Ulang</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px]"
@@ -566,7 +567,7 @@ onMounted(() => {
             </button>
 
             <button @click="setScope('all')"
-                class="px-3.5 py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
+                class="px-2.5 sm:px-3.5 py-1.5 sm:py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5"
                 :class="scopeTab === 'all' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'">
                 <span>Semua Lead</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px]"
@@ -635,7 +636,7 @@ onMounted(() => {
         <!-- Leads Table -->
         <div class="bg-white border border-gray-200 overflow-hidden shadow-xs">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-gray-600 min-w-[700px]">
+                <table class="w-full text-left text-xs text-gray-600 min-w-[820px]">
                     <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-semibold uppercase tracking-wider text-[10.5px]">
                         <tr>
                             <th class="py-3.5 px-4">Calon Pelanggan / Lead</th>
@@ -674,20 +675,20 @@ onMounted(() => {
                             <!-- Baris Data Prospek -->
                             <tr class="hover:bg-orange-50/20 transition-colors">
                                 <!-- Calon Pelanggan / Lead -->
-                                <td class="py-3 px-4">
+                                <td class="py-3 px-4 align-top">
                                     <div class="flex items-center gap-2">
                                         <button @click="emit('navigate', `/leads/${lead.id}`)" class="font-semibold text-gray-900 hover:text-orange-600 transition-colors text-left">
                                             {{ lead.name }}
                                         </button>
                                     </div>
-                                    <div class="flex items-center gap-1.5 text-[11px] text-gray-400 mt-0.5">
-                                        <span class="font-mono text-gray-500">{{ lead.lead_code }}</span>
+                                    <div class="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-gray-400 mt-0.5">
+                                        <span class="font-mono text-gray-500 whitespace-nowrap">{{ lead.lead_code }}</span>
                                         <template v-if="lead.company || lead.institution">
                                             <span class="text-gray-300">•</span>
                                             <span class="font-sans truncate max-w-[180px]">{{ lead.company || lead.institution }}</span>
                                         </template>
                                         <span class="text-gray-300">•</span>
-                                        <span>{{ formatTime(lead.created_at) }} WIB</span>
+                                        <span class="whitespace-nowrap">{{ formatTime(lead.created_at) }} WIB</span>
                                     </div>
                                 </td>
 
@@ -776,7 +777,7 @@ onMounted(() => {
                     </tbody>
                 </table>
             </div>
-            <div v-if="pagination.total > 0" class="p-3 border-t border-gray-100 flex items-center justify-between">
+            <div v-if="pagination.total > 0" class="p-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2 text-xs text-gray-500">
                     <span>Tampilkan</span>
                     <select v-model="perPage" @change="loadLeads(1)" class="border border-gray-200 px-2.5 py-1 text-xs text-gray-700 bg-white focus:outline-none focus:border-orange-500">
@@ -791,8 +792,8 @@ onMounted(() => {
         </div>
 
         <!-- Modal Penugasan Sales PIC (Admin Only) -->
-        <div v-if="showAssignModal" class="no-print fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-            <div class="bg-white max-w-sm w-full p-5 shadow-xl border border-gray-100 space-y-4">
+        <div v-if="showAssignModal" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/40 flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div class="bg-white max-w-sm w-full my-auto max-h-[92dvh] overflow-y-auto p-4 sm:p-5 shadow-xl border border-gray-100 space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                     <h3 class="text-sm font-bold text-gray-900">Tugaskan Prospek ke Sales PIC</h3>
                     <button @click="showAssignModal = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
@@ -833,42 +834,42 @@ onMounted(() => {
         </div>
 
         <!-- ── MODAL CETAK REKAPITULASI DATA LEAD ── -->
-        <div v-if="showPrintModal" class="print-modal-wrapper fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:static print:block print:bg-white print:overflow-visible print:inset-auto print:p-0">
-            <div class="print-modal-container bg-white w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:static print:block print:max-h-none print:h-auto print:my-0 print:border-none print:shadow-none print:overflow-visible print:max-w-none transition-all"
+        <div v-if="showPrintModal" class="print-modal-wrapper fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-6 print:static print:block print:bg-white print:overflow-visible print:inset-auto print:p-0">
+            <div class="print-modal-container bg-white w-full my-auto max-h-[92dvh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:static print:block print:max-h-none print:h-auto print:my-0 print:border-none print:shadow-none print:overflow-visible print:max-w-none transition-all"
                 :class="printOrientation === 'landscape' ? 'max-w-6xl' : 'max-w-4xl'">
                 <!-- Header Modal (Hidden saat print) -->
-                <div class="p-3.5 sm:p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3 bg-white no-print">
-                    <div>
+                <div class="p-3 sm:p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-white no-print">
+                    <div class="min-w-0">
                         <h3 class="text-sm font-bold text-gray-900">Cetak Rekapitulasi Data Lead / Prospek</h3>
                         <p class="text-[11px] text-gray-500">Pratinjau lembar data resmi prospek Disty Akademi</p>
                     </div>
 
                     <!-- Filter Bar & Orientasi di Header Modal -->
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="w-full sm:w-auto flex flex-wrap items-center gap-2">
                         <!-- Pilihan Orientasi Cetak -->
-                        <div class="flex items-center gap-1 bg-gray-100 p-0.5 border border-gray-300">
+                        <div class="flex items-center gap-1 bg-gray-100 p-0.5 border border-gray-300 w-full sm:w-auto">
                             <button type="button" @click="printOrientation = 'landscape'"
                                 :class="printOrientation === 'landscape' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'"
-                                class="px-2.5 py-1 text-[11px] transition-colors">
+                                class="flex-1 sm:flex-none px-2.5 py-1 text-[11px] transition-colors">
                                 Lanskap (Rekomendasi)
                             </button>
                             <button type="button" @click="printOrientation = 'portrait'"
                                 :class="printOrientation === 'portrait' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'"
-                                class="px-2.5 py-1 text-[11px] transition-colors">
+                                class="flex-1 sm:flex-none px-2.5 py-1 text-[11px] transition-colors">
                                 Potret
                             </button>
                         </div>
 
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-xs text-gray-500 font-medium">Tanggal:</span>
+                        <div class="w-full sm:w-auto flex items-center gap-1.5">
+                            <span class="text-xs text-gray-500 font-medium whitespace-nowrap">Tanggal:</span>
                             <input type="date" v-model="printFilterDate" @change="fetchPrintLeads"
-                                class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white" />
+                                class="flex-1 sm:flex-none text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white" />
                             <button v-if="printFilterDate" @click="printFilterDate = ''; fetchPrintLeads()" type="button"
                                 class="text-[10px] text-gray-500 hover:text-gray-800 underline">Semua</button>
                         </div>
 
                         <select v-model="printFilterStatus" @change="fetchPrintLeads"
-                            class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white">
+                            class="w-full sm:w-auto text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white">
                             <option value="">Semua Status</option>
                             <option value="new">Baru</option>
                             <option value="contacted">Dikontak</option>
@@ -880,24 +881,29 @@ onMounted(() => {
                         </select>
 
                         <select v-if="isAdmin" v-model="printFilterSales" @change="fetchPrintLeads"
-                            class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white">
+                            class="w-full sm:w-auto text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white">
                             <option value="">Semua Sales</option>
                             <option v-for="s in salesUsers" :key="s.id" :value="s.id">{{ s.name }}</option>
                         </select>
 
-                        <button @click="printDocument" class="px-3.5 py-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-xs">
-                            Cetak (PDF)
-                        </button>
+                        <div class="w-full sm:w-auto flex items-center gap-2">
+                            <button @click="printDocument" class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-xs">
+                                Cetak (PDF)
+                            </button>
 
-                        <button @click="closePrintModal" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors">
-                            Tutup
-                        </button>
+                            <button @click="closePrintModal" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors">
+                                Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Lembar Dokumen Cetak (Print Area) -->
-                <div class="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50 print:bg-white print:p-0">
-                    <div id="print-area" class="bg-white p-6 sm:p-8 border border-gray-200 shadow-sm mx-auto text-gray-900 print:border-none print:shadow-none print:p-0 print:max-w-none"
+                <div class="flex-1 overflow-auto p-3 sm:p-8 bg-gray-50 print:bg-white print:p-0 print:overflow-visible">
+                    <p class="sm:hidden no-print text-[11px] text-gray-500 text-center mb-2">
+                        Geser ke samping untuk melihat seluruh pratinjau dokumen A4 &harr;
+                    </p>
+                    <div id="print-area" class="min-w-[780px] md:min-w-0 bg-white p-6 sm:p-8 border border-gray-200 shadow-sm mx-auto text-gray-900 print:min-w-0 print:border-none print:shadow-none print:p-0 print:max-w-none"
                         :class="printOrientation === 'landscape' ? 'w-full max-w-5xl' : 'w-full max-w-4xl'">
                         <!-- KOP SURAT RESMI DISTY AKADEMI -->
                         <div class="border-b-4 border-double border-gray-800 pb-4 mb-5">
@@ -1085,11 +1091,11 @@ onMounted(() => {
                 </div>
 
                 <!-- Footer Modal (Hidden saat print) -->
-                <div class="p-3.5 sm:p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50/80 no-print">
-                    <span class="text-xs text-gray-500">
+                <div class="p-3 sm:p-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-gray-50/80 no-print">
+                    <span class="text-[11px] sm:text-xs text-gray-500">
                         Format cetak dioptimalkan untuk kertas A4 potret atau landscape saat dicetak ke PDF/Printer.
                     </span>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-end gap-2 shrink-0">
                         <button @click="closePrintModal" class="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors">
                             Tutup
                         </button>

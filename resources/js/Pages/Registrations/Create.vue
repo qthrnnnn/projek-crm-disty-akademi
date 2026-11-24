@@ -2,6 +2,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { api } from '../../services/api';
 
+const props = defineProps({
+    user: { type: Object, default: () => ({}) },
+});
+const canRegister = computed(() => props.user?.role === 'sales');
+
 const emit = defineEmits(['navigate']);
 
 const form = ref({
@@ -217,6 +222,7 @@ function onScheduleChange() {
 }
 
 async function save() {
+    if (!canRegister.value) return;
     error.value = '';
 
     if (!selectedParticipant.value) {
@@ -258,6 +264,10 @@ async function save() {
 }
 
 onMounted(() => {
+    if (!canRegister.value) {
+        emit('navigate', '/registrations');
+        return;
+    }
     loadDependencies();
     window.addEventListener('click', handleClickOutside);
 });
@@ -268,20 +278,20 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-    <div class="max-w-2xl mx-auto space-y-5">
-        <div class="flex items-center justify-between">
+    <div v-if="canRegister" class="max-w-2xl mx-auto space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">Pendaftaran Peserta ke Kelas</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Ketik atau pilih calon peserta (leads) / customer ke jadwal pelatihan aktif</p>
             </div>
-            <button @click="emit('navigate', '/registrations')" class="text-xs font-semibold text-gray-500 hover:text-gray-900">
+            <button @click="emit('navigate', '/registrations')" class="self-start sm:self-auto whitespace-nowrap shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900">
                 &larr; Batal & Kembali
             </button>
         </div>
 
         <div v-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
 
-        <form @submit.prevent="save" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+        <form @submit.prevent="save" class="bg-white p-4 sm:p-6 border border-gray-100 shadow-xs space-y-4">
             <!-- Field Peserta (Bisa Diketik & Bisa Dipilih) -->
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">
@@ -300,8 +310,8 @@ onBeforeUnmount(() => {
                             v-model="searchQuery"
                             type="text"
                             @focus="isDropdownOpen = true"
-                            placeholder="Ketik nama peserta, nomor WA, NIK, atau instansi..."
-                            class="w-full pl-9 pr-20 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none bg-white transition"
+                            placeholder="Cari nama, WA, NIK, atau instansi..."
+                            class="w-full pl-9 pr-14 sm:pr-20 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-none bg-white transition"
                         />
 
                         <!-- Tombol Clear atau Chevron -->
@@ -395,7 +405,7 @@ onBeforeUnmount(() => {
 
             <!-- Preview Data Peserta Terpilih (Jika Memilih Lead) -->
             <div v-if="selectedLeadDetail" class="p-3.5 bg-blue-50/70 border border-blue-200/80 text-xs space-y-1.5">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-1.5">
                     <span class="font-bold text-blue-900 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-blue-500"></span>
                         Calon Peserta dari Leads: {{ selectedLeadDetail.name }}
@@ -437,7 +447,7 @@ onBeforeUnmount(() => {
 
             <!-- Preview Data Peserta Terpilih (Jika Memilih Customer) -->
             <div v-else-if="selectedCustomerDetail" class="p-3.5 bg-emerald-50/70 border border-emerald-200/80 text-xs space-y-1.5">
-                <div class="flex items-center justify-between">
+                <div class="flex flex-wrap items-center justify-between gap-1.5">
                     <span class="font-bold text-emerald-900 flex items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
                         Customer Terdaftar: {{ selectedCustomerDetail.name }}
@@ -483,8 +493,8 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Rincian Biaya & Komisi Sales Transparan -->
-            <div v-if="selectedProduct" class="p-4 bg-orange-50/70 border border-orange-200/90 space-y-2 text-xs">
-                <div class="flex items-center justify-between font-bold text-gray-900">
+            <div v-if="selectedProduct" class="p-3.5 sm:p-4 bg-orange-50/70 border border-orange-200/90 space-y-2 text-xs">
+                <div class="flex flex-wrap items-center justify-between gap-1.5 font-bold text-gray-900">
                     <span>Rincian Pembayaran Program: {{ selectedProduct.name }}</span>
                     <span class="text-orange-700 font-mono text-[11px] px-2 py-0.5 bg-orange-100">{{ selectedProduct.code }}</span>
                 </div>

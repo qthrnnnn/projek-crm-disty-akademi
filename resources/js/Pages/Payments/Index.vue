@@ -105,7 +105,7 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 mt-0.5">Kelola verifikasi transfer peserta dan pencatatan deal akademi</p>
             </div>
             <button @click="emit('navigate', '/payments/create')"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-sm">
+                class="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-sm shrink-0">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Input Pembayaran
             </button>
@@ -114,14 +114,14 @@ onMounted(() => {
         <!-- Filter Card -->
         <div class="bg-white border border-blue-100 p-3.5 shadow-sm">
             <form @submit.prevent="loadPayments(1)" class="flex flex-wrap items-center gap-2.5">
-                <select v-model="status" @change="loadPayments(1)" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500">
+                <select v-model="status" @change="loadPayments(1)" class="w-full sm:w-auto text-xs border border-gray-200 px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-orange-500">
                     <option value="">Semua Status Pembayaran</option>
                     <option value="pending">Menunggu Verifikasi</option>
                     <option value="valid">Valid / Diterima</option>
                     <option value="invalid">Tidak Valid</option>
                     <option value="recheck">Perlu Cek Ulang</option>
                 </select>
-                <button type="submit" class="text-xs bg-orange-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors">
+                <button type="submit" class="w-full sm:w-auto text-xs bg-orange-500 text-white font-medium py-2 px-3 rounded-lg hover:bg-orange-600 transition-colors">
                     Filter
                 </button>
                 <button v-if="status" @click="resetFilter" type="button" class="text-xs text-gray-500 hover:text-gray-700 px-2 py-1">
@@ -133,7 +133,7 @@ onMounted(() => {
         <!-- Table Card -->
         <div class="bg-white border border-blue-100 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[640px] text-left text-xs text-gray-600">
+                <table class="w-full min-w-[740px] text-left text-xs text-gray-600">
                     <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-medium uppercase tracking-wider text-[11px]">
                         <tr>
                             <th class="py-3 px-4">Tanggal & Peserta</th>
@@ -152,9 +152,9 @@ onMounted(() => {
                             <td colspan="6" class="py-8 text-center text-gray-400">Belum ada riwayat pembayaran</td>
                         </tr>
                         <tr v-for="p in payments" :key="p.id" class="hover:bg-blue-50/30 transition-colors">
-                            <td class="py-3 px-4">
+                            <td class="py-3 px-4 whitespace-nowrap">
                                 <div class="font-semibold text-gray-900">{{ p.lead?.name || 'Peserta' }}</div>
-                                <div class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5 flex-wrap">
+                                <div class="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1.5 whitespace-nowrap">
                                     <span>{{ formatDate(getPaymentTimestamp(p)) }}</span>
                                     <template v-if="formatTime(getPaymentTimestamp(p))">
                                         <span class="text-gray-300">&bull;</span>
@@ -165,11 +165,11 @@ onMounted(() => {
                             <td class="py-3 px-4">
                                 {{ p.product?.name || (p.lead?.product?.name || '-') }}
                             </td>
-                            <td class="py-3 px-4 font-bold text-gray-900">
+                            <td class="py-3 px-4 font-bold text-gray-900 whitespace-nowrap">
                                 {{ formatCurrency(p.amount) }}
                             </td>
                             <td class="py-3 px-4">
-                                <div class="font-semibold text-gray-900 flex items-center gap-1">
+                                <div class="font-semibold text-gray-900 flex items-center gap-1 whitespace-nowrap">
                                     <span>{{ p.bank_name || (p.payment_method ? (p.payment_method.charAt(0).toUpperCase() + p.payment_method.slice(1)) : 'Transfer') }}</span>
                                     <span class="text-[10px] font-normal text-gray-400">(Tujuan Disty)</span>
                                 </div>
@@ -178,7 +178,7 @@ onMounted(() => {
                                 </div>
                             </td>
                             <td class="py-3 px-4">
-                                <span class="px-2 py-0.5 text-[10px] font-medium border" :class="statusBadgeClass(p.status)">
+                                <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10px] font-medium border" :class="statusBadgeClass(p.status)">
                                     {{ p.status ? (p.status.charAt(0).toUpperCase() + p.status.slice(1)) : '-' }}
                                 </span>
                                 <div v-if="p.status === 'invalid' && p.verification_notes" class="text-[10.5px] text-red-600 mt-1 max-w-[190px] leading-tight">

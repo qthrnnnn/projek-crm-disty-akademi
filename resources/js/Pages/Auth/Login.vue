@@ -26,9 +26,9 @@ async function submit() {
 </script>
 
 <template>
-    <div class="min-h-screen bg-slate-50 flex items-center justify-center p-4 w-full">
-        <div class="w-full max-w-md">
-            <div class="bg-white border border-blue-100 p-8 shadow-sm">
+    <div class="min-h-screen h-[100dvh] overflow-y-auto bg-slate-50 flex items-center justify-center p-4 w-full">
+        <div class="w-full max-w-md my-auto">
+            <div class="bg-white border border-blue-100 p-6 sm:p-8 shadow-sm">
                 <!-- Logo Disty Akademi -->
                 <div class="flex justify-center mb-6">
                     <img src="/images/disty-logo.png" alt="Disty Akademi" class="h-12 w-auto object-contain"

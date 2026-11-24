@@ -201,19 +201,19 @@ onMounted(() => {
 
 <template>
     <div class="max-w-2xl mx-auto space-y-5">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">Input Bukti Pembayaran</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Kirim bukti transfer peserta atau customer terdaftar untuk diverifikasi admin</p>
             </div>
-            <button @click="emit('navigate', '/payments')" class="text-xs font-semibold text-gray-500 hover:text-gray-900">
+            <button @click="emit('navigate', '/payments')" class="self-start sm:self-auto whitespace-nowrap shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900">
                 &larr; Batal & Kembali
             </button>
         </div>
 
         <div v-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
 
-        <form @submit.prevent="submit" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+        <form @submit.prevent="submit" class="bg-white p-4 sm:p-6 border border-gray-100 shadow-xs space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Pilih Peserta / Customer Menunggu Pembayaran *</label>
                 <select v-model="selectedKey" @change="onCandidateChange" required
@@ -239,9 +239,9 @@ onMounted(() => {
             </div>
 
             <!-- Preview Rincian Tagihan & Komisi -->
-            <div v-if="selectedCandidate" class="p-4 bg-orange-50/70 border border-orange-200/90 text-xs space-y-2.5">
-                <div class="flex items-center justify-between">
-                    <span class="font-bold text-gray-900 flex items-center gap-1.5">
+            <div v-if="selectedCandidate" class="p-3.5 sm:p-4 bg-orange-50/70 border border-orange-200/90 text-xs space-y-2.5">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                    <span class="font-bold text-gray-900 flex flex-wrap items-center gap-1.5">
                         <span class="w-2 h-2 rounded-full" :class="selectedCandidate.is_repeat_order ? 'bg-emerald-500' : 'bg-blue-500'"></span>
                         Rincian Transaksi: {{ selectedCandidate.name }}
                         <span class="text-[10px] px-1.5 py-0.2 rounded font-medium"

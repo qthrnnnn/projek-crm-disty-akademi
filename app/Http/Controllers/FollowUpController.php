@@ -244,7 +244,7 @@ class FollowUpController extends Controller
         SalesReminder::where('lead_id', $followUp->lead_id)
             ->where('sales_id', $followUp->assigned_to)
             ->where('is_completed', false)
-            ->update([
+            ->updateWithHistory([
                 'is_read' => true,
                 'is_completed' => true,
                 'completed_at' => now(),

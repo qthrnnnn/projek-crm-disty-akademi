@@ -63,15 +63,15 @@ onMounted(() => {
 
         <div class="bg-white border border-gray-100 shadow-xs overflow-hidden">
             <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs">
+                <table class="w-full min-w-[880px] text-left text-xs">
                     <thead class="bg-gray-50/80 text-gray-400 font-bold uppercase tracking-wider text-[10px] border-b border-gray-100">
                         <tr>
-                            <th class="p-4">Waktu</th>
-                            <th class="p-4">Jenis Notifikasi</th>
-                            <th class="p-4">Terkait Prospek</th>
-                            <th class="p-4">Program & Keterangan</th>
-                            <th class="p-4">Status</th>
-                            <th class="p-4 text-right">Aksi</th>
+                            <th class="p-3 sm:p-4 whitespace-nowrap">Waktu</th>
+                            <th class="p-3 sm:p-4 whitespace-nowrap">Jenis Notifikasi</th>
+                            <th class="p-3 sm:p-4 whitespace-nowrap">Terkait Prospek</th>
+                            <th class="p-3 sm:p-4 min-w-[280px]">Program & Keterangan</th>
+                            <th class="p-3 sm:p-4 whitespace-nowrap">Status</th>
+                            <th class="p-3 sm:p-4 text-right whitespace-nowrap">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-50 text-gray-700">
@@ -82,10 +82,10 @@ onMounted(() => {
                             <td colspan="6" class="p-8 text-center text-gray-400 text-xs">Tidak ada notifikasi aktif.</td>
                         </tr>
                         <tr v-for="r in reminders" :key="r.id" class="hover:bg-gray-50/50 transition-colors" :class="r.is_read ? 'opacity-80' : 'bg-orange-50/25'">
-                            <td class="p-4 text-gray-500 whitespace-nowrap text-[11px] align-top">
+                            <td class="p-3 sm:p-4 text-gray-500 whitespace-nowrap text-[11px] align-top">
                                 {{ r.created_at ? new Date(r.created_at).toLocaleString('id-ID') : '-' }}
                             </td>
-                            <td class="p-4 font-bold text-gray-900 align-top">
+                            <td class="p-3 sm:p-4 font-bold text-gray-900 align-top whitespace-nowrap">
                                 <span v-if="r.type === 'payment_rejected'" class="block text-red-600 font-bold">Bukti Bayar Tidak Valid</span>
                                 <span v-else class="block">{{ r.title || (r.type === 'commission_paid' ? 'Komisi Cair' : 'Instruksi Admin') }}</span>
                                 <span v-if="r.type === 'payment_rejected'" class="inline-block mt-1 px-1.5 py-0.5 text-[9.5px] font-bold bg-red-100 text-red-700">
@@ -95,7 +95,7 @@ onMounted(() => {
                                     Prioritas Cepat
                                 </span>
                             </td>
-                            <td class="p-4 align-top">
+                            <td class="p-3 sm:p-4 align-top whitespace-nowrap">
                                 <div v-if="r.lead">
                                     <a href="#" @click.prevent="emit('navigate', `/leads/${r.lead.id}`)" class="font-bold text-gray-900 hover:text-orange-600 block text-xs">
                                         {{ r.lead.name }}
@@ -104,7 +104,7 @@ onMounted(() => {
                                         {{ r.lead.company || r.lead.institution || 'Individu' }}
                                     </div>
                                     <div v-if="r.type !== 'commission_paid'" class="mt-1.5 flex items-center gap-1.5">
-                                        <span class="inline-flex items-center gap-1 text-emerald-700 font-semibold font-mono text-[11px] bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                                        <span class="inline-flex items-center gap-1 whitespace-nowrap text-emerald-700 font-semibold font-mono text-[11px] bg-emerald-50 px-2 py-0.5 border border-emerald-200">
                                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                                             WA: {{ r.lead.whatsapp || r.lead.phone || '-' }}
                                         </span>
@@ -115,7 +115,7 @@ onMounted(() => {
                                 </div>
                                 <span v-else class="text-gray-400">-</span>
                             </td>
-                            <td class="p-4 max-w-md align-top space-y-1.5">
+                            <td class="p-3 sm:p-4 min-w-[280px] max-w-md align-top space-y-1.5">
                                 <div v-if="r.lead?.product?.name || r.lead?.product_name || r.lead?.target_program">
                                     <span class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-bold bg-orange-50 text-orange-700 border border-orange-200">
                                         Program: {{ r.lead.product?.name || r.lead.product_name || r.lead.target_program }}
@@ -125,10 +125,10 @@ onMounted(() => {
                                     {{ r.message || r.notes || '-' }}
                                 </p>
                             </td>
-                            <td class="p-4 align-top">
+                            <td class="p-3 sm:p-4 align-top whitespace-nowrap">
                                 <Badge :status="r.is_read ? 'aktif' : 'pending'" :text="r.is_read ? 'DIBACA' : 'BARU'" />
                             </td>
-                            <td class="p-4 text-right align-top">
+                            <td class="p-3 sm:p-4 text-right align-top whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-1.5 flex-wrap">
                                     <!-- Tombol Chat WA HANYA untuk follow-up instruksi admin, tidak ditampilkan untuk komisi cair -->
                                     <a v-if="r.type !== 'commission_paid' && getWaUrl(r.lead)" :href="getWaUrl(r.lead)" target="_blank" rel="noopener noreferrer"

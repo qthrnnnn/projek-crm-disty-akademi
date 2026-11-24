@@ -57,6 +57,7 @@ const completing = ref(false);
 const completeError = ref('');
 
 async function loadSalesUsers() {
+    if (!isAdmin.value) return;
     try {
         const res = await api.list('users', { per_page: '100' });
         salesUsers.value = (res.data || []).filter(u => u.role === 'sales');
@@ -410,9 +411,9 @@ onMounted(() => {
         </div>
 
         <!-- Navigation Tabs -->
-        <div class="flex items-center gap-2 border-b border-gray-200 pb-1 text-xs">
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 border-b border-gray-200 pb-2 sm:pb-1 text-[11px] sm:text-xs">
             <button @click="switchTab('schedules')"
-                class="px-4 py-2 font-medium rounded-lg transition-colors flex items-center gap-2"
+                class="px-3 sm:px-4 py-1.5 sm:py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2"
                 :class="activeTab === 'schedules' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'">
                 <span>Jadwal Follow-up</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px]"
@@ -422,7 +423,7 @@ onMounted(() => {
             </button>
 
             <button @click="switchTab('unfollowed')"
-                class="px-4 py-2 font-medium rounded-lg transition-colors flex items-center gap-2"
+                class="px-3 sm:px-4 py-1.5 sm:py-2 font-medium rounded-lg transition-colors whitespace-nowrap flex items-center gap-1.5 sm:gap-2"
                 :class="activeTab === 'unfollowed' ? 'bg-orange-500 text-white shadow-xs' : 'text-gray-600 hover:bg-gray-100'">
                 <span>Monitoring Belum Di-Followup</span>
                 <span class="px-1.5 py-0.2 rounded-full text-[10px]"
@@ -436,7 +437,7 @@ onMounted(() => {
         <div class="bg-white border border-gray-200 p-3 shadow-xs">
             <div class="flex flex-wrap items-center gap-2.5">
                 <template v-if="activeTab === 'schedules'">
-                    <select v-model="statusFilter" @change="handleFilter" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500 bg-white">
+                    <select v-model="statusFilter" @change="handleFilter" class="w-full sm:w-auto text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500 bg-white">
                         <option value="">Semua Status Jadwal</option>
                         <option value="pending">Pending (Menunggu)</option>
                         <option value="completed">Selesai (Sudah Kontak)</option>
@@ -444,7 +445,7 @@ onMounted(() => {
                     </select>
                 </template>
 
-                <select v-if="isAdmin" v-model="assignedFilter" @change="handleFilter" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500 bg-white">
+                <select v-if="isAdmin" v-model="assignedFilter" @change="handleFilter" class="w-full sm:w-auto text-xs border border-gray-200 px-3 py-2 text-gray-700 focus:outline-none focus:border-orange-500 bg-white">
                     <option value="">Semua Sales PIC</option>
                     <option v-for="s in salesUsers" :key="s.id" :value="s.id">{{ s.name }}</option>
                 </select>
@@ -535,18 +536,18 @@ onMounted(() => {
 
         <!-- TAB 2: Monitoring Prospek Belum Di-Followup -->
         <div v-else-if="activeTab === 'unfollowed'" class="space-y-3">
-            <div class="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs flex items-center justify-between">
+            <div class="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 sm:gap-4">
                 <div>
                     <strong>Pusat Monitoring Follow-Up:</strong> Daftar calon peserta yang belum pernah dikontak atau belum di-follow up lagi selama lebih dari 1 minggu.
                 </div>
-                <div v-if="isAdmin" class="text-[11px] text-amber-700 font-medium">
+                <div v-if="isAdmin" class="text-[11px] text-amber-700 font-medium sm:text-right sm:shrink-0">
                     Admin dapat mengirim instruksi pengingat langsung ke Sales PIC
                 </div>
             </div>
 
             <div class="bg-white border border-gray-200 overflow-hidden shadow-xs">
                 <div class="overflow-x-auto">
-                    <table class="w-full min-w-[750px] text-left text-xs text-gray-600">
+                    <table class="w-full min-w-[820px] text-left text-xs text-gray-600">
                         <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-semibold uppercase tracking-wider text-[10.5px]">
                             <tr>
                                 <th class="py-3.5 px-4">Calon Peserta</th>
@@ -569,7 +570,7 @@ onMounted(() => {
                                     <button @click="emit('navigate', `/leads/${lead.id}`)" class="font-semibold text-gray-900 hover:text-orange-600 text-left">
                                         {{ lead.name }}
                                     </button>
-                                    <div class="text-[11px] text-gray-400 font-mono mt-0.5">{{ lead.lead_code }}</div>
+                                    <div class="text-[11px] text-gray-400 font-mono mt-0.5 whitespace-nowrap">{{ lead.lead_code }}</div>
                                 </td>
                                 <td class="py-3.5 px-4">
                                     <div class="flex items-center gap-1.5">
@@ -646,8 +647,8 @@ onMounted(() => {
         </div>
 
         <!-- MODAL 1: Beri Pengingat ke Sales (Khusus Admin, Jarak 1 Minggu) -->
-        <div v-if="showReminderModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-            <div class="bg-white max-w-lg w-full p-5 shadow-2xl space-y-4">
+        <div v-if="showReminderModal" class="fixed inset-0 z-50 overflow-y-auto flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4">
+            <div class="bg-white max-w-lg w-full my-auto max-h-[92dvh] overflow-y-auto p-4 sm:p-5 shadow-2xl space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                     <div>
                         <h2 class="text-base font-bold text-gray-900">Beri Pengingat Follow-up ke Sales</h2>
@@ -669,13 +670,13 @@ onMounted(() => {
                         <strong class="text-gray-900">{{ reminderLead?.name }}</strong> ({{ reminderLead?.phone || '-' }})
                     </div>
 
-                    <div v-if="reminderLead?.assigned_to" class="p-3 bg-gray-50 border border-gray-100 flex items-center justify-between text-xs">
+                    <div v-if="reminderLead?.assigned_to" class="p-3 bg-gray-50 border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
                         <div>
                             <span class="text-gray-400 block text-[11px] font-medium">Sales Penanggung Jawab</span>
                             <span class="font-bold text-gray-900 text-sm">{{ reminderLead.assigned_user?.name || 'Sales PIC' }}</span>
                             <span class="text-gray-500 text-[11px] block">{{ reminderLead.assigned_user?.email }}</span>
                         </div>
-                        <span class="px-2.5 py-1 text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">
+                        <span class="w-fit px-2.5 py-1 text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200 shrink-0">
                             Penerima Notifikasi
                         </span>
                     </div>
@@ -731,8 +732,8 @@ onMounted(() => {
         </div>
 
         <!-- MODAL 2: Selesaikan Follow-up & Catat Feedback (Khusus Sales) -->
-        <div v-if="showCompleteModal && isSales" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-            <div class="bg-white max-w-lg w-full p-5 shadow-2xl space-y-4">
+        <div v-if="showCompleteModal && isSales" class="fixed inset-0 z-50 overflow-y-auto flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4">
+            <div class="bg-white max-w-lg w-full my-auto max-h-[92dvh] overflow-y-auto p-4 sm:p-5 shadow-2xl space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                     <div>
                         <h2 class="text-base font-bold text-gray-900">Catat Hasil & Feedback Follow-up</h2>
@@ -808,8 +809,8 @@ onMounted(() => {
         </div>
 
         <!-- MODAL 3: Penugasan Sales PIC oleh Admin -->
-        <div v-if="showAssignModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
-            <div class="bg-white max-w-sm w-full p-5 shadow-2xl space-y-4">
+        <div v-if="showAssignModal" class="fixed inset-0 z-50 overflow-y-auto flex items-start sm:items-center justify-center bg-black/40 backdrop-blur-xs p-3 sm:p-4">
+            <div class="bg-white max-w-sm w-full my-auto max-h-[92dvh] overflow-y-auto p-4 sm:p-5 shadow-2xl space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                     <h3 class="text-sm font-bold text-gray-900">Tugaskan Prospek ke Sales PIC</h3>
                     <button @click="showAssignModal = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>

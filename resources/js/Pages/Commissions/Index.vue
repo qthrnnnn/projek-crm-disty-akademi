@@ -130,7 +130,7 @@ function formatDate(dateStr) {
     if (!dateStr) return '-';
     try {
         const d = new Date(dateStr);
-        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+        return d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Asia/Jakarta' });
     } catch {
         return dateStr;
     }
@@ -146,6 +146,7 @@ function formatDateTime(dateStr) {
             year: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: 'Asia/Jakarta',
         });
     } catch {
         return dateStr;
@@ -162,6 +163,7 @@ function showFeedback(type, text) {
 }
 
 async function loadSalesUsers() {
+    if (!isAdmin.value) return;
     try {
         const res = await api.list('users', { per_page: '100' });
         salesUsers.value = (res.data || []).filter(u => u.role === 'sales');
@@ -247,13 +249,12 @@ const selectedProofCommission = ref(null);
 
 function formatDatetimeLocal(dateOrStr) {
     const d = dateOrStr ? new Date(dateOrStr) : new Date();
-    const pad = (n) => String(n).padStart(2, '0');
-    const yyyy = d.getFullYear();
-    const mm = pad(d.getMonth() + 1);
-    const dd = pad(d.getDate());
-    const hh = pad(d.getHours());
-    const mi = pad(d.getMinutes());
-    return `${yyyy}-${mm}-${dd}T${hh}:${mi}`;
+    const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+    }).formatToParts(d).map(({ type, value }) => [type, value]));
+    return `${parts.year}-${parts.month}-${parts.day}T${parts.hour}:${parts.minute}`;
 }
 
 function openPayModal(commission) {
@@ -283,11 +284,12 @@ async function submitTransferCommission() {
 
     savingTransfer.value = true;
     try {
+        const paidAt = `${transferForm.value.paid_at}+07:00`;
         await api.payCommission(selectedCommissionForPay.value.id, {
-            paid_at: transferForm.value.paid_at,
+            paid_at: paidAt,
             notes: transferForm.value.notes,
         });
-        showFeedback('success', `Komisi #${selectedCommissionForPay.value.id} berhasil ditandai sudah ditransfer pada ${formatDateTime(transferForm.value.paid_at)} WIB.`);
+        showFeedback('success', `Komisi #${selectedCommissionForPay.value.id} berhasil ditandai sudah ditransfer pada ${formatDateTime(paidAt)} WIB.`);
         closePayModal();
         await loadCommissions(pagination.value.current_page);
     } catch (e) {
@@ -352,10 +354,7 @@ function getDateKey(dtStr) {
     try {
         const d = new Date(dtStr);
         if (!isNaN(d.getTime())) {
-            const y = d.getFullYear();
-            const m = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${y}-${m}-${day}`;
+            return formatDatetimeLocal(d).slice(0, 10);
         }
     } catch (e) {}
     const match = String(dtStr).match(/^(\d{4}-\d{2}-\d{2})/);
@@ -723,7 +722,7 @@ onUnmounted(() => {
                     {{ isAdmin ? 'Komisi 10% berbasis harga katalog resmi produk Disty Akademi, persetujuan, pencairan, dan cetak transfer bank.' : 'Komisi 10% berbasis harga katalog resmi produk Disty Akademi atas setiap pendaftaran dan closing yang Anda tangani.' }}
                 </p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <button @click="loadCommissions(pagination.current_page)"
                     class="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors shadow-xs">
                     <svg class="w-3.5 h-3.5" :class="{ 'animate-spin': loading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -739,20 +738,20 @@ onUnmounted(() => {
         </div>
 
         <!-- Sales Bank Account Banner (Khusus Sales) -->
-        <div v-if="!isAdmin" class="bg-gradient-to-r from-orange-50 via-amber-50 to-white border border-orange-200 p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div class="flex items-start gap-3.5">
+        <div v-if="!isAdmin" class="bg-gradient-to-r from-orange-50 via-amber-50 to-white border border-orange-200 p-3.5 sm:p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 sm:gap-4">
+            <div class="flex items-start gap-3">
                 <div class="w-10 h-10 bg-orange-500 text-white flex items-center justify-center shrink-0 shadow-sm">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
                     </svg>
                 </div>
-                <div>
-                    <div class="flex items-center gap-2">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2">
                         <h3 class="text-xs font-bold uppercase tracking-wider text-orange-950">Rekening Pencairan Komisi Anda</h3>
-                        <span v-if="currentUser.bank_account_number" class="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        <span v-if="currentUser.bank_account_number" class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
                             Aktif
                         </span>
-                        <span v-else class="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
+                        <span v-else class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10px] font-semibold bg-amber-100 text-amber-800 border border-amber-200">
                             Belum Diatur
                         </span>
                     </div>
@@ -768,7 +767,7 @@ onUnmounted(() => {
                 </div>
             </div>
             <button @click="openBankModal" type="button"
-                class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition-all shadow-xs shrink-0">
+                class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-orange-500 hover:bg-orange-600 rounded-xl transition-all shadow-xs shrink-0">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                 </svg>
@@ -826,7 +825,7 @@ onUnmounted(() => {
         <!-- Filter Bar -->
         <div class="bg-white border border-gray-200/80 p-3.5 shadow-xs">
             <form @submit.prevent="loadCommissions(1)" class="flex flex-wrap items-center gap-2.5">
-                <div class="relative flex-1 min-w-[200px]">
+                <div class="relative w-full sm:w-auto sm:flex-1 sm:min-w-[200px]">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -837,28 +836,28 @@ onUnmounted(() => {
                         class="w-full text-xs pl-9 pr-3 py-2 border border-gray-200 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition-colors">
                 </div>
 
-                <select v-model="statusFilter" @change="loadCommissions(1)" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-orange-500">
+                <select v-model="statusFilter" @change="loadCommissions(1)" class="w-full sm:w-auto text-xs border border-gray-200 px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-orange-500">
                     <option value="">Semua Status Komisi</option>
                     <option value="pending">Pending (Menunggu Persetujuan)</option>
                     <option value="approved">Disetujui (Siap Dicairkan)</option>
                     <option value="paid">Sudah Dibayar (Lunas)</option>
                 </select>
 
-                <select v-if="isAdmin" v-model="userFilter" @change="loadCommissions(1)" class="text-xs border border-gray-200 px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-orange-500">
+                <select v-if="isAdmin" v-model="userFilter" @change="loadCommissions(1)" class="w-full sm:w-auto text-xs border border-gray-200 px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-orange-500">
                     <option value="">Semua Sales</option>
                     <option v-for="s in salesUsers" :key="s.id" :value="s.id">{{ s.name }}</option>
                 </select>
 
                 <input type="date" v-model="dateFilter" @change="loadCommissions(1)"
-                    class="text-xs border border-gray-200 px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-orange-500 cursor-pointer"
+                    class="w-full sm:w-auto text-xs border border-gray-200 px-3 py-2 text-gray-700 bg-white focus:outline-none focus:border-orange-500 cursor-pointer"
                     title="Filter Tanggal Transaksi / Transfer" />
 
-                <button type="submit" class="text-xs bg-orange-500 text-white font-medium py-2 px-3.5 rounded-lg hover:bg-orange-600 transition-colors shadow-xs">
+                <button type="submit" class="w-full sm:w-auto text-xs bg-orange-500 text-white font-medium py-2 px-3.5 rounded-lg hover:bg-orange-600 transition-colors shadow-xs">
                     Terapkan Filter
                 </button>
 
                 <button v-if="statusFilter || userFilter || dateFilter || search" @click="resetFilter" type="button"
-                    class="text-xs text-gray-500 hover:text-gray-800 px-2 py-1 font-medium transition-colors">
+                    class="w-full sm:w-auto text-xs text-gray-500 hover:text-gray-800 px-2 py-1 font-medium transition-colors">
                     Reset
                 </button>
             </form>
@@ -1051,21 +1050,21 @@ onUnmounted(() => {
         </div>
 
         <!-- ── MODAL TRANSFER KOMISI (INPUT JAM MUTASI BANK) ── -->
-        <div v-if="showTransferModal && selectedCommissionForPay" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white max-w-lg w-full shadow-2xl border border-gray-100 overflow-hidden transform transition-all animate-in fade-in zoom-in-95">
+        <div v-if="showTransferModal && selectedCommissionForPay" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div class="bg-white max-w-lg w-full my-auto max-h-[92dvh] overflow-y-auto shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in-95">
                 <!-- Header -->
-                <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-emerald-50/50">
-                    <div>
+                <div class="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between gap-2 bg-emerald-50/50">
+                    <div class="min-w-0">
                         <h3 class="text-sm font-bold text-gray-900">
                             {{ selectedCommissionForPay.status === 'paid' ? 'Ubah Waktu Transfer Komisi' : 'Konfirmasi Transfer Komisi Sales' }}
                         </h3>
                         <p class="text-[11px] text-gray-500">Catat tanggal & jam transfer sesuai mutasi bank resmi</p>
                     </div>
-                    <button @click="closePayModal" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
+                    <button @click="closePayModal" class="text-gray-400 hover:text-gray-600 font-bold text-lg shrink-0">&times;</button>
                 </div>
 
                 <!-- Form Body -->
-                <form @submit.prevent="submitTransferCommission" class="p-5 space-y-4">
+                <form @submit.prevent="submitTransferCommission" class="p-4 sm:p-5 space-y-4">
                     <!-- Info Box -->
                     <div class="bg-gray-50 border border-gray-200/80 p-3.5 space-y-2 text-xs">
                         <div class="flex justify-between items-center">
@@ -1109,7 +1108,7 @@ onUnmounted(() => {
 
                     <!-- Input Jam & Tanggal Mutasi -->
                     <div>
-                        <div class="flex items-center justify-between mb-1.5">
+                        <div class="flex flex-wrap items-center justify-between gap-1 mb-1.5">
                             <label class="block text-xs font-semibold text-gray-700">
                                 Tanggal & Jam Transfer (Sesuai Mutasi Bank) *
                             </label>
@@ -1135,7 +1134,7 @@ onUnmounted(() => {
                     </div>
 
                     <!-- Footer Actions -->
-                    <div class="pt-2 flex items-center justify-end gap-2">
+                    <div class="pt-2 flex flex-wrap items-center justify-end gap-2">
                         <button @click="closePayModal" type="button"
                             class="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl transition-colors">
                             Batal
@@ -1150,21 +1149,21 @@ onUnmounted(() => {
         </div>
 
         <!-- ── MODAL BUKTI TF TRANSAKSI CUSTOMER ── -->
-        <div v-if="showProofModal && selectedProofCommission" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white max-w-lg w-full shadow-2xl border border-gray-100 overflow-hidden transform transition-all animate-in fade-in zoom-in-95">
-                <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-blue-50/50">
-                    <div>
+        <div v-if="showProofModal && selectedProofCommission" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div class="bg-white max-w-lg w-full my-auto max-h-[92dvh] overflow-y-auto shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in-95">
+                <div class="p-4 border-b border-gray-100 flex items-center justify-between gap-2 bg-blue-50/50">
+                    <div class="min-w-0">
                         <h3 class="text-sm font-bold text-gray-900">Bukti Transfer Transaksi Customer</h3>
                         <p class="text-[11px] text-gray-500">Verifikasi bukti transfer transaksi antara customer & sales</p>
                     </div>
-                    <button @click="closeProofModal" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
+                    <button @click="closeProofModal" class="text-gray-400 hover:text-gray-600 font-bold text-lg shrink-0">&times;</button>
                 </div>
-                <div class="p-5 space-y-3">
+                <div class="p-4 sm:p-5 space-y-3">
                     <div class="text-xs bg-gray-50 p-3 border border-gray-200/80 space-y-1.5">
-                        <div class="flex justify-between"><span class="text-gray-500">Nama Customer:</span> <span class="font-bold text-gray-800">{{ selectedProofCommission.lead?.name || 'Customer' }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Program:</span> <span class="font-medium text-gray-800">{{ selectedProofCommission.lead?.product?.name || '-' }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Nilai Deal / Transaksi:</span> <span class="font-bold text-gray-900">{{ formatCurrency(selectedProofCommission.deal_amount || selectedProofCommission.lead?.deal_price) }}</span></div>
-                        <div class="flex justify-between"><span class="text-gray-500">Sales PIC:</span> <span class="font-medium text-gray-800">{{ selectedProofCommission.user?.name || '-' }}</span></div>
+                        <div class="flex justify-between gap-2"><span class="text-gray-500 shrink-0">Nama Customer:</span> <span class="font-bold text-gray-800 text-right">{{ selectedProofCommission.lead?.name || 'Customer' }}</span></div>
+                        <div class="flex justify-between gap-2"><span class="text-gray-500 shrink-0">Program:</span> <span class="font-medium text-gray-800 text-right">{{ selectedProofCommission.lead?.product?.name || '-' }}</span></div>
+                        <div class="flex justify-between gap-2"><span class="text-gray-500 shrink-0">Nilai Deal / Transaksi:</span> <span class="font-bold text-gray-900 text-right">{{ formatCurrency(selectedProofCommission.deal_amount || selectedProofCommission.lead?.deal_price) }}</span></div>
+                        <div class="flex justify-between gap-2"><span class="text-gray-500 shrink-0">Sales PIC:</span> <span class="font-medium text-gray-800 text-right">{{ selectedProofCommission.user?.name || '-' }}</span></div>
                     </div>
 
                     <div v-if="getProofUrl(selectedProofCommission)" class="border border-gray-200 overflow-hidden bg-gray-900/5 flex items-center justify-center min-h-[220px] max-h-[360px]">
@@ -1174,7 +1173,7 @@ onUnmounted(() => {
                         Bukti transfer transaksi belum diunggah untuk data ini.
                     </div>
 
-                    <div class="pt-2 flex items-center justify-between">
+                    <div class="pt-2 flex flex-wrap items-center justify-between gap-2">
                         <button @click="closeProofModal" type="button" class="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-xl">
                             Tutup
                         </button>
@@ -1190,18 +1189,18 @@ onUnmounted(() => {
         </div>
 
         <!-- ── MODAL CETAK LAPORAN TRANSFER ── -->
-        <div v-if="showPrintModal" class="print-modal-wrapper fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:static print:block print:bg-white print:overflow-visible print:inset-auto print:p-0">
-            <div class="print-modal-container bg-white max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:static print:block print:max-h-none print:h-auto print:my-0 print:border-none print:shadow-none print:overflow-visible print:max-w-none">
+        <div v-if="showPrintModal" class="print-modal-wrapper fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-6 print:static print:block print:bg-white print:overflow-visible print:inset-auto print:p-0">
+            <div class="print-modal-container bg-white max-w-4xl w-full my-auto max-h-[92dvh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:static print:block print:max-h-none print:h-auto print:my-0 print:border-none print:shadow-none print:overflow-visible print:max-w-none">
                 <!-- Modal Controls Header (Hidden during Print) -->
-                <div class="p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3 bg-gray-50/80 no-print">
-                    <div>
+                <div class="p-3 sm:p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-gray-50/80 shrink-0 no-print">
+                    <div class="min-w-0">
                         <h2 class="text-sm font-bold text-gray-900 leading-tight">Cetak Rekapitulasi Transfer Komisi Sales</h2>
                         <p class="text-[11px] text-gray-500">Pratinjau lembar instruksi transfer bank resmi Disty Akademi</p>
                     </div>
 
                     <!-- Filter Controls inside Modal -->
-                    <div class="flex items-center flex-wrap gap-2">
-                        <select v-model="printFilterStatus" class="text-xs border border-gray-300 px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-orange-500">
+                    <div class="w-full sm:w-auto flex items-center flex-wrap gap-2">
+                        <select v-model="printFilterStatus" class="w-full sm:w-auto text-xs border border-gray-300 px-2.5 py-1.5 bg-white text-gray-700 focus:outline-none focus:border-orange-500">
                             <option value="">Semua Status</option>
                             <option value="approved">Hanya Siap Dicairkan (Approved)</option>
                             <option value="paid">Hanya Sudah Ditransfer (Paid)</option>
@@ -1209,8 +1208,8 @@ onUnmounted(() => {
                         </select>
 
                         <!-- Filter Sales (Searchable Combobox: Bisa Dicari & Diketik Langsung) -->
-                        <div v-if="isAdmin" class="relative" ref="salesDropdownRef">
-                            <div class="flex items-center border border-gray-300 bg-white px-2 py-1 text-xs focus-within:border-orange-500 transition-colors min-w-[150px] max-w-[190px]">
+                        <div v-if="isAdmin" class="relative w-full sm:w-auto" ref="salesDropdownRef">
+                            <div class="flex items-center border border-gray-300 bg-white px-2 py-1 text-xs focus-within:border-orange-500 transition-colors w-full sm:min-w-[150px] sm:max-w-[190px]">
                                 <svg class="w-3.5 h-3.5 text-gray-400 shrink-0 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                                 </svg>
@@ -1246,7 +1245,7 @@ onUnmounted(() => {
                             <!-- Dropdown Menu List Floating -->
                             <div
                                 v-if="isSalesDropdownOpen"
-                                class="absolute left-0 mt-1 w-56 max-h-60 overflow-y-auto bg-white border border-gray-200 shadow-xl z-50 py-1 divide-y divide-gray-100">
+                                class="absolute left-0 mt-1 w-full sm:w-56 max-h-60 overflow-y-auto bg-white border border-gray-200 shadow-xl z-50 py-1 divide-y divide-gray-100">
                                 <!-- Opsi Semua Sales -->
                                 <div
                                     @click="selectSales(null)"
@@ -1284,10 +1283,10 @@ onUnmounted(() => {
                         </div>
 
                         <!-- Filter Tanggal Cetak Transfer -->
-                        <div class="flex items-center border border-gray-300 bg-white px-2.5 py-1 gap-1.5">
+                        <div class="w-full sm:w-auto flex items-center border border-gray-300 bg-white px-2.5 py-1 gap-1.5">
                             <label class="text-[11px] font-semibold text-gray-500 whitespace-nowrap">Tanggal:</label>
                             <input type="date" v-model="printFilterDate"
-                                class="text-xs text-gray-700 bg-transparent focus:outline-none cursor-pointer"
+                                class="flex-1 sm:flex-none text-xs text-gray-700 bg-transparent focus:outline-none cursor-pointer"
                                 title="Pilih tanggal transfer / komisi yang ingin dicetak" />
                             <button v-if="printFilterDate" @click="printFilterDate = ''" type="button"
                                 class="text-xs text-gray-400 hover:text-rose-600 px-1 font-bold transition-colors"
@@ -1296,18 +1295,24 @@ onUnmounted(() => {
                             </button>
                         </div>
 
-                        <button @click="printDocument" class="px-3 py-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors shadow-xs">
-                            Cetak (PDF)
-                        </button>
+                        <div class="w-full sm:w-auto flex items-center gap-2">
+                            <button @click="printDocument" class="flex-1 sm:flex-none px-3 py-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 rounded-lg transition-colors shadow-xs">
+                                Cetak (PDF)
+                            </button>
 
-                        <button @click="closePrintModal" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
-                            Tutup
-                        </button>
+                            <button @click="closePrintModal" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
+                                Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- ── PRINTABLE SHEET AREA ── -->
-                <div id="print-area" class="p-8 sm:p-10 bg-white text-gray-900 print:p-0">
+                <div class="flex-1 overflow-x-auto bg-gray-50 p-3 sm:p-6 print:overflow-visible print:bg-white print:p-0">
+                    <p class="sm:hidden no-print text-[11px] text-gray-500 text-center mb-2">
+                        Geser ke samping untuk melihat seluruh pratinjau dokumen A4 &harr;
+                    </p>
+                <div id="print-area" class="min-w-[760px] md:min-w-0 p-6 sm:p-10 bg-white text-gray-900 border border-gray-200 shadow-xs mx-auto print:min-w-0 print:border-none print:shadow-none print:p-0">
                     <!-- KOP SURAT RESMI -->
                     <div class="border-b-4 border-double border-gray-800 pb-4 mb-5">
                         <div class="flex items-center justify-between gap-4">
@@ -1456,13 +1461,14 @@ onUnmounted(() => {
                         </div>
                     </div>
                 </div>
+                </div>
 
                 <!-- Modal Footer (Hidden during Print) -->
-                <div class="p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50/80 no-print">
-                    <span class="text-xs text-gray-500">
+                <div class="p-3 sm:p-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-gray-50/80 shrink-0 no-print">
+                    <span class="text-[11px] sm:text-xs text-gray-500">
                         Format cetak dioptimalkan untuk kertas A4 potret atau landscape saat dicetak ke PDF/Printer.
                     </span>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-end gap-2 shrink-0">
                         <button @click="closePrintModal" class="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors">
                             Tutup
                         </button>
@@ -1475,16 +1481,16 @@ onUnmounted(() => {
         </div>
 
         <!-- ── MODAL PENGATURAN REKENING BANK SALES ── -->
-        <div v-if="showBankModal" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-            <div class="bg-white max-w-md w-full shadow-2xl border border-gray-100 overflow-hidden transform transition-all animate-in fade-in zoom-in-95">
-                <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-orange-50/70">
-                    <div>
+        <div v-if="showBankModal" class="no-print fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div class="bg-white max-w-md w-full my-auto max-h-[92dvh] overflow-y-auto shadow-2xl border border-gray-100 transform transition-all animate-in fade-in zoom-in-95">
+                <div class="p-4 border-b border-gray-100 flex items-center justify-between gap-2 bg-orange-50/70">
+                    <div class="min-w-0">
                         <h3 class="text-sm font-bold text-gray-900">Rekening Bank Pencairan Komisi</h3>
                         <p class="text-[11px] text-gray-500">Admin akan mentransfer komisi closing Anda ke nomor rekening ini</p>
                     </div>
-                    <button @click="closeBankModal" class="text-gray-400 hover:text-gray-600 font-bold text-lg">&times;</button>
+                    <button @click="closeBankModal" class="text-gray-400 hover:text-gray-600 font-bold text-lg shrink-0">&times;</button>
                 </div>
-                <form @submit.prevent="submitBankForm" class="p-5 space-y-4">
+                <form @submit.prevent="submitBankForm" class="p-4 sm:p-5 space-y-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Bank *</label>
                         <select v-model="bankForm.bank_name" required class="w-full text-xs px-3.5 py-2.5 border border-gray-300 text-gray-800 bg-white focus:outline-none focus:border-orange-500">

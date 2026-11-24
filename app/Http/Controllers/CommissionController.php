@@ -79,8 +79,12 @@ class CommissionController extends Controller
             abort(404, 'Data komisi tidak ditemukan.');
         }
 
+        $request->validate(['paid_at' => ['nullable', 'date']]);
         $paidAtInput = $request->input('paid_at');
-        $paidAt = $paidAtInput ? \Carbon\Carbon::parse($paidAtInput) : now();
+        // The transfer form uses WIB; store the instant in the application's UTC timezone.
+        $paidAt = $paidAtInput
+            ? \Carbon\Carbon::parse($paidAtInput, 'Asia/Jakarta')->setTimezone(config('app.timezone'))
+            : now();
         $notes = $request->input('notes');
 
         $updates = [
@@ -115,7 +119,7 @@ class CommissionController extends Controller
             ]);
         }
 
-        $transferTimeFormatted = $paidAt->translatedFormat('d M Y, H:i') . ' WIB';
+        $transferTimeFormatted = $paidAt->copy()->setTimezone('Asia/Jakarta')->translatedFormat('d M Y, H:i') . ' WIB';
 
         // Buat atau perbarui notifikasi pencairan komisi untuk Sales (1 komisi = tepat 1 notifikasi)
         SalesReminder::updateOrCreate(

@@ -73,12 +73,12 @@ onMounted(() => {
 
 <template>
     <div class="max-w-2xl mx-auto space-y-5">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">Tambah Prospek Baru</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Input data calon peserta atau mitra pelatihan</p>
             </div>
-            <button @click="emit('navigate', '/leads')" class="text-xs font-semibold text-gray-500 hover:text-gray-900">
+            <button @click="emit('navigate', '/leads')" class="self-start sm:self-auto whitespace-nowrap shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900">
                 &larr; Batal & Kembali
             </button>
         </div>
@@ -105,7 +105,7 @@ onMounted(() => {
                 {{ error }}
             </div>
 
-            <div class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+            <div class="bg-white p-4 sm:p-6 border border-gray-100 shadow-xs space-y-4">
                 <!-- Nama Lengkap -->
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Lengkap *</label>

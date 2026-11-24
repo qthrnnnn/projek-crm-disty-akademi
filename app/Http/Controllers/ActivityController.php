@@ -10,14 +10,7 @@ class ActivityController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Activity::with(['lead', 'user'])->latest('activity_at');
-
-        if (auth()->user()->isSales()) {
-            $query->where(function ($q) {
-                $q->where('user_id', auth()->id())
-                  ->orWhereHas('lead', fn ($l) => $l->where('assigned_to', auth()->id()));
-            });
-        }
+        $query = Activity::with(['lead', 'user'])->visibleTo($request->user())->latest('activity_at')->latest('id');
 
         if ($request->filled('type')) {
             $query->where('type', $request->type);

@@ -396,7 +396,7 @@ watch(() => props.query?.institution_id, (newInstId) => {
                 <button type="submit" class="w-full sm:w-auto px-4 py-2 text-xs bg-orange-500 text-white font-medium rounded-lg hover:bg-orange-600 transition-colors whitespace-nowrap">
                     Terapkan Filter
                 </button>
-                <button v-if="search || statusFilter || institutionFilter" @click="resetFilter" type="button" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
+                <button v-if="search || statusFilter || institutionFilter" @click="resetFilter" type="button" class="w-full sm:w-auto px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
                     Reset
                 </button>
             </form>
@@ -405,7 +405,7 @@ watch(() => props.query?.institution_id, (newInstId) => {
         <!-- Table Card -->
         <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[700px] text-left text-xs text-gray-600">
+                <table class="w-full min-w-[820px] text-left text-xs text-gray-600">
                     <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
                         <tr>
                             <th class="py-3.5 px-4">CUSTOMER</th>
@@ -433,17 +433,17 @@ watch(() => props.query?.institution_id, (newInstId) => {
                                     {{ c.name }}
                                 </button>
                             </td>
-                            <td class="py-3.5 px-4 font-mono text-gray-500 text-[11px]">
+                            <td class="py-3.5 px-4 font-mono text-gray-500 text-[11px] whitespace-nowrap">
                                 {{ c.customer_code || '-' }}
                             </td>
                             <td class="py-3.5 px-4">
                                 <div class="font-medium text-gray-900">{{ c.institution?.name || c.company || '-' }}</div>
                                 <div v-if="c.institution?.type" class="text-[10.5px] text-gray-400">{{ c.institution.type }}</div>
                             </td>
-                            <td class="py-3.5 px-4 text-gray-600">{{ c.email || '-' }}</td>
-                            <td class="py-3.5 px-4 text-gray-600">{{ c.phone || '-' }}</td>
+                            <td class="py-3.5 px-4 text-gray-600 whitespace-nowrap">{{ c.email || '-' }}</td>
+                            <td class="py-3.5 px-4 text-gray-600 whitespace-nowrap">{{ c.phone || '-' }}</td>
                             <td class="py-3.5 px-4">
-                                <span class="px-2 py-0.5 text-[10px] font-medium border"
+                                <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10px] font-medium border"
                                     :class="(c.status === 'active' || c.status === 'aktif' || !c.status) ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'">
                                     {{ (c.status === 'active' || c.status === 'aktif' || !c.status) ? 'Active' : 'Inactive' }}
                                 </span>
@@ -472,66 +472,71 @@ watch(() => props.query?.institution_id, (newInstId) => {
         </div>
 
         <!-- ── MODAL CETAK REKAPITULASI DAFTAR CUSTOMER ── -->
-        <div v-if="showPrintModal" class="print-modal-wrapper fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-6 print:static print:block print:bg-white print:overflow-visible print:inset-auto print:p-0">
-            <div class="print-modal-container bg-white w-full max-h-[92vh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:static print:block print:max-h-none print:h-auto print:my-0 print:border-none print:shadow-none print:overflow-visible print:max-w-none transition-all"
+        <div v-if="showPrintModal" class="print-modal-wrapper fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-start sm:items-center justify-center p-2 sm:p-6 print:static print:block print:bg-white print:overflow-visible print:inset-auto print:p-0">
+            <div class="print-modal-container bg-white w-full my-auto max-h-[92dvh] overflow-y-auto shadow-2xl flex flex-col border border-gray-200 print:static print:block print:max-h-none print:h-auto print:my-0 print:border-none print:shadow-none print:overflow-visible print:max-w-none transition-all"
                 :class="printOrientation === 'landscape' ? 'max-w-6xl' : 'max-w-4xl'">
                 <!-- Header Modal (Hidden saat print) -->
-                <div class="p-3.5 sm:p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3 bg-white no-print">
-                    <div>
+                <div class="p-3 sm:p-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 bg-white no-print">
+                    <div class="min-w-0">
                         <h3 class="text-sm font-bold text-gray-900">Cetak Rekapitulasi Daftar Customer</h3>
                         <p class="text-[11px] text-gray-500">Pratinjau lembar data resmi pelanggan & peserta Disty Akademi</p>
                     </div>
 
                     <!-- Filter Bar & Orientasi di Header Modal -->
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="w-full sm:w-auto flex flex-wrap items-center gap-2">
                         <!-- Pilihan Orientasi Cetak -->
-                        <div class="flex items-center gap-1 bg-gray-100 p-0.5 border border-gray-300">
+                        <div class="flex items-center gap-1 bg-gray-100 p-0.5 border border-gray-300 w-full sm:w-auto">
                             <button type="button" @click="printOrientation = 'landscape'"
                                 :class="printOrientation === 'landscape' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'"
-                                class="px-2.5 py-1 text-[11px] transition-colors">
+                                class="flex-1 sm:flex-none px-2.5 py-1 text-[11px] transition-colors">
                                 Lanskap (Rekomendasi)
                             </button>
                             <button type="button" @click="printOrientation = 'portrait'"
                                 :class="printOrientation === 'portrait' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'"
-                                class="px-2.5 py-1 text-[11px] transition-colors">
+                                class="flex-1 sm:flex-none px-2.5 py-1 text-[11px] transition-colors">
                                 Potret
                             </button>
                         </div>
 
-                        <div class="flex items-center gap-1.5">
-                            <span class="text-xs text-gray-500 font-medium">Tanggal:</span>
+                        <div class="w-full sm:w-auto flex items-center gap-1.5">
+                            <span class="text-xs text-gray-500 font-medium whitespace-nowrap">Tanggal:</span>
                             <input type="date" v-model="printFilterDate" @change="fetchPrintCustomers"
-                                class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white" />
+                                class="flex-1 sm:flex-none text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white" />
                             <button v-if="printFilterDate" @click="printFilterDate = ''; fetchPrintCustomers()" type="button"
                                 class="text-[10px] text-gray-500 hover:text-gray-800 underline">Semua</button>
                         </div>
 
                         <select v-model="printFilterStatus" @change="fetchPrintCustomers"
-                            class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white">
+                            class="w-full sm:w-auto text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white">
                             <option value="">Semua Status</option>
                             <option value="active">Active</option>
                             <option value="inactive">Inactive</option>
                         </select>
 
                         <select v-model="printFilterInstitution" @change="fetchPrintCustomers"
-                            class="text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white max-w-[160px]">
+                            class="w-full sm:w-auto text-xs border border-gray-300 py-1 px-2 text-gray-800 focus:outline-none focus:border-orange-500 bg-white sm:max-w-[160px]">
                             <option value="">Semua Instansi</option>
                             <option v-for="inst in institutions" :key="inst.id" :value="inst.id">{{ inst.name }}</option>
                         </select>
 
-                        <button @click="printDocument" class="px-3.5 py-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-xs">
-                            Cetak (PDF)
-                        </button>
+                        <div class="w-full sm:w-auto flex items-center gap-2">
+                            <button @click="printDocument" class="flex-1 sm:flex-none px-3.5 py-1.5 text-xs font-semibold text-white bg-orange-500 hover:bg-orange-600 transition-colors shadow-xs">
+                                Cetak (PDF)
+                            </button>
 
-                        <button @click="closePrintModal" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors">
-                            Tutup
-                        </button>
+                            <button @click="closePrintModal" class="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors">
+                                Tutup
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Lembar Dokumen Cetak (Print Area) -->
-                <div class="flex-1 overflow-y-auto p-4 sm:p-8 bg-gray-50 print:bg-white print:p-0">
-                    <div id="print-area" class="bg-white p-6 sm:p-8 border border-gray-200 shadow-sm mx-auto text-gray-900 print:border-none print:shadow-none print:p-0 print:max-w-none"
+                <div class="flex-1 overflow-auto p-3 sm:p-8 bg-gray-50 print:bg-white print:p-0 print:overflow-visible">
+                    <p class="sm:hidden no-print text-[11px] text-gray-500 text-center mb-2">
+                        Geser ke samping untuk melihat seluruh pratinjau dokumen A4 &harr;
+                    </p>
+                    <div id="print-area" class="min-w-[780px] md:min-w-0 bg-white p-6 sm:p-8 border border-gray-200 shadow-sm mx-auto text-gray-900 print:min-w-0 print:border-none print:shadow-none print:p-0 print:max-w-none"
                         :class="printOrientation === 'landscape' ? 'w-full max-w-5xl' : 'w-full max-w-4xl'">
                         <!-- KOP SURAT RESMI DISTY AKADEMI -->
                         <div class="border-b-4 border-double border-gray-800 pb-4 mb-5">
@@ -684,11 +689,11 @@ watch(() => props.query?.institution_id, (newInstId) => {
                 </div>
 
                 <!-- Footer Modal (Hidden saat print) -->
-                <div class="p-3.5 sm:p-4 border-t border-gray-200 flex items-center justify-between bg-gray-50/80 no-print">
-                    <span class="text-xs text-gray-500">
+                <div class="p-3 sm:p-4 border-t border-gray-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 bg-gray-50/80 no-print">
+                    <span class="text-[11px] sm:text-xs text-gray-500">
                         Format cetak dioptimalkan untuk kertas A4 potret atau landscape saat dicetak ke PDF/Printer.
                     </span>
-                    <div class="flex items-center gap-2">
+                    <div class="flex items-center justify-end gap-2 shrink-0">
                         <button @click="closePrintModal" class="px-4 py-2 text-xs font-medium text-gray-600 bg-white border border-gray-300 hover:bg-gray-100 transition-colors">
                             Tutup
                         </button>

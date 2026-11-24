@@ -46,7 +46,7 @@ onMounted(() => {
                 <p class="text-xs text-gray-500 mt-0.5">Kelola akun Admin dan Sales tim Disty Akademi</p>
             </div>
             <button @click="emit('navigate', '/users/create')"
-                class="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-sm">
+                class="self-start sm:self-auto inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-sm shrink-0">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 Tambah Pengguna
             </button>
@@ -55,7 +55,7 @@ onMounted(() => {
         <!-- Table Card -->
         <div class="bg-white border border-blue-100 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[550px] text-left text-xs text-gray-600">
+                <table class="w-full min-w-[680px] text-left text-xs text-gray-600">
                     <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-medium uppercase tracking-wider text-[11px]">
                         <tr>
                             <th class="py-3 px-4">Nama & Email</th>
@@ -78,13 +78,13 @@ onMounted(() => {
                                 <div class="font-semibold text-gray-900">{{ u.name }}</div>
                                 <div class="text-[11px] text-gray-400">{{ u.email }}</div>
                             </td>
-                            <td class="py-3 px-4">
-                                <span class="px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider border"
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider border"
                                     :class="u.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-200' : (u.role === 'manager' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200')">
                                     {{ u.role }}
                                 </span>
                             </td>
-                            <td class="py-3 px-4 text-gray-700">{{ u.phone || '-' }}</td>
+                            <td class="py-3 px-4 text-gray-700 whitespace-nowrap">{{ u.phone || '-' }}</td>
                             <td class="py-3 px-4">
                                 <div v-if="u.bank_account_number" class="text-xs">
                                     <div class="flex items-center gap-1.5 flex-wrap">
@@ -99,8 +99,8 @@ onMounted(() => {
                                 </div>
                                 <span v-else class="text-[11px] text-gray-400 italic">Belum diatur</span>
                             </td>
-                            <td class="py-3 px-4">
-                                <span class="px-2 py-0.5 text-[10px] font-medium border"
+                            <td class="py-3 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10px] font-medium border"
                                     :class="u.is_active ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'">
                                     {{ u.is_active ? 'Aktif' : 'Non-aktif' }}
                                 </span>

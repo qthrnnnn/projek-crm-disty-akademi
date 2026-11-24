@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use App\Models\SalesReminder;
+use App\Observers\ActivityAuditObserver;
+use App\Support\ActivityAudit;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
@@ -22,6 +25,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        foreach (array_keys(ActivityAudit::MODULES) as $name) {
+            $model = 'App\\Models\\'.$name;
+            $model::observe(ActivityAuditObserver::class);
+        }
+        Builder::macro('updateWithHistory', function (array $values) {
+            return app(ActivityAudit::class)->updateQuery($this, $values);
+        });
+        Builder::macro('deleteWithHistory', function () {
+            return app(ActivityAudit::class)->deleteQuery($this);
+        });
+
         View::composer('*', function ($view) {
             if (Auth::check()) {
                 /** @var \App\Models\User $user */

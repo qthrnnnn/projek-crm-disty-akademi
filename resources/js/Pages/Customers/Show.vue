@@ -148,7 +148,7 @@ onMounted(() => {
                                         {{ r.product?.name || r.product_name || 'Pelatihan' }}
                                     </span>
                                 </div>
-                                <div class="flex items-center gap-3 shrink-0 text-xs">
+                                <div class="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0 text-xs">
                                     <span class="text-gray-400 font-medium whitespace-nowrap">
                                         {{ formatDateTime(r.created_at) }}
                                     </span>
@@ -170,19 +170,19 @@ onMounted(() => {
                             <!-- Rincian yang muncul saat ditekan / diklik (Kotak Lancip) -->
                             <div
                                 v-show="isExpanded(r.id)"
-                                class="mt-2.5 p-4 bg-gray-50 border border-gray-200 text-xs space-y-4"
+                                class="mt-2.5 p-3 sm:p-4 bg-gray-50 border border-gray-200 text-xs space-y-4"
                             >
-                                <div class="flex items-center justify-between pb-2 border-b border-gray-200">
-                                    <div class="flex items-center gap-2">
+                                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-gray-200">
+                                    <div class="flex flex-wrap items-center gap-2">
                                         <span class="font-mono text-xs font-bold text-gray-700 bg-white px-2 py-0.5 border border-gray-200">
                                             {{ r.registration_number || ('REG-' + r.id) }}
                                         </span>
                                         <Badge :status="r.status || 'confirmed'" />
-                                        <span v-if="r.payment?.status === 'valid'" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                                        <span v-if="r.payment?.status === 'valid'" class="px-2 py-0.5 text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                                             Lunas / Valid
                                         </span>
                                     </div>
-                                    <div class="text-right">
+                                    <div class="sm:text-right">
                                         <span class="text-[10px] text-gray-400 block font-semibold uppercase">Total Nilai Deal</span>
                                         <span class="text-sm font-black text-emerald-600">
                                             {{ formatCurrency(r.amount || r.payment?.amount || r.product?.price) }}

@@ -44,7 +44,7 @@ onMounted(() => {
                     <h1 class="text-xl font-black text-gray-900 mt-2">{{ batch.original_filename || batch.filename }}</h1>
                     <p class="text-xs text-gray-500 mt-0.5">Diupload {{ batch.created_at ? new Date(batch.created_at).toLocaleString('id-ID') : '-' }}</p>
                 </div>
-                <button @click="emit('navigate', '/lead-imports')" class="px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
+                <button @click="emit('navigate', '/lead-imports')" class="self-start sm:self-auto whitespace-nowrap shrink-0 px-3.5 py-2 rounded-xl border border-gray-200 text-xs font-semibold text-gray-600 hover:bg-gray-50">
                     &larr; Kembali ke Daftar Batch
                 </button>
             </div>

@@ -1,8 +1,9 @@
 <?php
 
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Inertia;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 Route::inertia('/login', 'Spa')->name('login');
@@ -35,12 +36,28 @@ $spaNamedRoutes = [
 
 Route::inertia('/', 'Spa')->name('home');
 
+Route::get('/leads/template', [\App\Http\Controllers\LeadController::class, 'downloadTemplate']);
+Route::get('/leads/template-excel', [\App\Http\Controllers\LeadController::class, 'downloadTemplateExcel']);
+
 foreach ($spaNamedRoutes as $name => $uri) {
     Route::inertia($uri, 'Spa')->name($name);
 }
 
-Route::get('/leads/template', [\App\Http\Controllers\LeadController::class, 'downloadTemplate']);
-Route::get('/leads/template-excel', [\App\Http\Controllers\LeadController::class, 'downloadTemplateExcel']);
+/* Fallback agar bukti transfer pada disk public tetap bisa dibuka
+   meskipun symlink public/storage belum dibuat setelah folder proyek dipindahkan. */
+Route::get('/storage/payments/{filename}', function (string $filename) {
+    if (str_contains($filename, '..')) {
+        abort(404);
+    }
+
+    $path = 'payments/'.$filename;
+    $disk = Storage::disk('public');
+    if (! $disk->exists($path)) {
+        abort(404);
+    }
+
+    return $disk->response($path);
+})->where('filename', '[A-Za-z0-9._-]+');
 
 /* Alamat yang tidak dikenal (mis. /admin/dashboard diketik langsung oleh Klien) dialihkan ke halaman awal SPA.
    Hanya untuk navigasi browser. Permintaan API atau JSON tetap mendapat 404 JSON sesuai kontrak. */

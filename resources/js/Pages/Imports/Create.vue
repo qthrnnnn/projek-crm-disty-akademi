@@ -136,12 +136,12 @@ onMounted(() => {
 
 <template>
     <div class="max-w-2xl mx-auto space-y-5">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">Upload Data Leads Excel</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Unggah prospek masal dari spreadsheet (.xlsx / .csv)</p>
             </div>
-            <button @click="emit('navigate', '/leads')" class="text-xs font-semibold text-gray-500 hover:text-gray-900">
+            <button @click="emit('navigate', '/leads')" class="self-start sm:self-auto whitespace-nowrap shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900">
                 &larr; Batal & Kembali
             </button>
         </div>
@@ -154,7 +154,7 @@ onMounted(() => {
         <div v-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
         <div v-if="successMessage" class="p-3 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold">{{ successMessage }}</div>
 
-        <form @submit.prevent="upload" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+        <form @submit.prevent="upload" class="bg-white p-4 sm:p-6 border border-gray-100 shadow-xs space-y-4">
             <!-- Pilihan Sales PIC khusus untuk Admin -->
             <div v-if="isAdmin">
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Tugaskan ke Sales PIC *</label>
@@ -169,20 +169,20 @@ onMounted(() => {
             </div>
 
             <div>
-                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-1.5">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1.5 mb-1.5">
                     <label class="block text-xs font-semibold text-gray-700">Pilih Berkas Excel / CSV *</label>
                     <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="text-[11px] text-gray-400">Unduh Template:</span>
+                        <span class="text-[11px] text-gray-400 w-full sm:w-auto">Unduh Template:</span>
                         <button type="button" @click="downloadExcelTemplate"
-                            class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded inline-flex items-center gap-1 transition-colors cursor-pointer">
-                            <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="whitespace-nowrap text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded inline-flex items-center gap-1 transition-colors cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                             </svg>
                             Format Excel (.xlsx)
                         </button>
                         <button type="button" @click="downloadCsvTemplate"
-                            class="text-[11px] font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded inline-flex items-center gap-1 transition-colors cursor-pointer">
-                            <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="whitespace-nowrap text-[11px] font-semibold text-blue-700 hover:text-blue-800 bg-blue-50 hover:bg-blue-100 border border-blue-200 px-2 py-0.5 rounded inline-flex items-center gap-1 transition-colors cursor-pointer">
+                            <svg class="w-3.5 h-3.5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                             </svg>
                             Format CSV

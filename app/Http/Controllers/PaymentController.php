@@ -174,7 +174,7 @@ class PaymentController extends Controller
         try {
             $attached = Payment::whereKey($payment->id)
                 ->where('proof_file', $previousPath)
-                ->update(['proof_file' => $path]);
+                ->updateWithHistory(['proof_file' => $path]);
         } finally {
             if (! $attached) {
                 $disk->delete($path);

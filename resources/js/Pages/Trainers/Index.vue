@@ -88,7 +88,7 @@ onMounted(() => {
                 <button type="submit" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow-sm transition-colors">
                     Cari
                 </button>
-                <button v-if="search" @click="resetFilter" type="button" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
+                <button v-if="search" @click="resetFilter" type="button" class="w-full sm:w-auto px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
                     Reset
                 </button>
             </form>
@@ -146,7 +146,7 @@ onMounted(() => {
                     </tbody>
                 </table>
             </div>
-            <div class="p-4 border-t border-gray-100 flex items-center justify-between">
+            <div class="p-3 sm:p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2 text-xs text-gray-500">
                     <span>Tampilkan</span>
                     <span class="border border-gray-200 px-2.5 py-1 text-xs text-gray-700 bg-white">50</span>

@@ -68,7 +68,7 @@ class Registration extends Model
                 ->whereNull('registration_id')
                 ->latest('id')
                 ->first();
-            if ($prepayment && Payment::whereKey($prepayment->id)->whereNull('registration_id')->update(['registration_id' => $registration->id])) {
+            if ($prepayment && Payment::whereKey($prepayment->id)->whereNull('registration_id')->updateWithHistory(['registration_id' => $registration->id])) {
                 $registration->update(['status' => 'confirmed']);
             }
         });

@@ -12,22 +12,22 @@ class DashboardDateFilterTest extends TestCase
 
     public function test_authenticated_user_can_view_dashboard_for_selected_date(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'admin', 'is_active' => true]);
 
-        $response = $this->actingAs($user)->get('/dashboard?date=2026-10-07');
+        $response = $this->actingAs($user)->getJson('/api/dashboard?date=2026-10-07');
 
         $response
             ->assertOk()
-            ->assertViewHas('selectedDateString', '2026-10-07')
-            ->assertSee('Lead');
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.selectedDateString', '2026-10-07');
     }
 
     public function test_dashboard_rejects_invalid_selected_date(): void
     {
-        $user = User::factory()->create(['role' => 'admin']);
+        $user = User::factory()->create(['role' => 'admin', 'is_active' => true]);
 
-        $response = $this->actingAs($user)->get('/dashboard?date=07-10-2026');
+        $response = $this->actingAs($user)->getJson('/api/dashboard?date=07-10-2026');
 
-        $response->assertSessionHasErrors('date');
+        $response->assertUnprocessable()->assertJsonValidationErrors('date');
     }
 }

@@ -160,15 +160,6 @@ class LeadController extends Controller
 
         $lead = Lead::create($data);
 
-        Activity::create([
-            'lead_id' => $lead->id,
-            'user_id' => auth()->id(),
-            'type' => 'note',
-            'subject' => 'Lead baru ditambahkan',
-            'description' => 'Lead ditambahkan secara manual oleh '.(auth()->user()?->name ?? 'pengguna').'.',
-            'activity_at' => now(),
-        ]);
-
         // Otomatis sinkron instansi jika bukan pribadi
         $inst = $this->syncInstitutionFromCompany($data['company'] ?? null, $data['city'] ?? null, $data['province'] ?? null);
 
@@ -401,7 +392,7 @@ class LeadController extends Controller
             \App\Models\Commission::ensureCommissionCreated($lead, $lead->deal_price);
 
             // Otomatis selesaikan follow-up & pengingat pending untuk lead ini
-            $lead->followUps()->where('status', 'pending')->update([
+            $lead->followUps()->where('status', 'pending')->updateWithHistory([
                 'status' => 'completed',
                 'completed_at' => now(),
                 'result_notes' => 'Otomatis selesai: Lead Won (Closing)',
@@ -409,7 +400,7 @@ class LeadController extends Controller
             \App\Models\SalesReminder::where('lead_id', $lead->id)
                 ->where('type', 'follow_up')
                 ->where('is_completed', false)
-                ->update([
+                ->updateWithHistory([
                     'is_completed' => true,
                     'completed_at' => now(),
                     'sales_reply' => 'Selesai: Lead Won',
@@ -504,6 +495,9 @@ class LeadController extends Controller
         }
 
         $cleanName = trim($companyName);
+        if ($cleanName === '') {
+            return null;
+        }
         $lower = mb_strtolower($cleanName);
 
         // Abaikan jika pribadi atau bukan instansi
@@ -520,8 +514,7 @@ class LeadController extends Controller
         }
 
         // Cek apakah sudah ada di database instansi (case-insensitive)
-        $existing = Institution::whereRaw('LOWER(name) = ?', [$lower])
-            ->orWhere('name', 'like', $cleanName)
+        $existing = Institution::whereRaw('LOWER(TRIM(name)) = ?', [$lower])
             ->first();
 
         if ($existing) {

@@ -129,12 +129,12 @@ onMounted(() => {
                 <h1 class="text-xl font-bold text-gray-900">Pendaftaran Peserta</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Customer didaftarkan ke jadwal yang telah dibuat, bukan menentukan tanggal sendiri.</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <button type="button" @click="emit('navigate', '/training-schedules')"
                     class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
                     Lihat Jadwal
                 </button>
-                <button type="button" @click="emit('navigate', '/registrations/create')"
+                <button v-if="user?.role === 'sales'" type="button" @click="emit('navigate', '/registrations/create')"
                     class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 shadow-sm transition-colors">
                     + Daftarkan Peserta
                 </button>
@@ -172,7 +172,7 @@ onMounted(() => {
                     Filter
                 </button>
                 <button v-if="search || status || salesId" type="button" @click="resetFilter"
-                    class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
+                    class="w-full sm:w-auto px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
                     Reset
                 </button>
             </form>
@@ -181,7 +181,7 @@ onMounted(() => {
         <!-- Table Card -->
         <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[680px] text-left text-xs text-gray-600">
+                <table class="w-full min-w-[860px] text-left text-xs text-gray-600">
                     <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
                         <tr>
                             <th class="py-3.5 px-4">NO. REGISTRASI</th>
@@ -205,9 +205,9 @@ onMounted(() => {
                             </td>
                         </tr>
                         <tr v-for="r in registrations" :key="r.id" class="hover:bg-blue-50/20 transition-colors">
-                            <td class="py-3.5 px-4 font-mono font-bold text-gray-900">
-                                <div>{{ r.registration_number || ('#REG-' + r.id) }}</div>
-                                <div class="text-[10px] font-sans font-normal text-gray-400 mt-0.5 flex items-center gap-1 flex-wrap">
+                            <td class="py-3.5 px-4 font-mono font-bold text-gray-900 whitespace-nowrap">
+                                <div class="whitespace-nowrap">{{ r.registration_number || ('#REG-' + r.id) }}</div>
+                                <div class="text-[10px] font-sans font-normal text-gray-400 mt-0.5 flex items-center gap-1 whitespace-nowrap">
                                     <span>{{ formatDate(r.created_at) }}</span>
                                     <template v-if="formatTime(r.created_at)">
                                         <span>&bull;</span>
@@ -242,15 +242,15 @@ onMounted(() => {
                                 </template>
                                 <span v-else class="text-gray-400">-</span>
                             </td>
-                            <td class="py-3.5 px-4">
-                                <span class="inline-block px-2 py-0.5 border text-[10px] font-semibold uppercase tracking-wider" :class="statusBadgeClass(r.status)">
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 border text-[10px] font-semibold uppercase tracking-wider" :class="statusBadgeClass(r.status)">
                                     {{ r.status }}
                                 </span>
                             </td>
-                            <td class="py-3.5 px-4 font-bold text-gray-900">
+                            <td class="py-3.5 px-4 font-bold text-gray-900 whitespace-nowrap">
                                 {{ formatCurrency(r.amount) }}
                             </td>
-                            <td class="py-3.5 px-4 text-right">
+                            <td class="py-3.5 px-4 text-right whitespace-nowrap">
                                 <button @click="emit('navigate', `/registrations/${r.id}/edit`)" class="text-xs text-blue-600 hover:underline font-medium">
                                     Edit
                                 </button>
@@ -260,7 +260,7 @@ onMounted(() => {
                 </table>
             </div>
 
-            <div class="p-4 border-t border-gray-100 flex items-center justify-between">
+            <div class="p-3 sm:p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2 text-xs text-gray-500">
                     <span>Tampilkan</span>
                     <select v-model="perPage" @change="loadRegistrations(1)" class="border border-gray-200 rounded px-2 py-1 text-xs bg-white">

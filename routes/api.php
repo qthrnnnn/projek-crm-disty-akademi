@@ -29,7 +29,7 @@ $registerRoutes = function () {
     Route::get('/csrf-token', fn () => response()->json(['token' => csrf_token()]));
 
     // ── Endpoint Terproteksi (JWT Auth) ──
-    Route::middleware('jwt')->group(function () {
+    Route::middleware(['jwt', \App\Http\Middleware\AtomicCrmChanges::class])->group(function () {
         Route::get('/user', [ApiController::class, 'user'])->name('api.auth.me');
         Route::get('/auth/me', [ApiController::class, 'user']);
         Route::match(['post', 'put', 'patch'], '/user/bank-account', [ApiController::class, 'updateBankAccount']);

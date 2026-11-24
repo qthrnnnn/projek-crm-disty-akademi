@@ -1,8 +1,14 @@
 <script setup>
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { api } from '../../services/api';
 
+const props = defineProps({
+    user: { type: Object, default: () => ({}) },
+});
+
 const emit = defineEmits(['navigate']);
+
+const isAdmin = computed(() => props.user?.role === 'admin');
 
 const form = ref({
     product_id: '',
@@ -12,7 +18,7 @@ const form = ref({
     end_time: '16:00',
     capacity: 25,
     status: 'scheduled',
-    location: 'Disty Academy Hall / Zoom Meeting',
+    location: 'Zoom Meeting',
     notes: '',
 });
 
@@ -35,6 +41,7 @@ async function loadDependencies() {
 }
 
 async function save() {
+    if (!isAdmin.value) return;
     loading.value = true;
     error.value = '';
     try {
@@ -48,25 +55,37 @@ async function save() {
 }
 
 onMounted(() => {
+    if (!isAdmin.value) {
+        emit('navigate', '/training-schedules');
+        return;
+    }
     loadDependencies();
 });
 </script>
 
 <template>
-    <div class="max-w-2xl mx-auto space-y-5">
-        <div class="flex items-center justify-between">
+    <div v-if="!isAdmin" class="max-w-xl mx-auto p-6 bg-white border border-red-100 text-center space-y-3">
+        <p class="text-sm font-semibold text-red-600">Akses Ditolak</p>
+        <p class="text-xs text-gray-500">Hanya Admin yang dapat menambahkan jadwal pelatihan.</p>
+        <button type="button" @click="emit('navigate', '/training-schedules')"
+            class="px-4 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600">
+            Kembali ke Jadwal Pelatihan
+        </button>
+    </div>
+    <div v-else class="max-w-2xl mx-auto space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">Buat Jadwal Pelatihan Baru</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Atur materi program, instruktur, kuota, & waktu</p>
             </div>
-            <button @click="emit('navigate', '/training-schedules')" class="text-xs font-semibold text-gray-500 hover:text-gray-900">
+            <button @click="emit('navigate', '/training-schedules')" class="self-start sm:self-auto whitespace-nowrap shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900">
                 &larr; Batal & Kembali
             </button>
         </div>
 
         <div v-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
 
-        <form @submit.prevent="save" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+        <form @submit.prevent="save" class="bg-white p-4 sm:p-6 border border-gray-100 shadow-xs space-y-4">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-semibold text-gray-700 mb-1">Pilih Program Pelatihan *</label>
@@ -134,7 +153,7 @@ onMounted(() => {
                     class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Kebutuhan software, persiapan kelas, dll..."></textarea>
             </div>
 
-            <div class="pt-2 flex justify-end gap-2">
+            <div class="pt-2 flex flex-wrap justify-end gap-2">
                 <button type="button" @click="emit('navigate', '/training-schedules')" class="px-4 py-2.5 rounded-xl border border-gray-200 font-semibold text-xs text-gray-600 hover:bg-gray-50">Batal</button>
                 <button type="submit" :disabled="loading" class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm disabled:opacity-50">
                     <span v-if="loading">Menyimpan...</span>

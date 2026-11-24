@@ -96,7 +96,7 @@ onMounted(() => {
                 <button type="submit" class="w-full sm:w-auto px-5 py-2 text-xs font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 shadow-sm transition-colors">
                     Cari
                 </button>
-                <button v-if="search" @click="resetFilter" type="button" class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
+                <button v-if="search" @click="resetFilter" type="button" class="w-full sm:w-auto px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
                     Reset
                 </button>
             </form>
@@ -105,7 +105,7 @@ onMounted(() => {
         <!-- Table Card -->
         <div class="bg-white border border-blue-100/70 overflow-hidden shadow-sm">
             <div class="overflow-x-auto">
-                <table class="w-full min-w-[550px] text-left text-xs text-gray-600">
+                <table class="w-full min-w-[660px] text-left text-xs text-gray-600">
                     <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-400 font-semibold uppercase tracking-wider text-[10.5px]">
                         <tr>
                             <th class="py-3.5 px-4">INSTANSI</th>
@@ -134,16 +134,16 @@ onMounted(() => {
                                     <span v-if="inst.phone">{{ inst.phone }}</span>
                                 </div>
                             </td>
-                            <td class="py-3.5 px-4">
-                                <span class="px-2 py-0.5 text-[10px] font-medium border bg-gray-50 text-gray-600 border-gray-200">
+                            <td class="py-3.5 px-4 whitespace-nowrap">
+                                <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10px] font-medium border bg-gray-50 text-gray-600 border-gray-200">
                                     {{ inst.type || 'Perguruan Tinggi' }}
                                 </span>
                             </td>
                             <td class="py-3.5 px-4 text-gray-700">
                                 {{ inst.city ? (inst.province ? `${inst.city} , ${inst.province}` : inst.city) : (inst.address || '-') }}
                             </td>
-                            <td class="py-3.5 px-4 text-center">
-                                <button @click="emit('navigate', `/customers?institution_id=${inst.id}`)" class="text-blue-600 hover:underline font-semibold">
+                            <td class="py-3.5 px-4 text-center whitespace-nowrap">
+                                <button @click="emit('navigate', `/customers?institution_id=${inst.id}`)" class="text-blue-600 hover:underline font-semibold whitespace-nowrap">
                                     {{ inst.customers_count ?? (inst.customers?.length ?? 0) }} customer
                                 </button>
                             </td>

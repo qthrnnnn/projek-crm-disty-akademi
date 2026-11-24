@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Customer;
+use App\Models\Activity;
 use App\Models\Lead;
 use App\Models\Payment;
 use App\Models\Product;
@@ -65,6 +66,11 @@ class PaymentCandidateTest extends TestCase
 
         $this->assertDatabaseHas('registrations', ['id' => $secondId, 'status' => 'confirmed']);
         $this->assertDatabaseHas('registrations', ['id' => $thirdId, 'status' => 'registered']);
+        $verification = Activity::where('entity_type', 'payments')->where('entity_id', $paymentId)
+            ->where('type', 'updated')->latest('id')->firstOrFail();
+        $this->assertSame($admin->id, $verification->user_id);
+        $this->assertSame('pending', $verification->changes['status']['before']);
+        $this->assertSame('valid', $verification->changes['status']['after']);
     }
 
     public function test_sales_can_pay_a_registration_that_does_not_have_a_lead_yet(): void

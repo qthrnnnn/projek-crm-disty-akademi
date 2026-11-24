@@ -138,14 +138,14 @@ class Payment extends Model
                 );
 
                 // 5. Otomatis selesaikan follow-up & pengingat
-                $lead->followUps()->where('status', 'pending')->update([
+                $lead->followUps()->where('status', 'pending')->updateWithHistory([
                     'status' => 'completed',
                     'completed_at' => now(),
                     'result_notes' => 'Otomatis selesai: Pembayaran valid & deal won',
                 ]);
                 SalesReminder::where('lead_id', $lead->id)
                     ->where('is_completed', false)
-                    ->update([
+                    ->updateWithHistory([
                         'is_completed' => true,
                         'completed_at' => now(),
                         'sales_reply' => 'Selesai: Pembayaran terverifikasi valid',
@@ -182,7 +182,7 @@ class Payment extends Model
                 }
 
                 // 2. Batalkan komisi jika sebelumnya pernah dibuat
-                Commission::where('payment_id', $this->id)->delete();
+                Commission::where('payment_id', $this->id)->deleteWithHistory();
 
                 if ($registration?->status === 'confirmed' && ! self::where('registration_id', $registration->id)->where('status', 'valid')->exists()) {
                     $registration->update(['status' => 'registered']);

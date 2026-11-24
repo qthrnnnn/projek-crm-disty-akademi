@@ -68,7 +68,7 @@ const colorClasses = computed(() => {
 </script>
 
 <template>
-    <span class="inline-flex items-center px-2 py-0.5 text-[10.5px] font-medium border" :class="colorClasses">
+    <span class="inline-flex items-center whitespace-nowrap px-2 py-0.5 text-[10.5px] font-medium border" :class="colorClasses">
         {{ displayLabel }}
     </span>
 </template>

@@ -116,13 +116,13 @@ onBeforeUnmount(() => {
         </button>
 
         <!-- Breadcrumb -->
-        <div class="flex items-center gap-1.5 text-sm">
-            <span class="text-gray-400 hidden sm:block">Disty Akademi</span>
-            <span class="text-gray-300 hidden sm:block">/</span>
-            <span class="text-gray-700 font-medium">{{ title }}</span>
+        <div class="flex items-center gap-1.5 text-sm min-w-0 flex-1">
+            <span class="text-gray-400 hidden sm:block shrink-0">Disty Akademi</span>
+            <span class="text-gray-300 hidden sm:block shrink-0">/</span>
+            <span class="text-gray-700 font-medium truncate">{{ title }}</span>
         </div>
 
-        <div class="ml-auto flex items-center gap-2">
+        <div class="ml-auto flex items-center gap-1.5 sm:gap-2 shrink-0">
             <span class="hidden md:block text-xs text-gray-400">{{ dateStr }}</span>
 
             <!-- Notifications (Sales) -->
@@ -141,7 +141,7 @@ onBeforeUnmount(() => {
                 </button>
 
                 <div v-if="notifOpen"
-                    class="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-gray-200 shadow-xl py-2 z-50 overflow-hidden">
+                    class="fixed left-3 right-3 top-14 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 max-h-[calc(100dvh-4.5rem)] flex flex-col bg-white border border-gray-200 shadow-xl py-2 z-50 overflow-hidden">
                     <div class="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
                         <span class="font-bold text-xs text-gray-900">Notifikasi Masuk ({{ unreadCount }} Baru)</span>
                         <a href="/reminders" @click.prevent="emit('navigate', '/reminders'); notifOpen = false;" class="text-[10px] font-semibold text-orange-600 hover:text-orange-700">Lihat Semua &rarr;</a>
@@ -221,7 +221,7 @@ onBeforeUnmount(() => {
                 </button>
 
                 <div v-if="profileOpen"
-                    class="absolute right-0 top-full mt-1 w-44 bg-white border border-gray-200 shadow-lg py-1.5 z-50">
+                    class="absolute right-0 top-full mt-1 w-44 max-w-[calc(100vw-1.5rem)] bg-white border border-gray-200 shadow-lg py-1.5 z-50">
                     <div class="px-3 py-2 border-b border-gray-100 mb-1">
                         <p class="text-xs font-semibold text-gray-900 truncate">{{ user?.name || 'Admin CRM' }}</p>
                         <p class="text-xs text-gray-400 truncate">{{ user?.role ? (user.role.charAt(0).toUpperCase() + user.role.slice(1)) : 'Admin' }}</p>

@@ -83,7 +83,7 @@ class CrmResourceTest extends TestCase
 
     public function test_manual_registration_validates_aliases_before_creating_a_customer(): void
     {
-        $this->actingAs(User::factory()->create(['role' => 'admin', 'is_active' => true]));
+        $this->actingAs(User::factory()->create(['role' => 'sales', 'is_active' => true]));
         $product = Product::create(['name' => 'Program Pelatihan', 'code' => 'CRM', 'price' => 500000]);
         $participant = [
             'participant_mode' => 'manual',
@@ -117,5 +117,39 @@ class CrmResourceTest extends TestCase
             'start_time' => '09:00',
             'end_time' => '16:00:00',
         ])->assertCreated();
+    }
+
+    public function test_sales_can_view_training_schedules_but_only_admin_can_create_update_or_delete(): void
+    {
+        $admin = User::factory()->create(['role' => 'admin', 'is_active' => true]);
+        $sales = User::factory()->create(['role' => 'sales', 'is_active' => true]);
+        $product = Product::create(['name' => 'Program Pelatihan', 'code' => 'CRM-SCHED']);
+        $trainer = Trainer::create(['name' => 'Trainer CRM']);
+
+        $scheduleId = $this->actingAs($admin)->postJson('/api/training-schedules', [
+            'product_id' => $product->id,
+            'trainer_id' => $trainer->id,
+            'training_date' => '2026-12-10',
+            'start_time' => '09:00',
+            'end_time' => '16:00',
+        ])->assertCreated()->json('data.id');
+
+        $this->actingAs($sales);
+
+        foreach (['/api', '/api/v1'] as $prefix) {
+            $this->getJson("{$prefix}/training-schedules")->assertOk();
+            $this->postJson("{$prefix}/training-schedules", [
+                'product_id' => $product->id,
+                'trainer_id' => $trainer->id,
+                'training_date' => '2026-12-12',
+                'start_time' => '09:00',
+                'end_time' => '16:00',
+            ])->assertForbidden();
+            $this->patchJson("{$prefix}/training-schedules/{$scheduleId}", [
+                'location' => 'Diubah Sales',
+            ])->assertForbidden();
+            $this->deleteJson("{$prefix}/training-schedules/{$scheduleId}")
+                ->assertForbidden();
+        }
     }
 }

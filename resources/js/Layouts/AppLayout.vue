@@ -63,7 +63,7 @@ function handleNavigate(path) {
             />
 
             <main id="main-content"
-                class="flex-1 min-h-0 overflow-y-auto p-5 scrollbar-thin overscroll-contain bg-gray-100">
+                class="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-3 sm:p-5 scrollbar-thin overscroll-contain bg-gray-100">
                 <slot />
             </main>
         </div>

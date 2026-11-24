@@ -6,7 +6,7 @@ const emit = defineEmits(['navigate']);
 
 const form = ref({
     name: '',
-    type: 'Kampus',
+    type: 'Perguruan Tinggi',
     phone: '',
     email: '',
     address: '',
@@ -31,19 +31,19 @@ async function save() {
 
 <template>
     <div class="max-w-2xl mx-auto space-y-5">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">Tambah Mitra Instansi</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Input kampus, sekolah, perusahaan, atau organisasi mitra</p>
             </div>
-            <button @click="emit('navigate', '/institutions')" class="text-xs font-semibold text-gray-500 hover:text-gray-900">
+            <button @click="emit('navigate', '/institutions')" class="self-start sm:self-auto whitespace-nowrap shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900">
                 &larr; Batal & Kembali
             </button>
         </div>
 
         <div v-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
 
-        <form @submit.prevent="save" class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+        <form @submit.prevent="save" class="bg-white p-4 sm:p-6 border border-gray-100 shadow-xs space-y-4">
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Instansi *</label>
                 <input v-model="form.name" type="text" required
@@ -54,7 +54,7 @@ async function save() {
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Kategori Instansi</label>
                 <select v-model="form.type"
                     class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 bg-white">
-                    <option value="Kampus">Perguruan Tinggi / Kampus</option>
+                    <option value="Perguruan Tinggi">Perguruan Tinggi / Kampus</option>
                     <option value="Sekolah">SMK / SMA</option>
                     <option value="Perusahaan">Perusahaan Swasta / BUMN</option>
                     <option value="Pemerintah">Instansi Pemerintah</option>
@@ -81,7 +81,7 @@ async function save() {
                     class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none" placeholder="Alamat lengkap instansi..."></textarea>
             </div>
 
-            <div class="pt-2 flex justify-end gap-2">
+            <div class="pt-2 flex flex-wrap justify-end gap-2">
                 <button type="button" @click="emit('navigate', '/institutions')" class="px-4 py-2.5 rounded-xl border border-gray-200 font-semibold text-xs text-gray-600 hover:bg-gray-50">Batal</button>
                 <button type="submit" :disabled="loading" class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm disabled:opacity-50">
                     <span v-if="loading">Menyimpan...</span>

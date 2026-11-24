@@ -85,7 +85,7 @@ onMounted(() => {
                 <h1 class="text-xl font-bold text-gray-900">Katalog Program</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Daftar kode, nama program, dan harga</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <div class="flex items-center bg-gray-100 p-1 text-xs font-semibold">
                     <button type="button" @click="viewMode = 'grid'"
                         class="px-3 py-1.5 rounded-lg transition"
@@ -108,8 +108,8 @@ onMounted(() => {
 
         <!-- Pencarian Sederhana -->
         <div class="bg-white border border-gray-100 p-3 shadow-xs">
-            <form @submit.prevent="handleFilter" class="flex items-center gap-2">
-                <div class="relative flex-1">
+            <form @submit.prevent="handleFilter" class="flex flex-wrap sm:flex-nowrap items-center gap-2">
+                <div class="relative flex-1 min-w-0">
                     <input v-model="search" @input="onSearchInput" type="text"
                         placeholder="Cari berdasarkan nama atau kode program..."
                         class="w-full text-xs border border-gray-200 px-3.5 py-2 text-gray-800 placeholder-gray-400 focus:outline-none focus:border-orange-500" />
@@ -156,21 +156,21 @@ onMounted(() => {
 
                 <!-- Rincian Biaya Transfer & Komisi Sales -->
                 <div class="mt-4 pt-3.5 border-t border-gray-100 space-y-2">
-                    <div class="bg-orange-50/70 p-2.5 border border-orange-100 flex items-center justify-between">
+                    <div class="bg-orange-50/70 p-2.5 border border-orange-100 flex flex-wrap items-center justify-between gap-2">
                         <div>
                             <span class="text-[10px] text-orange-800 font-bold uppercase tracking-wider block">Customer Wajib Transfer</span>
                             <span class="text-base font-black text-orange-600 leading-tight">
                                 {{ formatCurrency(Math.round((p.price || 0) * 1.10)) }}
                             </span>
                         </div>
-                        <div class="text-right">
+                        <div class="text-left sm:text-right">
                             <span class="text-[10px] text-emerald-800 font-bold uppercase tracking-wider block">Komisi Sales (10%)</span>
                             <span class="text-xs font-black text-emerald-600">
                                 + {{ formatCurrency(Math.round((p.price || 0) * 0.10)) }}
                             </span>
                         </div>
                     </div>
-                    <div class="flex items-center justify-between text-[11px] text-gray-500 px-0.5">
+                    <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-gray-500 px-0.5">
                         <span>Harga Resmi Katalog: <strong>{{ formatCurrency(p.price) }}</strong></span>
                         <div v-if="isAdmin" class="flex items-center gap-1.5">
                             <button @click="emit('navigate', `/products/${p.id}/edit`)"

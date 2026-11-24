@@ -155,12 +155,12 @@ onMounted(() => {
 
 <template>
     <div class="max-w-3xl mx-auto space-y-4">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
                 <h1 class="text-xl font-semibold text-gray-900">Verifikasi Bukti Transfer</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Validasi pembayaran peserta untuk penerbitan akses kelas & komisi sales</p>
             </div>
-            <button @click="emit('navigate', '/payments')" class="text-xs text-gray-600 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <button @click="emit('navigate', '/payments')" class="self-start sm:self-auto whitespace-nowrap shrink-0 text-xs text-gray-600 px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50">
                 &larr; Kembali
             </button>
         </div>

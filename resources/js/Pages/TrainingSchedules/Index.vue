@@ -93,7 +93,7 @@ onMounted(() => {
                 <h1 class="text-xl font-bold text-gray-900">Jadwal yang Tersedia</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Setiap jadwal memiliki trainer, waktu, lokasi, dan kapasitas.</p>
             </div>
-            <div class="flex items-center gap-2">
+            <div class="flex flex-wrap items-center gap-2">
                 <button v-if="isAdmin" type="button" @click="emit('navigate', '/trainers')"
                     class="px-3.5 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 shadow-sm transition-colors">
                     Kelola Trainer
@@ -128,7 +128,7 @@ onMounted(() => {
                     Cari
                 </button>
                 <button v-if="search || status" type="button" @click="resetFilter"
-                    class="px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
+                    class="w-full sm:w-auto px-3 py-2 text-xs text-gray-500 hover:text-gray-700 border border-gray-200 rounded-lg">
                     Reset
                 </button>
             </form>
@@ -187,7 +187,7 @@ onMounted(() => {
                             </td>
                             <td class="py-3.5 px-4 text-center whitespace-nowrap">
                                 <div class="inline-flex items-center justify-center gap-1.5">
-                                    <button @click="emit('navigate', `/registrations/create?schedule_id=${s.id}`)"
+                                    <button v-if="user?.role === 'sales'" @click="emit('navigate', `/registrations/create?schedule_id=${s.id}`)"
                                         class="p-1.5 text-gray-400 hover:text-emerald-600 rounded-lg hover:bg-emerald-50 transition-colors"
                                         title="Daftarkan customer">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -207,7 +207,7 @@ onMounted(() => {
                     </tbody>
                 </table>
             </div>
-            <div class="p-4 border-t border-gray-100 flex items-center justify-between">
+            <div class="p-3 sm:p-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-2">
                 <div class="flex items-center gap-2 text-xs text-gray-500">
                     <span>Tampilkan</span>
                     <span class="border border-gray-200 px-2.5 py-1 text-xs text-gray-700 bg-white">50</span>

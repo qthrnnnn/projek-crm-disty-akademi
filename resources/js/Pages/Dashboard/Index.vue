@@ -301,7 +301,7 @@ onMounted(() => {
 </script>
 
 <template>
-    <div class="space-y-6">
+    <div class="space-y-4 sm:space-y-6">
         <!-- Header -->
         <div>
             <h1 class="text-xl font-bold text-gray-900">
@@ -360,24 +360,24 @@ onMounted(() => {
             </div>
 
             <!-- Distribusi Status Lead & Filter Prospek Periode -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
                 <!-- Panel Kiri: Donut Chart & 7 Status Cards -->
-                <div class="lg:col-span-2 bg-white p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
+                <div class="lg:col-span-2 bg-white p-3.5 sm:p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
                     <div>
                         <!-- Header Panel -->
-                        <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-                            <div>
+                        <div class="flex items-center justify-between gap-2 pb-3 border-b border-gray-100 mb-3">
+                            <div class="min-w-0">
                                 <h2 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Distribusi Status Lead</h2>
-                                <p class="text-[11px] text-gray-400 mt-0.5">{{ periodLabel }}</p>
+                                <p class="text-[11px] text-gray-400 mt-0.5 truncate">{{ periodLabel }}</p>
                             </div>
-                            <span class="text-xs text-gray-500">Total: <strong class="text-gray-900 font-bold">{{ periodTotal }}</strong></span>
+                            <span class="text-xs text-gray-500 shrink-0">Total: <strong class="text-gray-900 font-bold">{{ periodTotal }}</strong></span>
                         </div>
 
                         <!-- Donut + 7 Status Buttons -->
-                        <div class="flex flex-col sm:flex-row items-center gap-6 pt-2">
+                        <div class="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 pt-2">
                             <!-- SVG Donut Chart -->
                             <div class="relative shrink-0 mx-auto sm:mx-0">
-                                <svg viewBox="0 0 160 160" class="w-44 h-44 sm:w-52 sm:h-52 -rotate-90 transform origin-center">
+                                <svg viewBox="0 0 160 160" class="w-40 h-40 sm:w-52 sm:h-52 -rotate-90 transform origin-center">
                                     <circle cx="80" cy="80" r="54" fill="none" stroke="#f1f5f9" stroke-width="20" />
                                     <circle v-for="c in donutCircles" :key="c.key"
                                         cx="80" cy="80" r="54" fill="none"
@@ -400,14 +400,14 @@ onMounted(() => {
                             </div>
 
                             <!-- 7 Interactive Status Buttons (Hover Mengubah Teks di Tengah, Tanpa Tooltip/Resize) -->
-                            <div class="flex-1 w-full">
-                                <div class="grid grid-cols-4 lg:grid-cols-7 gap-2">
+                            <div class="flex-1 w-full min-w-0">
+                                <div class="flex flex-wrap justify-center gap-1.5 sm:gap-2 lg:grid lg:grid-cols-7">
                                     <button v-for="s in STAGES" :key="s.key"
                                         type="button"
                                         @click="selectStage(s.key)"
                                         @mouseenter="hoverStage = s.key"
                                         @mouseleave="hoverStage = null"
-                                        class="text-center p-1.5 transition-colors rounded-lg cursor-pointer"
+                                        class="w-[calc(25%-0.375rem)] sm:w-[calc(25%-0.5rem)] lg:w-auto text-center px-1 py-1.5 sm:p-1.5 transition-colors rounded-lg cursor-pointer"
                                         :class="[
                                             activeStage === s.key
                                                 ? 'bg-orange-50 border border-orange-300 ring-1 ring-orange-200'
@@ -415,7 +415,7 @@ onMounted(() => {
                                         ]">
                                         <span class="inline-block w-1.5 h-1.5 rounded-full mb-1" :class="s.dot"></span>
                                         <p class="text-base sm:text-lg font-bold text-gray-900 leading-tight">{{ stageCounts[s.key] ?? 0 }}</p>
-                                        <p class="text-[10px] text-gray-500 mt-0.5 leading-tight truncate">{{ s.label }}</p>
+                                        <p class="text-[9.5px] sm:text-[10px] text-gray-500 mt-0.5 leading-tight">{{ s.label }}</p>
                                     </button>
                                 </div>
                             </div>
@@ -423,7 +423,7 @@ onMounted(() => {
                     </div>
 
                     <!-- Footer Bar -->
-                    <div class="pt-3 border-t border-gray-100 mt-2 flex items-center justify-between text-xs text-gray-500">
+                    <div class="pt-3 border-t border-gray-100 mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-gray-500">
                         <span>Conversion rate: <strong class="text-gray-900 font-bold">{{ periodConvRate }}%</strong></span>
                         <button v-if="activeStage !== 'all'" @click="activeStage = 'all'"
                             class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold underline">
@@ -433,15 +433,15 @@ onMounted(() => {
                 </div>
 
                 <!-- Panel Kanan: Pilihan Periode Prospek -->
-                <div class="bg-white p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
+                <div class="bg-white p-3.5 sm:p-5 border border-gray-100 shadow-xs flex flex-col justify-between">
                     <div>
                         <!-- Header -->
-                        <div class="flex items-center justify-between pb-3 border-b border-gray-100 mb-3">
-                            <div>
+                        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-gray-100 mb-3">
+                            <div class="min-w-0">
                                 <h2 class="text-xs font-bold text-gray-800 uppercase tracking-wide">Pilihan Periode Prospek</h2>
-                                <p class="text-[11px] text-gray-400 mt-0.5">{{ periodLabel }}</p>
+                                <p class="text-[11px] text-gray-400 mt-0.5 truncate">{{ periodLabel }}</p>
                             </div>
-                            <button v-if="activeStage !== 'all'" @click="activeStage = 'all'" class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1">
+                            <button v-if="activeStage !== 'all'" @click="activeStage = 'all'" class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 shrink-0">
                                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
                                 Semua Status
                             </button>
@@ -450,52 +450,52 @@ onMounted(() => {
                         <!-- 3 Segmented Tabs -->
                         <div class="grid grid-cols-3 gap-1 p-1 bg-gray-100 mb-2.5">
                             <button type="button" @click="setFilterMode('today')"
-                                class="py-1.5 px-2 text-center text-xs rounded-md transition-all"
+                                class="py-1.5 px-1.5 sm:px-2 text-center text-[11px] sm:text-xs whitespace-nowrap rounded-md transition-all"
                                 :class="filterMode === 'today' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'">
                                 Hari Ini
                             </button>
                             <button type="button" @click="setFilterMode('month')"
-                                class="py-1.5 px-2 text-center text-xs rounded-md transition-all"
+                                class="py-1.5 px-1.5 sm:px-2 text-center text-[11px] sm:text-xs whitespace-nowrap rounded-md transition-all"
                                 :class="filterMode === 'month' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'">
                                 Pilih Bulan
                             </button>
                             <button type="button" @click="setFilterMode('all')"
-                                class="py-1.5 px-2 text-center text-xs rounded-md transition-all"
+                                class="py-1.5 px-1.5 sm:px-2 text-center text-[11px] sm:text-xs whitespace-nowrap rounded-md transition-all"
                                 :class="filterMode === 'all' ? 'bg-orange-500 text-white font-bold shadow-xs' : 'text-gray-600 hover:text-gray-900'">
                                 Semua Data
                             </button>
                         </div>
 
                         <!-- Mode Controls -->
-                        <div v-if="filterMode === 'today'" class="flex items-center justify-between p-2 px-2.5 bg-orange-50/60 border border-orange-100 mb-2.5 text-xs">
+                        <div v-if="filterMode === 'today'" class="flex items-center justify-between gap-2 p-2 px-2.5 bg-orange-50/60 border border-orange-100 mb-2.5 text-xs">
                             <span class="text-gray-600 flex items-center gap-1.5">
-                                <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span>
+                                <span class="w-2 h-2 rounded-full bg-orange-500 animate-pulse shrink-0"></span>
                                 Target Hari Ini:
                             </span>
-                            <span class="font-bold text-gray-900">{{ selectedDate }}</span>
+                            <span class="font-bold text-gray-900 whitespace-nowrap">{{ selectedDate }}</span>
                         </div>
 
                         <div v-else-if="filterMode === 'month'" class="flex items-center gap-1.5 p-1 bg-gray-50 border border-gray-200 mb-2.5">
-                            <button type="button" @click="prevMonth" class="p-1 rounded hover:bg-gray-200 text-gray-600">
+                            <button type="button" @click="prevMonth" class="p-1 rounded hover:bg-gray-200 text-gray-600 shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                             </button>
-                            <select v-model.number="selectedFilterMonth" class="flex-1 text-xs font-semibold text-gray-800 bg-white border border-gray-300 py-1 px-2 outline-none">
+                            <select v-model.number="selectedFilterMonth" class="flex-1 min-w-0 text-xs font-semibold text-gray-800 bg-white border border-gray-300 py-1 px-2 outline-none">
                                 <option v-for="(name, idx) in MONTH_NAMES" :key="idx" :value="idx + 1">{{ name }}</option>
                             </select>
-                            <select v-model.number="selectedFilterYear" class="w-20 text-xs font-semibold text-gray-800 bg-white border border-gray-300 py-1 px-2 outline-none">
+                            <select v-model.number="selectedFilterYear" class="w-20 shrink-0 text-xs font-semibold text-gray-800 bg-white border border-gray-300 py-1 px-2 outline-none">
                                 <option v-for="y in [2024, 2025, 2026, 2027, 2028, 2029, 2030]" :key="y" :value="y">{{ y }}</option>
                             </select>
-                            <button type="button" @click="nextMonth" class="p-1 rounded hover:bg-gray-200 text-gray-600">
+                            <button type="button" @click="nextMonth" class="p-1 rounded hover:bg-gray-200 text-gray-600 shrink-0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                             </button>
                         </div>
 
-                        <div v-else class="flex items-center justify-between p-2 px-2.5 bg-blue-50/60 border border-blue-100 mb-2.5 text-xs">
+                        <div v-else class="flex items-center justify-between gap-2 p-2 px-2.5 bg-blue-50/60 border border-blue-100 mb-2.5 text-xs">
                             <span class="text-gray-600 flex items-center gap-1.5">
-                                <svg class="w-3.5 h-3.5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+                                <svg class="w-3.5 h-3.5 text-blue-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
                                 Akumulasi Historis:
                             </span>
-                            <span class="font-bold text-blue-900">Sepanjang Waktu</span>
+                            <span class="font-bold text-blue-900 whitespace-nowrap">Sepanjang Waktu</span>
                         </div>
 
                         <!-- 3 Stats Summary -->
@@ -537,7 +537,7 @@ onMounted(() => {
                                     </div>
                                     <Badge :status="lead.status" class="shrink-0" />
                                 </div>
-                                <div class="flex items-center justify-between pt-1 text-[11px]">
+                                <div class="flex flex-wrap items-center justify-between gap-1.5 pt-1 text-[11px]">
                                     <span class="text-gray-400 text-[10px]">{{ lead.phone || '-' }}</span>
                                     <div class="flex items-center gap-1.5">
                                         <a v-if="lead.wa_link" :href="lead.wa_link" target="_blank" class="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-600 hover:bg-emerald-700 text-white transition-colors">
@@ -569,8 +569,8 @@ onMounted(() => {
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Modul Operasional & Pelatihan (Khusus Admin)</p>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-                    <button @click="emit('navigate', '/registrations')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/registrations')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[104px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Pendaftaran</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Peserta</span>
                             </p>
@@ -578,12 +578,12 @@ onMounted(() => {
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Daftarkan ke jadwal aktif</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/training-schedules')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/training-schedules')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[104px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Jadwal</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Pelatihan</span>
                             </p>
@@ -591,12 +591,12 @@ onMounted(() => {
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Cek kuota & instruktur</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/customers')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/customers')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[104px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Customer</span>
                             </p>
@@ -604,12 +604,12 @@ onMounted(() => {
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Export CSV & Data Peserta</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/institutions')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/institutions')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[104px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Instansi</span>
                             </p>
@@ -617,33 +617,33 @@ onMounted(() => {
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Mitra kampus & kantor</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/trainers')" class="group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/trainers')" class="col-span-2 sm:col-span-1 group bg-white border border-blue-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[88px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
-                                <span>Daftar</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Trainer</span>
+                                <span>Daftar</span><br class="card-title-br hidden sm:block 2xl:hidden"><span class="card-title-space inline sm:hidden 2xl:inline">&nbsp;</span><span>Trainer</span>
                             </p>
                             <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Instruktur & expert</p>
                         </div>
                     </button>
                 </div>
             </div>
             <div v-else class="mb-5">
-                <div class="flex items-center justify-between mb-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mb-3">
                     <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider">Aktivitas Affiliate & Penjualan</p>
                     <span class="text-[11px] text-emerald-600 font-semibold">Komisi 10% dari setiap deal closing</span>
                 </div>
                 <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2.5 sm:gap-3">
-                    <button @click="emit('navigate', '/leads/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/leads/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[104px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Input</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Prospek Baru</span>
                             </p>
@@ -651,12 +651,12 @@ onMounted(() => {
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Kenalan sales / calon deal</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/payments/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/payments/create')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[104px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Kirim</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Bukti Bayar</span>
                             </p>
@@ -664,12 +664,12 @@ onMounted(() => {
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Upload transfer DP / lunas</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/commissions')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/commissions')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[104px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Komisi 10%</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Saya</span>
                             </p>
@@ -677,12 +677,12 @@ onMounted(() => {
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Cek insentif & pencairan</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/products')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/products')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[104px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
                                 <span>Katalog &</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Harga Patokan</span>
                             </p>
@@ -690,20 +690,20 @@ onMounted(() => {
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Harga resmi sertifikasi</p>
                         </div>
                     </button>
-                    <button @click="emit('navigate', '/follow-ups')" class="group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[130px] sm:min-h-[150px]">
-                        <div class="flex items-start justify-between text-left">
+                    <button @click="emit('navigate', '/follow-ups')" class="col-span-2 sm:col-span-1 group bg-white border border-emerald-100 p-3 sm:p-4 text-left hover:bg-orange-500 hover:border-orange-500 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col justify-between min-h-[88px] sm:min-h-[150px]">
+                        <div class="flex items-start justify-between gap-2 text-left">
                             <p class="text-sm sm:text-base font-bold leading-tight text-gray-900 group-hover:text-white 2xl:whitespace-nowrap">
-                                <span>Follow-up</span><br class="card-title-br 2xl:hidden"><span class="card-title-space hidden 2xl:inline">&nbsp;</span><span>Prospek</span>
+                                <span>Follow-up</span><br class="card-title-br hidden sm:block 2xl:hidden"><span class="card-title-space inline sm:hidden 2xl:inline">&nbsp;</span><span>Prospek</span>
                             </p>
                             <span class="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-white/20 group-hover:text-white transition-colors shrink-0">
                                 <svg class="w-3 h-3 sm:w-3.5 sm:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M7 17L17 7m0 0H9m8 0v8"/></svg>
                             </span>
                         </div>
-                        <div class="mt-auto">
+                        <div class="mt-auto pt-2">
                             <p class="text-[11px] sm:text-xs text-gray-400 group-hover:text-white/80 mt-1">Jadwal tindak lanjut</p>
                         </div>
                     </button>
@@ -711,21 +711,21 @@ onMounted(() => {
             </div>
 
             <!-- Lead 6 Bulan -->
-            <div class="bg-white p-5 border border-gray-100 shadow-2xs">
-                <div class="flex items-center justify-between mb-3">
+            <div class="bg-white p-3.5 sm:p-5 border border-gray-100 shadow-2xs">
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
                     <h2 class="text-xs font-bold text-gray-900">Lead 6 Bulan sampai {{ calendarTitle }}</h2>
-                    <span class="inline-flex items-center gap-1 text-[10px] text-gray-500">
+                    <span class="inline-flex items-center gap-1 text-[10px] text-gray-500 shrink-0">
                         <span class="w-2 h-2 bg-emerald-400"></span>
                         Won
                     </span>
                 </div>
-                <div v-if="sixMonthLeads.length" class="grid grid-cols-6 gap-2 sm:gap-4 items-end h-28">
-                    <div v-for="month in sixMonthLeads" :key="month.label" class="h-full flex flex-col items-center justify-end gap-1">
-                        <span class="text-[9px] text-gray-400">{{ month.total }}</span>
+                <div v-if="sixMonthLeads.length" class="grid grid-cols-6 gap-1.5 sm:gap-4 items-end h-32 sm:h-28">
+                    <div v-for="month in sixMonthLeads" :key="month.label" class="h-full flex flex-col items-center justify-end gap-1 min-w-0">
+                        <span class="text-[10px] sm:text-[9px] text-gray-400">{{ month.total }}</span>
                         <div class="w-full max-w-10 h-20 flex items-end justify-center">
                             <div class="w-full rounded-t-sm bg-emerald-400 transition-all" :style="{ height: `${Math.max(4, (Number(month.total) / maxSixMonthLeads) * 100)}%` }"></div>
                         </div>
-                        <span class="text-[9px] text-gray-400 truncate max-w-full">{{ month.label }}</span>
+                        <span class="text-[10px] sm:text-[9px] text-gray-400 truncate max-w-full text-center">{{ month.label }}</span>
                     </div>
                 </div>
                 <div v-else class="h-28 flex items-center justify-center text-xs text-gray-400">
@@ -734,8 +734,8 @@ onMounted(() => {
             </div>
 
             <!-- Aktivitas Terbaru & Follow-up Mendatang -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                <div class="bg-white p-5 border border-gray-100 shadow-xs">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5">
+                <div class="bg-white p-3.5 sm:p-5 border border-gray-100 shadow-xs">
                     <div class="flex items-center justify-between pb-2.5 border-b border-gray-100 mb-3">
                         <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Aktivitas Terbaru</h2>
                         <button @click="emit('navigate', '/activities')" class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1">
@@ -765,7 +765,7 @@ onMounted(() => {
                     </div>
                 </div>
 
-                <div class="bg-white p-5 border border-gray-100 shadow-xs">
+                <div class="bg-white p-3.5 sm:p-5 border border-gray-100 shadow-xs">
                     <div class="flex items-center justify-between pb-2.5 border-b border-gray-100 mb-3">
                         <h2 class="text-xs font-bold text-gray-900 uppercase tracking-wider">Follow-up Mendatang</h2>
                         <button @click="emit('navigate', '/follow-ups')" class="text-[11px] text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1">

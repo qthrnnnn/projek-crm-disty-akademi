@@ -85,12 +85,12 @@ onMounted(() => {
 
 <template>
     <div class="max-w-2xl mx-auto space-y-5">
-        <div class="flex items-center justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             <div>
                 <h1 class="text-xl font-bold text-gray-900">Edit Data Prospek #{{ id }}</h1>
                 <p class="text-xs text-gray-500 mt-0.5">Perbarui profil dan status prospek</p>
             </div>
-            <button @click="emit('navigate', '/leads')" class="text-xs font-semibold text-gray-500 hover:text-gray-900">
+            <button @click="emit('navigate', '/leads')" class="self-start sm:self-auto whitespace-nowrap shrink-0 text-xs font-semibold text-gray-500 hover:text-gray-900">
                 &larr; Batal & Kembali
             </button>
         </div>
@@ -98,7 +98,7 @@ onMounted(() => {
         <div v-if="loading" class="text-center py-12 text-xs text-gray-400">Memuat data...</div>
         <div v-else-if="error" class="p-3 bg-red-50 border border-red-200 text-red-600 text-xs">{{ error }}</div>
 
-        <div v-else class="bg-white p-6 border border-gray-100 shadow-xs space-y-4">
+        <div v-else class="bg-white p-4 sm:p-6 border border-gray-100 shadow-xs space-y-4">
             <!-- Nama Lengkap -->
             <div>
                 <label class="block text-xs font-semibold text-gray-700 mb-1">Nama Lengkap *</label>
@@ -172,7 +172,7 @@ onMounted(() => {
                     class="w-full px-3.5 py-2.5 border border-gray-200 text-xs focus:ring-2 focus:ring-orange-500/20 outline-none"></textarea>
             </div>
 
-            <div class="pt-2 flex justify-end gap-2">
+            <div class="pt-2 flex flex-wrap justify-end gap-2">
                 <button type="button" @click="emit('navigate', `/leads/${id}`)" class="px-4 py-2.5 rounded-xl border border-gray-200 font-semibold text-xs text-gray-600 hover:bg-gray-50">Batal</button>
                 <button type="button" @click="save" :disabled="saving" class="px-5 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs shadow-sm disabled:opacity-50">
                     <span v-if="saving">Menyimpan...</span>

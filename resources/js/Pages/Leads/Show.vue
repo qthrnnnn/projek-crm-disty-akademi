@@ -64,6 +64,7 @@ async function saveAssignment() {
 }
 
 async function loadSalesUsers() {
+    if (!isAdmin.value) return;
     try {
         const res = await api.list('users', { per_page: '100' });
         salesUsers.value = (res.data || []).filter(u => u.role === 'sales');
@@ -216,7 +217,7 @@ onMounted(() => {
             </div>
 
             <!-- Header Card -->
-            <div class="bg-white p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div class="bg-white p-4 sm:p-5 border border-gray-100 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
                 <div>
                     <div class="flex items-center gap-2">
                         <span class="text-xs font-mono font-bold text-orange-600 bg-orange-50 px-2 py-0.5">
@@ -369,8 +370,8 @@ onMounted(() => {
         </div>
 
         <!-- Modal Beri Pengingat Sales (Admin Only) -->
-        <div v-if="showReminderModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-            <div class="bg-white max-w-md w-full p-6 shadow-xl border border-gray-100 space-y-4">
+        <div v-if="showReminderModal" class="fixed inset-0 z-50 overflow-y-auto bg-black/40 flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div class="bg-white max-w-md w-full my-auto max-h-[92dvh] overflow-y-auto p-4 sm:p-6 shadow-xl border border-gray-100 space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                     <h3 class="text-sm font-bold text-gray-900">Beri Pengingat Follow-Up ke Sales</h3>
                     <button @click="showReminderModal = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>
@@ -384,13 +385,13 @@ onMounted(() => {
                 </div>
 
                 <form @submit.prevent="submitReminder" class="space-y-3.5 text-xs">
-                    <div v-if="lead.assigned_to" class="p-3 bg-gray-50 border border-gray-100 flex items-center justify-between text-xs">
+                    <div v-if="lead.assigned_to" class="p-3 bg-gray-50 border border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs">
                         <div>
                             <span class="text-gray-400 block text-[11px] font-medium">Sales Penanggung Jawab</span>
                             <span class="font-bold text-gray-900 text-sm">{{ lead.sales?.name || lead.assigned_user?.name || 'Sales PIC' }}</span>
                             <span class="text-gray-500 text-[11px] block">{{ lead.sales?.email || lead.assigned_user?.email }}</span>
                         </div>
-                        <span class="px-2.5 py-1 text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200">
+                        <span class="w-fit px-2.5 py-1 text-[10px] font-bold bg-orange-100 text-orange-800 border border-orange-200 shrink-0">
                             Penerima Notifikasi
                         </span>
                     </div>
@@ -443,8 +444,8 @@ onMounted(() => {
         </div>
 
         <!-- Modal Penugasan Sales PIC (Admin Only) -->
-        <div v-if="showAssignModal" class="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-            <div class="bg-white max-w-sm w-full p-5 shadow-xl border border-gray-100 space-y-4">
+        <div v-if="showAssignModal" class="fixed inset-0 z-50 overflow-y-auto bg-black/40 flex items-start sm:items-center justify-center p-3 sm:p-4">
+            <div class="bg-white max-w-sm w-full my-auto max-h-[92dvh] overflow-y-auto p-4 sm:p-5 shadow-xl border border-gray-100 space-y-4">
                 <div class="flex items-center justify-between border-b border-gray-100 pb-3">
                     <h3 class="text-sm font-bold text-gray-900">Tugaskan Prospek ke Sales PIC</h3>
                     <button @click="showAssignModal = false" class="text-gray-400 hover:text-gray-600 text-lg">&times;</button>

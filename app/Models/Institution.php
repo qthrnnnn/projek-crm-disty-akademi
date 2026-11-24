@@ -10,6 +10,15 @@ class Institution extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        static::saving(function (Institution $institution) {
+            if (preg_match('/\b(universitas|institut|politeknik)\b/iu', $institution->name ?? '')) {
+                $institution->type = 'Perguruan Tinggi';
+            }
+        });
+    }
+
     protected $fillable = [
         'name',
         'type',
